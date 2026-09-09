@@ -610,6 +610,80 @@ const questions = [
     questionText: "In cloud computing, what is an 'Infrastructure as Code' (IaC) tool used to define cloud infrastructure declaratively?",
     options: ["Terraform", "Postman", "Webpack", "Redis"],
     correctAnswerIndex: 0
+  },
+
+  // ==========================================
+  // 9. MACHINE LEARNING & AI (MACHINE_LEARNING)
+  // ==========================================
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Core Concepts",
+    questionText: "Which type of machine learning uses labelled training data to learn a mapping from inputs to outputs?",
+    options: ["Unsupervised Learning", "Reinforcement Learning", "Supervised Learning", "Self-Supervised Learning"],
+    correctAnswerIndex: 2
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Core Concepts",
+    questionText: "The Bias-Variance Trade-off describes the tension between:",
+    options: ["Model accuracy and training speed", "Underfitting (high bias) and Overfitting (high variance)", "Data size and feature count", "Learning rate and batch size"],
+    correctAnswerIndex: 1
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Algorithms",
+    questionText: "Which algorithm constructs an ensemble of decision trees on random feature subsets and averages their predictions?",
+    options: ["Gradient Boosting (XGBoost)", "K-Nearest Neighbours", "Random Forest", "Support Vector Machine"],
+    correctAnswerIndex: 2
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Algorithms",
+    questionText: "In Logistic Regression, which activation function squashes the output between 0 and 1 to represent probability?",
+    options: ["ReLU", "Tanh", "Sigmoid", "Softmax"],
+    correctAnswerIndex: 2
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Neural Networks",
+    questionText: "During Backpropagation, gradients are computed using which calculus rule to propagate error through all network layers?",
+    options: ["Product Rule", "Chain Rule", "Quotient Rule", "Taylor Expansion"],
+    correctAnswerIndex: 1
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Neural Networks",
+    questionText: "Which optimisation algorithm adaptively scales learning rates per-parameter using estimates of first and second moments of gradients?",
+    options: ["Vanilla SGD", "Momentum SGD", "RMSProp", "Adam (Adaptive Moment Estimation)"],
+    correctAnswerIndex: 3
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Deep Learning Architectures",
+    questionText: "Convolutional Neural Networks (CNNs) achieve translation invariance for image tasks primarily through:",
+    options: ["Fully connected dense layers", "Shared weights (filters) in convolutional layers + pooling", "Dropout regularisation", "Batch normalisation"],
+    correctAnswerIndex: 1
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Deep Learning Architectures",
+    questionText: "LSTM (Long Short-Term Memory) networks solve the Vanishing Gradient problem in RNNs using:",
+    options: ["Residual skip connections", "Self-attention heads", "Cell state, input gate, forget gate, and output gate", "Causal masking"],
+    correctAnswerIndex: 2
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Model Evaluation",
+    questionText: "In a binary classification problem with class imbalance, which metric is more informative than raw Accuracy?",
+    options: ["Mean Squared Error", "F1-Score (Harmonic Mean of Precision & Recall)", "R-squared", "Cross-Entropy Loss"],
+    correctAnswerIndex: 1
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Model Evaluation",
+    questionText: "A ROC-AUC score of 0.5 for a binary classifier indicates:",
+    options: ["Perfect model", "A model performing no better than random chance", "Severe overfitting", "Underfitting on training set"],
+    correctAnswerIndex: 1
   }
 ];
 
@@ -618,7 +692,7 @@ const importData = async () => {
     await connectDB();
     await Question.deleteMany({});
     const inserted = await Question.insertMany(questions);
-    console.log(`✅ Successfully seeded ${inserted.length} comprehensive CSE placement MCQs across all 8 core domains!`);
+    console.log(`✅ Successfully seeded ${inserted.length} comprehensive CSE placement MCQs across all 9 core domains!`);
     
     // Log breakdown
     const counts = {};

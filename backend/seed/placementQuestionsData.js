@@ -7,6 +7,7 @@ export const PLACEMENT_SUBJECTS = [
   { id: "SYSTEM_DESIGN", name: "System Design & LLD/HLD", code: "SYSTEM_DESIGN", icon: "📐", totalTopics: 5, description: "Scalability, Caching/Redis, Load Balancers, CAP Theorem, Microservices" },
   { id: "APTITUDE", name: "Quantitative Aptitude & Reasoning", code: "APTITUDE", icon: "🧠", totalTopics: 6, description: "Percentages, Time-Speed-Distance, Probability, Number Series, Syllogisms" },
   { id: "WEB_DEV", name: "Web Dev & Cloud Fundamentals", code: "WEB_DEV", icon: "☁️", totalTopics: 5, description: "JS Event Loop, REST APIs, JWT Auth, Git/GitHub, Docker & Cloud" },
+  { id: "MACHINE_LEARNING", name: "Machine Learning & AI", code: "MACHINE_LEARNING", icon: "🤖", totalTopics: 5, description: "Supervised/Unsupervised Learning, Regression, Neural Networks, CNN/RNN, Model Evaluation" },
 ];
 
 export const PLACEMENT_QUESTIONS = [
@@ -106,7 +107,19 @@ export const PLACEMENT_QUESTIONS = [
   { subject: "WEB_DEV", topic: "Git Version Control", questionText: "What is the difference between `git merge` and `git rebase`?", options: ["Merge creates a new commit preserving history; Rebase rewrites commit history onto the tip of another branch for a linear log", "Rebase deletes branches permanently", "Merge is only used for remote repositories", "They do the exact same thing"], correctAnswerIndex: 0 },
   { subject: "WEB_DEV", topic: "Git Version Control", questionText: "Which command temporarily shelves (stashes) uncommitted modifications so you can switch branches cleanly?", options: ["git reset --hard", "git stash", "git commit --amend", "git checkout -b"], correctAnswerIndex: 1 },
   { subject: "WEB_DEV", topic: "Containers & Cloud", questionText: "What is the core difference between a Docker Container and a Virtual Machine (VM)?", options: ["Containers share the host OS kernel and are lightweight, while VMs run a full guest OS on top of a hypervisor", "Containers require more RAM than VMs", "VMs do not use hypervisors", "Containers cannot run Linux"], correctAnswerIndex: 0 },
-  { subject: "WEB_DEV", topic: "Containers & Cloud", questionText: "In cloud computing, what is an 'Infrastructure as Code' (IaC) tool used to define cloud infrastructure declaratively?", options: ["Terraform", "Postman", "Webpack", "Redis"], correctAnswerIndex: 0 }
+  { subject: "WEB_DEV", topic: "Containers & Cloud", questionText: "In cloud computing, what is an 'Infrastructure as Code' (IaC) tool used to define cloud infrastructure declaratively?", options: ["Terraform", "Postman", "Webpack", "Redis"], correctAnswerIndex: 0 },
+
+  // 9. MACHINE LEARNING & AI (MACHINE_LEARNING)
+  { subject: "MACHINE_LEARNING", topic: "Core Concepts", questionText: "Which type of machine learning uses labelled training data to learn a mapping from inputs to outputs?", options: ["Unsupervised Learning", "Reinforcement Learning", "Supervised Learning", "Self-Supervised Learning"], correctAnswerIndex: 2 },
+  { subject: "MACHINE_LEARNING", topic: "Core Concepts", questionText: "The Bias-Variance Trade-off describes the tension between:", options: ["Model accuracy and training speed", "Underfitting (high bias) and Overfitting (high variance)", "Data size and feature count", "Learning rate and batch size"], correctAnswerIndex: 1 },
+  { subject: "MACHINE_LEARNING", topic: "Algorithms", questionText: "Which algorithm constructs an ensemble of decision trees on random feature subsets and averages their predictions?", options: ["Gradient Boosting (XGBoost)", "K-Nearest Neighbours", "Random Forest", "Support Vector Machine"], correctAnswerIndex: 2 },
+  { subject: "MACHINE_LEARNING", topic: "Algorithms", questionText: "In Logistic Regression, which activation function squashes the output between 0 and 1 to represent probability?", options: ["ReLU", "Tanh", "Sigmoid", "Softmax"], correctAnswerIndex: 2 },
+  { subject: "MACHINE_LEARNING", topic: "Neural Networks", questionText: "During Backpropagation, gradients are computed using which calculus rule to propagate error through all network layers?", options: ["Product Rule", "Chain Rule", "Quotient Rule", "Taylor Expansion"], correctAnswerIndex: 1 },
+  { subject: "MACHINE_LEARNING", topic: "Neural Networks", questionText: "Which optimisation algorithm adaptively scales learning rates per-parameter using estimates of first and second moments of gradients?", options: ["Vanilla SGD", "Momentum SGD", "RMSProp", "Adam (Adaptive Moment Estimation)"], correctAnswerIndex: 3 },
+  { subject: "MACHINE_LEARNING", topic: "Deep Learning Architectures", questionText: "Convolutional Neural Networks (CNNs) achieve translation invariance for image tasks primarily through:", options: ["Fully connected dense layers", "Shared weights (filters) in convolutional layers + pooling", "Dropout regularisation", "Batch normalisation"], correctAnswerIndex: 1 },
+  { subject: "MACHINE_LEARNING", topic: "Deep Learning Architectures", questionText: "LSTM (Long Short-Term Memory) networks solve the Vanishing Gradient problem in RNNs using:", options: ["Residual skip connections", "Self-attention heads", "Cell state, input gate, forget gate, and output gate", "Causal masking"], correctAnswerIndex: 2 },
+  { subject: "MACHINE_LEARNING", topic: "Model Evaluation", questionText: "In a binary classification problem with class imbalance, which metric is more informative than raw Accuracy?", options: ["Mean Squared Error", "F1-Score (Harmonic Mean of Precision & Recall)", "R-squared", "Cross-Entropy Loss"], correctAnswerIndex: 1 },
+  { subject: "MACHINE_LEARNING", topic: "Model Evaluation", questionText: "A ROC-AUC score of 0.5 for a binary classifier indicates:", options: ["Perfect model", "A model performing no better than random chance", "Severe overfitting", "Underfitting on training set"], correctAnswerIndex: 1 }
 ];
 
 export const OFFLINE_STUDY_PACKS = {
@@ -197,6 +210,17 @@ export const OFFLINE_STUDY_PACKS = {
       { topic: "JavaScript Internals", summary: "Single-threaded non-blocking event loop. Call Stack -> Microtask Queue (Promises) -> Macrotask Queue (setTimeout).", keyFormulas: "Closures preserve outer lexical scope" },
       { topic: "REST & HTTP", summary: "GET (Safe/Idempotent), POST (Create), PUT (Idempotent update), DELETE (Idempotent). Status: 200 OK, 201 Created, 401 Unauthorized, 404 Not Found.", keyFormulas: "JWT = Header.Payload.Signature" },
       { topic: "Docker & Cloud", summary: "Docker containers share host OS kernel; VMs virtualize hardware with guest OS. Git rebase creates linear commit history.", keyFormulas: "IaC: Terraform, Cloud: AWS/GCP/Azure" }
+    ]
+  },
+  MACHINE_LEARNING: {
+    subject: "MACHINE_LEARNING",
+    title: "Machine Learning & AI Placement Pack",
+    version: "1.0",
+    sizeKB: 29,
+    cheatSheet: [
+      { topic: "Learning Paradigms", summary: "Supervised (labelled data -> classification/regression), Unsupervised (clustering/PCA), Reinforcement (agent-environment reward).", keyFormulas: "Loss = -Σ y·log(ŷ) (Cross-Entropy)" },
+      { topic: "Bias-Variance & Regularisation", summary: "High Bias = Underfitting (simple model). High Variance = Overfitting (memorises train data). L1 (Lasso) sparsifies; L2 (Ridge) shrinks weights.", keyFormulas: "Total Error = Bias² + Variance + Noise" },
+      { topic: "Neural Networks & Metrics", summary: "Backprop uses Chain Rule to compute gradients. Adam optimizer adapts learning rate. F1 = 2·P·R/(P+R). AUC-ROC measures ranking quality.", keyFormulas: "Precision = TP/(TP+FP), Recall = TP/(TP+FN)" }
     ]
   }
 };

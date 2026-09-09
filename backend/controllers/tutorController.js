@@ -20,6 +20,7 @@ export const askTutor = async (req, res) => {
       SYSTEM_DESIGN: "Focus on High-Level Architecture (HLD), Load balancing, Caching (Redis/Memcached), CAP theorem trade-offs, Database Sharding, and Message Queues (Kafka/RabbitMQ).",
       APTITUDE: "Focus on Quantitative Aptitude shortcut tricks, Speed-Math formulas, step-by-step calculation breakdown, and common campus OA test patterns.",
       WEB_DEV: "Focus on Modern Full-Stack Web Development, JavaScript Event Loop & Async Microtasks, RESTful API design & Idempotency, JWT security, and Docker/DevOps containerization.",
+      MACHINE_LEARNING: "Focus on Supervised vs Unsupervised Learning, Linear/Logistic Regression math, Bias-Variance Trade-off, Decision Trees & Random Forests, Neural Network backpropagation, CNN/RNN architectures, model evaluation metrics (Precision/Recall/F1/AUC-ROC), and practical Python (scikit-learn/TensorFlow/PyTorch) implementations.",
     };
 
     const domainFocus = subject && SUBJECT_GUIDELINES[subject] ? SUBJECT_GUIDELINES[subject] : "Provide accurate, clear, and high-impact computer science explanations.";

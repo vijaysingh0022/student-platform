@@ -162,6 +162,7 @@ const TUTOR_TRACKS = [
   { id: "SYSTEM_DESIGN", label: "System Design", icon: "🏗️", color: "from-rose-600 to-pink-600" },
   { id: "APTITUDE", label: "Aptitude & Math", icon: "🧠", color: "from-fuchsia-600 to-pink-600" },
   { id: "WEB_DEV", label: "Web & DevOps", icon: "🚀", color: "from-emerald-600 to-green-600" },
+  { id: "MACHINE_LEARNING", label: "Machine Learning", icon: "🤖", color: "from-purple-600 to-indigo-700" },
 ];
 
 const SUBJECT_SUGGESTIONS = {
@@ -219,6 +220,12 @@ const SUBJECT_SUGGESTIONS = {
     { label: "JWT Auth & Token Rotation", query: "Explain JSON Web Token (JWT) structure, access token vs refresh token rotation, and secure HTTP-only cookie storage." },
     { label: "Docker Containers vs VMs", query: "Explain the architectural difference between Docker Containers (sharing host OS kernel) and Virtual Machines (Hypervisor)." },
   ],
+  MACHINE_LEARNING: [
+    { label: "Supervised vs Unsupervised", query: "Explain the difference between Supervised, Unsupervised, and Reinforcement Learning with real-world use case examples." },
+    { label: "Bias-Variance Trade-off", query: "Explain Bias-Variance Trade-off, Overfitting vs Underfitting, and how Regularization (L1/L2) and Dropout help." },
+    { label: "Neural Net Backpropagation", query: "Explain how Backpropagation works in a Neural Network step-by-step — forward pass, loss calculation, gradient descent, and weight update." },
+    { label: "CNN & RNN Architectures", query: "Explain Convolutional Neural Networks (CNN) for images and Recurrent Neural Networks (RNN/LSTM) for sequences with architecture diagrams." },
+  ],
 };
 
 const Tutor = () => {
@@ -230,7 +237,7 @@ const Tutor = () => {
       time: "Just now",
       text: `### 👋 Welcome to LearnX AI Academic Tutor!
 
-I'm your 24/7 personalized Computer Science Engineering placement & semester tutor. I specialize across all **8 core placement tracks**:
+I'm your 24/7 personalized Computer Science Engineering placement & semester tutor. I specialize across all **9 core placement tracks**:
 * ⚡ **DSA**: Binary Search, Trees/BST, Dynamic Programming, Graphs, Heaps
 * 🗄️ **DBMS & SQL**: Normalization 1NF-BCNF, B+ Trees, ACID, Transactions, Indexing
 * 💻 **Operating Systems**: Processes, Semaphores, Deadlocks, Virtual Memory Paging
@@ -239,6 +246,7 @@ I'm your 24/7 personalized Computer Science Engineering placement & semester tut
 * 🏗️ **System Design**: HLD Scalability, Redis Caching, Sharding, CAP Theorem
 * 🧠 **Quantitative Aptitude**: Time-Work, Speed-Distance, Probability, Permutations
 * 🚀 **Web Dev & DevOps**: JS Event Loop, REST API Idempotency, JWT, Docker
+* 🤖 **Machine Learning & AI**: Regression, Neural Networks, CNN/RNN, Bias-Variance, Metrics
 
 Select a subject pill above or type your question below! 🚀`,
     },

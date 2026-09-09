@@ -52,6 +52,12 @@ const BENCHMARK_CURRICULUM = {
     { topic: "Authentication & Security (JWT)", target: 85, weight: 1.1, complexity: "Medium", baseHours: 4 },
     { topic: "DevOps & Containers (Docker/Git)", target: 80, weight: 1.0, complexity: "Medium", baseHours: 4 },
   ],
+  MACHINE_LEARNING: [
+    { topic: "Supervised Learning & Regression", target: 85, weight: 1.2, complexity: "High", baseHours: 6 },
+    { topic: "Neural Networks & Deep Learning", target: 85, weight: 1.3, complexity: "High", baseHours: 8 },
+    { topic: "Model Evaluation & Metrics", target: 90, weight: 1.1, complexity: "Medium", baseHours: 4 },
+    { topic: "CNN, RNN & Transformer Architectures", target: 80, weight: 1.3, complexity: "High", baseHours: 8 },
+  ],
 };
 
 const COMPANY_TIERS = [

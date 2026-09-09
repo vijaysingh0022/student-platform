@@ -12,6 +12,7 @@ const PLACEMENT_TRACKS = [
   { id: "SYSTEM_DESIGN", name: "System Design & Arch", shortName: "Sys Design", icon: "🏗️", questionsCount: 10, tag: "Top Tier Giants", color: "from-rose-600 to-pink-600" },
   { id: "APTITUDE", name: "Aptitude & Reasoning", shortName: "Aptitude", icon: "🧠", questionsCount: 10, tag: "Round 1 OA", color: "from-fuchsia-600 to-pink-600" },
   { id: "WEB_DEV", name: "Web Dev & DevOps", shortName: "Web & DevOps", icon: "🚀", questionsCount: 10, tag: "Full Stack", color: "from-emerald-600 to-green-600" },
+  { id: "MACHINE_LEARNING", name: "Machine Learning & AI", shortName: "ML & AI", icon: "🤖", questionsCount: 10, tag: "AI/ML Track", color: "from-purple-600 to-indigo-700" },
 ];
 
 const TestPage = () => {
