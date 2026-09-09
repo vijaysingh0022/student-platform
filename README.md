@@ -15,8 +15,8 @@ Collaborators and friends can launch and test the full **LearnX** platform direc
 
 > **Direct Launch Link:**  
 > 👉 **[Click here to open LearnX in Cloud Browser](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=vijaysingh0022/student-platform)**
-> 
-> *GitHub spins up an automated cloud environment, starts both frontend & backend servers, and opens the running application directly in your browser with full auto-seeded diagnostic tests, AI tutor, and database.*
+>
+> *GitHub Codespaces spins up a full cloud environment, installs dependencies, starts both frontend & backend servers, and opens the running application in your browser automatically — with all 92 placement questions seeded and demo accounts ready.*
 
 ---
 
@@ -40,7 +40,6 @@ Collaborators and friends can launch and test the full **LearnX** platform direc
 - Specialized pedagogical domain guidance across all 8 CSE placement subjects.
 - Markdown explanations with TL;DR concept overview, step-by-step logic, code blocks (C++, Python, Java, SQL, JS), and common exam pitfalls.
 - Quick action buttons: **"💡 Simpler Analogy"**, **"💻 Code Example"**, and **"❓ Quiz Me"**.
-- 1-click dynamic interview doubt suggestions tailored per subject.
 
 ### 3. 🗺️ Personalized 7-Day AI Remediation Roadmap
 - Automatically generated upon assessment completion targeting specific weak topics.
@@ -62,17 +61,29 @@ Collaborators and friends can launch and test the full **LearnX** platform direc
 - Predictive placement readiness score calibrated against Tier-1 Product Giants, FinTech Unicorns, Startups, and IT Services.
 - Learning velocity tracking across longitudinal assessment attempts.
 
+### 7. 🔒 Security & Governance
+- **RBAC** — Role-based access control (student / teacher / admin).
+- **SSO** — Single Sign-On via Google Workspace, Microsoft 365 & Institutional SAML.
+- **Audit Logs** — Every login, registration, and role-switch is recorded.
+- **Enterprise Security Middleware** — HSTS, CSP, rate limiting (150 req/min), XSS & NoSQL injection protection.
+- **Data Privacy** — GDPR-compliant data export, consent management, and data purge.
+
+### 8. 🧠 AI Quiz & MCQ Generator
+- Upload study material (PDF/DOCX) and auto-generate multiple-choice quizzes.
+- Instant AI-powered quiz evaluation and scoring.
+
 ---
 
 ## 🛠️ Technology Stack
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18, Vite 5, Tailwind CSS, Recharts, Lucide Icons, React Router DOM |
+| **Frontend** | React 18, Vite 5, Tailwind CSS, Recharts, React Router DOM |
 | **Backend** | Node.js, Express.js, JWT Authentication, CORS, Dotenv |
-| **Database** | MongoDB / MongoDB Atlas (with automatic Embedded Local MongoDB fallback) |
+| **Database** | MongoDB Atlas **or** Auto-embedded In-Process MongoDB (zero config) |
 | **AI Integration** | OpenAI API / OpenRouter (`google/gemini-2.0-flash-001`, `gpt-4o-mini`) |
-| **DevOps / CI** | GitHub Actions CI, Gitflow Branching |
+| **Security** | RBAC, SSO (SAML/OAuth2), Audit Logs, Rate Limiting, CSP |
+| **DevOps** | GitHub Codespaces, Concurrently, Nodemon |
 
 ---
 
@@ -80,17 +91,18 @@ Collaborators and friends can launch and test the full **LearnX** platform direc
 
 ```text
 student-platform/
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # GitHub Actions continuous integration pipeline
+├── .devcontainer/
+│   └── devcontainer.json        # GitHub Codespaces 1-click launch config
 ├── backend/
-│   ├── config/                  # DB connection & AI client setup
-│   ├── controllers/             # Auth, Test, Roadmap, Tutor, Offline, Institution
-│   ├── middleware/              # JWT auth & role protection
-│   ├── models/                  # User, Question, TestResult, Roadmap schemas
+│   ├── config/                  # DB connection (Atlas + embedded fallback)
+│   ├── controllers/             # Auth, Quiz, Security, Privacy, Career, Tutor…
+│   ├── middleware/              # JWT auth, RBAC, security headers, rate limiter
+│   ├── models/                  # User, Question, Quiz, AuditLog, TestResult…
 │   ├── routes/                  # Express REST API endpoints
-│   ├── seed/                    # 82 calibrated placement MCQs & offline study packs
-│   ├── .env.example             # Template environment variables
+│   ├── seed/                    # 92 calibrated placement MCQs
+│   ├── utils/                   # generateToken, auditLogger
+│   ├── .env                     # ✅ Safe defaults — works out of the box
+│   ├── .env.example             # Template for custom environment variables
 │   ├── package.json
 │   └── server.js                # Server entrypoint
 ├── frontend/
@@ -98,118 +110,112 @@ student-platform/
 │   ├── src/
 │   │   ├── components/          # Navbar, Logo, RoadmapVisualizer, MarkdownRenderer
 │   │   ├── context/             # AuthContext, OfflineContext
-│   │   ├── pages/               # Dashboard, TestPage, Tutor, OfflineLearning, etc.
-│   │   ├── services/            # Axios API service, Offline storage engine
+│   │   ├── pages/               # Dashboard, TestPage, Tutor, QuizGenerator…
+│   │   ├── services/            # Axios API service
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
-├── .gitignore                   # Comprehensive secrets & build ignores
-├── CONTRIBUTING.md              # Git workflow, branching & PR guidelines
-├── LICENSE                      # MIT License
+├── .gitignore
+├── CONTRIBUTING.md
+├── LICENSE
+├── package.json                 # Root: `npm run dev` starts everything
 └── README.md
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (Local Setup)
 
 ### Prerequisites
-- **Node.js** (v18.x or v20.x recommended)
-- **npm** (v9.x or higher)
+- **Node.js** v18+ or v20+
+- **npm** v9+
 - **Git**
 
----
-
-### Installation
-
-1. **Clone the Repository**
-   ```bash
-   git clone <YOUR_REPO_URL>
-   cd student-platform
-   ```
-
-2. **Backend Setup**
-   ```bash
-   cd backend
-   npm install
-   ```
-
-   Create your `.env` file from the template:
-   ```bash
-   cp .env.example .env
-   ```
-
-   Fill in your `.env` variables:
-   ```env
-   # MongoDB connection string (Optional: if empty or unreachable, embedded MongoDB starts automatically)
-   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/student-platform
-
-   PORT=5001
-   JWT_SECRET=your_super_secret_jwt_key_here
-
-   # OpenAI / OpenRouter API Key for AI Tutor & Roadmap Generation
-   OPENAI_API_KEY=your_openai_or_openrouter_api_key_here
-   ```
-
-3. **Frontend Setup**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+> **✅ No database setup needed** — the app automatically starts an embedded in-process MongoDB and seeds all demo data on first boot.
 
 ---
 
-### Running the Application Locally
+### ⚡ Quick Start (3 Commands)
 
-#### ⚡ Quick 1-Command Start (Both Backend & Frontend)
-From the project root:
 ```bash
-npm run setup   # Installs dependencies for both frontend and backend
-npm run dev     # Boots backend on :5001 and frontend on :3000 concurrently
+# 1. Clone the repository
+git clone https://github.com/vijaysingh0022/student-platform.git
+cd student-platform
+
+# 2. Install all dependencies (backend + frontend)
+npm run setup
+
+# 3. Start both servers with one command
+npm run dev
 ```
 
+That's it! Open **http://localhost:3000** in your browser.
+
+- Backend API runs at → `http://localhost:5001`
+- Frontend app runs at → `http://localhost:3000`
+
 ---
 
-#### Or Run Separately in 2 Terminals:
+### Or Run Separately in 2 Terminals
 
-#### Terminal 1 — Backend Server
+**Terminal 1 — Backend:**
 ```bash
 cd backend
+npm install
 npm run dev
 ```
-*Backend runs on `http://localhost:5001`.*  
-*(Note: If MongoDB Atlas is not configured, the built-in auto-seeder will launch a local embedded MongoDB database and seed all 82 placement questions automatically).*
 
-#### Terminal 2 — Frontend Dev Server
+**Terminal 2 — Frontend:**
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
-*Frontend runs on `http://localhost:5173`.*
 
 ---
 
 ## 🔑 Default Demo Accounts
 
-Upon initial server boot, the database is auto-seeded with:
+Upon initial server boot, the database is **auto-seeded** with:
 
 | Role | Email | Password | Access |
 |---|---|---|---|
-| **Student** | `demo@example.com` | `password123` | Dashboard, Tests, AI Tutor, Offline Hub |
-| **Faculty** | `faculty@example.com` | `password123` | Faculty Portal, Institutional Analytics |
+| **Student** | `demo@example.com` | `password123` | Dashboard, Tests, AI Tutor, Offline Hub, Career Engine |
+| **Faculty** | `faculty@example.com` | `password123` | Faculty Portal, Institutional Analytics, Student Reports |
+
+> No sign-up required for testing — just use the credentials above on the Login page.
+
+---
+
+## ⚙️ Environment Variables (Optional)
+
+The `backend/.env` file ships with working defaults. You can optionally customize:
+
+```env
+# MongoDB Atlas URI (optional — embedded DB starts automatically if blank)
+MONGO_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/student-platform
+
+# Server port (default: 5001)
+PORT=5001
+
+# JWT secret (change in production!)
+JWT_SECRET=your_secret_key_here
+
+# OpenAI / OpenRouter API Key (needed for AI Tutor & Roadmap features)
+OPENAI_API_KEY=sk-or-your-key-here
+```
 
 ---
 
 ## 🌿 Git Branching Workflow
 
-This project adheres to a clean Gitflow workflow:
-- **`main`**: Production code only.
+- **`main`**: Production-ready code.
 - **`develop`**: Active development branch.
-- **`feature/*`**: Feature branches (e.g. `feature/system-design-module`).
+- **`feature/*`**: Feature branches (e.g. `feature/quiz-generator`).
 
-Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for full branch naming conventions, commit guidelines, and Pull Request instructions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ---
 
