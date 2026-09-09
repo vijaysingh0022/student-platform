@@ -1,0 +1,17 @@
+{
+  "name": "LearnX Web Platform",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "forwardPorts": [3000, 5001],
+  "portsAttributes": {
+    "3000": {
+      "label": "LearnX Web Application",
+      "onAutoForward": "openBrowser"
+    },
+    "5001": {
+      "label": "LearnX Backend API",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "npm install && npm run setup",
+  "postStartCommand": "npm run dev"
+}

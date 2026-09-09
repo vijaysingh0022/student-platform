@@ -7,6 +7,19 @@ LearnX is an AI-powered diagnostic, assessment, and career acceleration platform
 
 ---
 
+## 🚀 Instant 1-Click Live Launch (No Setup Required)
+
+Collaborators and friends can launch and test the full **LearnX** platform directly in their web browser with **1 click** via GitHub Codespaces:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=vijaysingh0022/student-platform)
+
+> **Direct Launch Link:**  
+> 👉 **[Click here to open LearnX in Cloud Browser](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=vijaysingh0022/student-platform)**
+> 
+> *GitHub spins up an automated cloud environment, starts both frontend & backend servers, and opens the running application directly in your browser with full auto-seeded diagnostic tests, AI tutor, and database.*
+
+---
+
 ## 🌟 Core Features
 
 ### 1. 🎯 CSE Placement Diagnostic Assessment Arena
@@ -149,6 +162,17 @@ student-platform/
 ---
 
 ### Running the Application Locally
+
+#### ⚡ Quick 1-Command Start (Both Backend & Frontend)
+From the project root:
+```bash
+npm run setup   # Installs dependencies for both frontend and backend
+npm run dev     # Boots backend on :5001 and frontend on :3000 concurrently
+```
+
+---
+
+#### Or Run Separately in 2 Terminals:
 
 #### Terminal 1 — Backend Server
 ```bash

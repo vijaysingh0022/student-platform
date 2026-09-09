@@ -1,0 +1,15 @@
+{
+  "name": "learnx-student-platform",
+  "version": "1.0.0",
+  "description": "LearnX — AI-Powered Student Growth & CSE Placement Platform",
+  "private": true,
+  "scripts": {
+    "setup": "npm install --prefix backend && npm install --prefix frontend",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "build": "npm run build --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
