@@ -19,6 +19,7 @@ const SUBJECTS = [
   { id: "SYSTEM_DESIGN", name: "System Design & Arch", icon: "🏗️", totalTopics: 5, tag: "Top Tier" },
   { id: "APTITUDE", name: "Aptitude & Reasoning", icon: "🧠", totalTopics: 4, tag: "Round 1 OA" },
   { id: "WEB_DEV", name: "Web Dev & DevOps", icon: "🚀", totalTopics: 4, tag: "Full Stack" },
+  { id: "MACHINE_LEARNING", name: "Machine Learning & AI", icon: "🤖", totalTopics: 5, tag: "AI/ML Track" },
 ];
 
 const DAILY_CHALLENGES = [
@@ -85,6 +86,14 @@ const DAILY_CHALLENGES = [
     options: ["POST", "PUT", "PATCH (without conditional headers)", "CONNECT"],
     correctIdx: 1,
     explanation: "PUT is idempotent because executing it multiple times with the same payload produces the exact same resource state."
+  },
+  {
+    subject: "MACHINE_LEARNING",
+    topic: "Bias-Variance Trade-off",
+    question: "A model that performs excellently on training data but poorly on unseen test data is suffering from:",
+    options: ["High Bias / Underfitting", "High Variance / Overfitting", "Data Leakage", "Gradient Explosion"],
+    correctIdx: 1,
+    explanation: "High Variance (Overfitting) means the model memorises training data and fails to generalise. Remedies include Regularisation (L1/L2), Dropout, and more training data."
   }
 ];
 

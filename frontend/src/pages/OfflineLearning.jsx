@@ -268,6 +268,7 @@ const OfflineLearning = () => {
               { subject: "SYSTEM_DESIGN", title: "System Design & Arch", icon: "🏗️", topics: ["Caching & Cache Stampede", "Load Balancing & Sharding", "CAP Theorem & Consistency"], size: "26 KB" },
               { subject: "APTITUDE", title: "Aptitude & Reasoning", icon: "🧠", topics: ["Time & Work Formulas", "Speed-Distance & Trains", "Probability & Combinatorics"], size: "20 KB" },
               { subject: "WEB_DEV", title: "Web Dev & DevOps", icon: "🚀", topics: ["Event Loop & Async Microtasks", "REST API Idempotency", "Docker, JWT & Git Rebase"], size: "25 KB" },
+              { subject: "MACHINE_LEARNING", title: "Machine Learning & AI", icon: "🤖", topics: ["Supervised vs Unsupervised", "Neural Nets & Backpropagation", "CNN/RNN & Model Evaluation"], size: "29 KB" },
             ].map((pack, idx) => {
               const isDownloaded = downloadedPacks.some((p) => p.subject === pack.subject);
 
@@ -356,7 +357,7 @@ const OfflineLearning = () => {
 
             {/* Subject Selector */}
             <div className="flex flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 self-start">
-              {["DSA", "DBMS", "OS", "CN", "OOPS", "SYSTEM_DESIGN", "APTITUDE", "WEB_DEV"].map((s) => (
+              {["DSA", "DBMS", "OS", "CN", "OOPS", "SYSTEM_DESIGN", "APTITUDE", "WEB_DEV", "MACHINE_LEARNING"].map((s) => (
                 <button
                   key={s}
                   onClick={() => handleStartQuiz(s)}
