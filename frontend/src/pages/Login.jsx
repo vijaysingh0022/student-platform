@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api.js";
+import api, { ssoLogin } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const Login = () => {
@@ -11,6 +11,25 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSSO = async (provider, defaultEmail, defaultName, role = "student") => {
+    setError("");
+    setLoading(true);
+    try {
+      const { data } = await ssoLogin({
+        provider,
+        email: form.email || defaultEmail,
+        name: defaultName,
+        role,
+      });
+      login(data);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "SSO Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -151,6 +170,36 @@ const Login = () => {
                 ) : "Sign In →"}
               </button>
             </form>
+
+            {/* Single Sign-On (SSO) Section */}
+            <div className="mt-5 pt-4 border-t border-slate-200">
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center mb-3">
+                Or authenticate via Institutional SSO
+              </p>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => handleSSO("google", "alex.chen@berkeley.edu", "Alex Chen", "student")}
+                  className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center justify-center gap-2 transition-all"
+                >
+                  <span>🌐</span> Continue with Google Workspace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSSO("microsoft", "prof.williams@mit.edu", "Prof. Williams", "teacher")}
+                  className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 flex items-center justify-center gap-2 transition-all"
+                >
+                  <span>🏢</span> Continue with Microsoft 365
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSSO("institution_edu", "dean.sharma@iit.edu", "Dean Sharma", "admin")}
+                  className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-violet-50 hover:bg-violet-100 text-xs font-bold text-violet-800 flex items-center justify-center gap-2 transition-all"
+                >
+                  <span>🎓</span> Institutional Shibboleth / Edu SAML
+                </button>
+              </div>
+            </div>
 
             <p className="text-xs text-center mt-6 text-slate-600 font-medium">
               No account?{" "}

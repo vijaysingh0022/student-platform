@@ -12,6 +12,8 @@ import PlacementPrediction from "./pages/PlacementPrediction.jsx";
 import CareerReadiness from "./pages/CareerReadiness.jsx";
 import TeacherDashboard from "./pages/TeacherDashboard.jsx";
 import OfflineLearning from "./pages/OfflineLearning.jsx";
+import QuizGenerator from "./pages/QuizGenerator.jsx";
+import SecurityGovernance from "./pages/SecurityGovernance.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 
 function App() {
@@ -36,6 +38,14 @@ function App() {
                   <Dashboard />
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/quiz-generator"
+              element={<QuizGenerator />}
+            />
+            <Route
+              path="/security"
+              element={<SecurityGovernance />}
             />
             <Route
               path="/offline-learning"
@@ -109,6 +119,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </div>
