@@ -23,7 +23,6 @@ import {
 } from "./middleware/securityMiddleware.js";
 
 dotenv.config();
-connectDB();
 
 const app = express();
 
@@ -43,9 +42,49 @@ app.use(sanitizeInput);
 // 5. Sliding-window rate limiting (150 requests / minute)
 app.use(rateLimiter({ maxRequests: 150, windowMs: 60000 }));
 
-// Root health check
+// 6. Resilient Database Connection Middleware for Serverless & Long-running instances
+app.use(async (req, res, next) => {
+  // Allow health check without waiting for DB if needed
+  if (req.path === "/" || req.path === "/api" || req.path === "/api/health") {
+    return next();
+  }
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("Database connection failure:", err.message);
+    res.status(503).json({
+      error: "Database unavailable. Please ensure MONGO_URI is configured correctly.",
+      details: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
+// Root & API Health Checks
 app.get("/", (req, res) => {
-  res.send("Student Growth & Career Intelligence Platform API is running");
+  res.json({
+    status: "ok",
+    service: "LearnX Student Platform API",
+    version: "1.0.0",
+    environment: process.env.VERCEL ? "vercel-serverless" : "standalone",
+  });
+});
+
+app.get("/api", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "LearnX Student Platform API",
+    version: "1.0.0",
+    environment: process.env.VERCEL ? "vercel-serverless" : "standalone",
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Mount Platform APIs
@@ -62,5 +101,29 @@ app.use("/api/institution", institutionRoutes);
 app.use("/api/offline", offlineRoutes);
 app.use("/api/career", careerRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("Unhandled API Error:", err);
+  res.status(err.status || 500).json({
+    error: err.message || "Internal Server Error",
+  });
+});
+
+// Only listen directly when running standalone (not when imported as a serverless handler)
+const isServerless = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT ||
+  (process.argv[1] && (process.argv[1].includes("api/index") || process.argv[1].endsWith("api/index.js")))
+);
+
+if (!isServerless) {
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    // Pre-connect database in standalone dev mode
+    connectDB().catch((err) => console.warn("Initial DB pre-connect:", err.message));
+  });
+}
+
+export default app;

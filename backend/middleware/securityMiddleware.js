@@ -21,7 +21,7 @@ export const enterpriseSecurityHeaders = (req, res, next) => {
 const rateLimitBuckets = new Map();
 
 // Periodic cleanup of stale rate-limit buckets every 5 minutes
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [ip, data] of rateLimitBuckets.entries()) {
     if (now - data.windowStart > 60000 * 2) {
@@ -29,13 +29,14 @@ setInterval(() => {
     }
   }
 }, 60000 * 5);
+cleanupTimer.unref?.();
 
 export const rateLimiter = ({ maxRequests = 120, windowMs = 60000, message = "Rate limit exceeded. Please retry shortly." } = {}) => {
   return async (req, res, next) => {
     const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress ||
-      req.ip ||
+      req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      req.socket?.remoteAddress ||
+      req.connection?.remoteAddress ||
       "127.0.0.1";
 
     const now = Date.now();

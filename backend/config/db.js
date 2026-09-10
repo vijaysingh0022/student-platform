@@ -6,6 +6,9 @@ import { PLACEMENT_QUESTIONS } from "../seed/placementQuestionsData.js";
 import TestResult from "../models/TestResult.js";
 import CareerProfile from "../models/CareerProfile.js";
 
+let isConnected = false;
+let connectionPromise = null;
+
 export const autoSeed = async () => {
   try {
     const qCount = await Question.countDocuments();
@@ -52,32 +55,63 @@ export const autoSeed = async () => {
 };
 
 const connectDB = async () => {
-  if (process.env.MONGO_URI) {
-    try {
-      console.log("Connecting to MongoDB Atlas...");
-      const conn = await mongoose.connect(process.env.MONGO_URI, {
-        serverSelectionTimeoutMS: 3000,
-      });
-      console.log(`✅ MongoDB Atlas connected: ${conn.connection.host}`);
-      await autoSeed();
-      return;
-    } catch (error) {
-      console.warn(`⚠️ Atlas connection failed (${error.message}).`);
-      console.log("🚀 Starting embedded Local MongoDB instance automatically so all features work immediately...");
-    }
+  if (mongoose.connection.readyState >= 1) {
+    return;
   }
 
-  // Fallback to in-memory Mongo server
-  try {
-    const { MongoMemoryServer } = await import("mongodb-memory-server");
-    const mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    const conn = await mongoose.connect(uri);
-    console.log(`✅ Embedded Local MongoDB connected successfully at ${uri}`);
-    await autoSeed();
-  } catch (err) {
-    console.error("Critical MongoDB connection error:", err.message);
+  if (connectionPromise) {
+    return connectionPromise;
   }
+
+  connectionPromise = (async () => {
+    if (process.env.MONGO_URI) {
+      try {
+        console.log("Connecting to MongoDB Atlas...");
+        const conn = await mongoose.connect(process.env.MONGO_URI, {
+          serverSelectionTimeoutMS: 5000,
+          maxPoolSize: 10,
+        });
+        console.log(`✅ MongoDB Atlas connected: ${conn.connection.host}`);
+        if (!isConnected) {
+          await autoSeed();
+          isConnected = true;
+        }
+        return conn;
+      } catch (error) {
+        console.warn(`⚠️ Atlas connection failed (${error.message}).`);
+        if (process.env.VERCEL) {
+          connectionPromise = null;
+          throw error;
+        }
+        console.log("🚀 Starting embedded Local MongoDB instance automatically so all features work immediately...");
+      }
+    }
+
+    // Fallback to in-memory Mongo server (only for local development)
+    if (!process.env.VERCEL) {
+      try {
+        const { MongoMemoryServer } = await import("mongodb-memory-server");
+        const mongod = await MongoMemoryServer.create();
+        const uri = mongod.getUri();
+        const conn = await mongoose.connect(uri);
+        console.log(`✅ Embedded Local MongoDB connected successfully at ${uri}`);
+        if (!isConnected) {
+          await autoSeed();
+          isConnected = true;
+        }
+        return conn;
+      } catch (err) {
+        console.error("Critical MongoDB connection error:", err.message);
+        connectionPromise = null;
+        throw err;
+      }
+    } else {
+      connectionPromise = null;
+      throw new Error("MONGO_URI is required when deploying to Vercel.");
+    }
+  })();
+
+  return connectionPromise;
 };
 
 export default connectDB;

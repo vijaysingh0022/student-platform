@@ -3,11 +3,24 @@
   "version": "1.0.0",
   "description": "LearnX — AI-Powered Student Growth & CSE Placement Platform",
   "private": true,
+  "type": "module",
   "scripts": {
     "setup": "npm install --prefix backend && npm install --prefix frontend",
     "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-    "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "node backend/server.js",
     "build": "npm run build --prefix frontend"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.2",
+    "mongoose": "^8.4.0",
+    "multer": "^2.3.0",
+    "openai": "^4.52.0",
+    "pdf-parse": "^2.4.5"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
