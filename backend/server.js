@@ -26,11 +26,17 @@ dotenv.config();
 
 const app = express();
 
-// 1. Enterprise Security Headers (HSTS, CSP, No-Sniff, X-Frame)
+// 1. Enterprise Security Headers
 app.use(enterpriseSecurityHeaders);
 
-// 2. Global CORS
-app.use(cors());
+// 2. Global CORS — allow requests from any origin (Vercel frontend domain included)
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // 3. Body parsers with payload limits
 app.use(express.json({ limit: "15mb" }));
@@ -42,41 +48,17 @@ app.use(sanitizeInput);
 // 5. Sliding-window rate limiting (150 requests / minute)
 app.use(rateLimiter({ maxRequests: 150, windowMs: 60000 }));
 
-// 6. Resilient Database Connection Middleware for Serverless & Long-running instances
-app.use(async (req, res, next) => {
-  // Allow health check without waiting for DB if needed
-  if (req.path === "/" || req.path === "/api" || req.path === "/api/health") {
-    return next();
-  }
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    console.error("Database connection failure:", err.message);
-    res.status(503).json({
-      error: "Database unavailable. Please ensure MONGO_URI is configured correctly.",
-      details: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-  }
-});
-
-// Root & API Health Checks
+// Root health check
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
     service: "LearnX Student Platform API",
     version: "1.0.0",
-    environment: process.env.VERCEL ? "vercel-serverless" : "standalone",
   });
 });
 
 app.get("/api", (req, res) => {
-  res.json({
-    status: "ok",
-    service: "LearnX Student Platform API",
-    version: "1.0.0",
-    environment: process.env.VERCEL ? "vercel-serverless" : "standalone",
-  });
+  res.json({ status: "ok", service: "LearnX API", version: "1.0.0" });
 });
 
 app.get("/api/health", (req, res) => {
@@ -109,21 +91,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Only listen directly when running standalone (not when imported as a serverless handler)
-const isServerless = Boolean(
-  process.env.VERCEL ||
-  process.env.AWS_LAMBDA_FUNCTION_NAME ||
-  process.env.LAMBDA_TASK_ROOT ||
-  (process.argv[1] && (process.argv[1].includes("api/index") || process.argv[1].endsWith("api/index.js")))
-);
+// Connect DB then start server
+const PORT = process.env.PORT || 5001;
 
-if (!isServerless) {
-  const PORT = process.env.PORT || 5001;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    // Pre-connect database in standalone dev mode
-    connectDB().catch((err) => console.warn("Initial DB pre-connect:", err.message));
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`✅ LearnX API running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to database:", err.message);
+    process.exit(1);
   });
-}
 
 export default app;

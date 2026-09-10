@@ -6,8 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
+    "build": "echo 'Backend ready'",
     "dev": "nodemon server.js",
     "seed": "node seed/seedQuestions.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,7 +20,6 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.12.2",
-    "mongodb-memory-server": "^11.2.0",
     "mongoose": "^8.4.0",
     "multer": "^2.3.0",
     "openai": "^4.52.0",
