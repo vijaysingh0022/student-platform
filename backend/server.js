@@ -91,18 +91,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect DB then start server
-const PORT = process.env.PORT || 5001;
+// Connect DB then start server (only for standalone server execution, not Vercel serverless)
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 5001;
 
-connectDB()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`✅ LearnX API running on port ${PORT}`);
+  connectDB()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`✅ LearnX API running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Failed to connect to database:", err.message);
     });
-  })
-  .catch((err) => {
-    console.error("Failed to connect to database:", err.message);
-    process.exit(1);
-  });
+}
 
 export default app;
