@@ -4,7 +4,6 @@ import { getAIClient, getAIModel } from "../config/ai.js";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
-const pdfParseModule = require("pdf-parse");
 const mammoth = require("mammoth");
 
 const extractTextFromBuffer = async (buffer, mimeType = "", originalName = "") => {
@@ -13,6 +12,7 @@ const extractTextFromBuffer = async (buffer, mimeType = "", originalName = "") =
 
   try {
     if (lowerName.endsWith(".pdf") || mimeType === "application/pdf") {
+      const pdfParseModule = require("pdf-parse");
       if (typeof pdfParseModule.PDFParse === "function") {
         const parser = new pdfParseModule.PDFParse({ data: new Uint8Array(buffer) });
         await parser.load();

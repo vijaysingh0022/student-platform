@@ -42,3 +42,4 @@ coverage/
 scratch/
 tmp/
 temp/
+.vercel

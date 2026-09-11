@@ -4,7 +4,6 @@ import Quiz from "../models/Quiz.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
 
 const require = createRequire(import.meta.url);
-const pdfParseModule = require("pdf-parse");
 const mammoth = require("mammoth");
 
 /**
@@ -55,6 +54,7 @@ async function extractTextFromFile(file) {
 
   try {
     if (originalName.endsWith(".pdf") || mimeType === "application/pdf") {
+      const pdfParseModule = require("pdf-parse");
       if (typeof pdfParseModule.PDFParse === "function") {
         const parser = new pdfParseModule.PDFParse({ data: new Uint8Array(buffer) });
         await parser.load();
