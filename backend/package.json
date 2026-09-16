@@ -2,10 +2,10 @@
   "name": "student-platform-backend",
   "version": "1.0.0",
   "description": "Backend for AI-Powered Student Growth & Career Intelligence Platform",
-  "main": "server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "build": "echo 'Backend ready'",
     "dev": "nodemon server.js",
     "seed": "node seed/seedQuestions.js"
