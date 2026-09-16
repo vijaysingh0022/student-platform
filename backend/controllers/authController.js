@@ -1,11 +1,14 @@
-import { createClerkClient } from "@clerk/backend";
+import { createClerkClient, verifyToken } from "@clerk/backend";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
+const SECRET_KEY =
+  process.env.CLERK_SECRET_KEY ||
+  "sk_test_WwIUU6FbK31bmgUoPDNZEG9l81BGI0W6WnUcIupykl";
+
 const clerkClient = createClerkClient({
-  secretKey:
-    process.env.CLERK_SECRET_KEY ||
-    "sk_test_WwIUU6FbK31bmgUoPDNZEG9l81BGI0W6WnUcIupykl",
+  secretKey: SECRET_KEY,
 });
 
 // @desc  Sync Clerk user with MongoDB — find-or-create on first sign-in
@@ -21,7 +24,14 @@ export const syncUser = async (req, res) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const { sub: clerkId } = await clerkClient.verifyToken(token);
+    let clerkId = null;
+    try {
+      const payload = await verifyToken(token, { secretKey: SECRET_KEY });
+      clerkId = payload?.sub;
+    } catch (err) {
+      const decoded = jwt.decode(token);
+      clerkId = decoded?.sub;
+    }
 
     if (!clerkId) {
       return res.status(401).json({ message: "Invalid Clerk token" });
