@@ -153,11 +153,37 @@ const Dashboard = () => {
         ]);
         setSkillGap(skillGapRes.data);
         setResults(resultsRes.data || []);
+        
+        let loadedRoadmap = null;
         try {
           const roadmapRes = await api.get(`/roadmap/${selectedSubject}`);
-          setRoadmap(roadmapRes.data);
+          loadedRoadmap = roadmapRes.data;
+          setRoadmap(loadedRoadmap);
         } catch (e) {
           setRoadmap(null);
+        }
+
+        // If autoRoadmap is requested from test page and no roadmap exists yet, auto-generate it!
+        if (location.state?.autoRoadmap && !loadedRoadmap) {
+          const weakTopics =
+            location.state.weakTopics?.length > 0
+              ? location.state.weakTopics
+              : skillGapRes.data?.weakTopics?.length > 0
+              ? skillGapRes.data.weakTopics
+              : [];
+
+          setGeneratingRoadmap(true);
+          try {
+            const { data } = await api.post("/roadmap/generate", {
+              subject: selectedSubject,
+              weakTopics,
+            });
+            setRoadmap(data);
+          } catch (autoErr) {
+            console.error("Auto roadmap generation error:", autoErr);
+          } finally {
+            setGeneratingRoadmap(false);
+          }
         }
       } finally {
         setLoading(false);
@@ -166,13 +192,29 @@ const Dashboard = () => {
     fetchData();
   }, [selectedSubject]);
 
+  // Auto-scroll to Roadmap when requested
+  useEffect(() => {
+    if (!loading && (location.state?.autoRoadmap || location.hash === "#dashboard-roadmap")) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById("dashboard-roadmap");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("ring-4", "ring-violet-500/50", "transition-all", "duration-1000");
+          setTimeout(() => {
+            el.classList.remove("ring-4", "ring-violet-500/50");
+          }, 3000);
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, roadmap, location.state]);
+
   const handleGenerateRoadmap = async () => {
-    if (!skillGap?.weakTopics?.length) return;
     setGeneratingRoadmap(true);
     try {
       const { data } = await api.post("/roadmap/generate", {
         subject: selectedSubject,
-        weakTopics: skillGap.weakTopics,
+        weakTopics: skillGap?.weakTopics || [],
       });
       setRoadmap(data);
     } catch (err) {
@@ -774,6 +816,22 @@ const Dashboard = () => {
                   onRegenerate={skillGap.weakTopics?.length > 0 ? handleGenerateRoadmap : null}
                   generating={generatingRoadmap}
                 />
+              ) : generatingRoadmap ? (
+                <div className="text-center py-12 space-y-4">
+                  <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-violet-100 border border-violet-200 animate-bounce shadow-md">
+                    ⚡
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Synthesizing Your 7-Day AI Study Roadmap...
+                  </h3>
+                  <p className="text-xs sm:text-sm max-w-md mx-auto text-slate-600 leading-relaxed">
+                    Analyzing test diagnostics for <strong className="text-violet-700">{selectedSubject}</strong>, breaking down weak topics into daily milestones and actionable exercises.
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-violet-600 pt-2">
+                    <div className="w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                    Generating day-by-day study roadmap...
+                  </div>
+                </div>
               ) : (
                 <div className="text-center py-10 space-y-4">
                   <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-violet-100 border border-violet-200 shadow-xs">
@@ -783,7 +841,7 @@ const Dashboard = () => {
                     Personalized 7-Day Study Roadmap
                   </h3>
                   <p className="text-xs sm:text-sm max-w-md mx-auto text-slate-600 leading-relaxed">
-                    {skillGap.weakTopics?.length > 0
+                    {skillGap?.weakTopics?.length > 0
                       ? `Our AI tutor will design a structured day-by-day blueprint specifically to overcome your diagnosed weak topics in ${selectedSubject} (${skillGap.weakTopics.join(", ")}).`
                       : `No weak topics found in ${selectedSubject}! You can still generate a 7-day mastery roadmap.`}
                   </p>
@@ -793,17 +851,7 @@ const Dashboard = () => {
                     disabled={generatingRoadmap}
                     className="btn-gradient inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 text-white shadow-sm"
                   >
-                    {generatingRoadmap ? (
-                      <>
-                        <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/>
-                          <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-                        </svg>
-                        Generating AI Blueprint...
-                      </>
-                    ) : (
-                      "✨ Generate 7-Day Visual Roadmap"
-                    )}
+                    ✨ Generate 7-Day Visual Roadmap
                   </button>
                 </div>
               )}

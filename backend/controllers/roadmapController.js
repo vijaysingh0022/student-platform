@@ -53,14 +53,15 @@ const parseRoadmapResponse = (content, subject, weakTopics) => {
 export const generateRoadmap = async (req, res) => {
   try {
     const { subject, weakTopics } = req.body;
-
-    if (!weakTopics || weakTopics.length === 0) {
-      return res.status(400).json({ message: "No weak topics provided" });
-    }
+    const effectiveSubject = subject || "Computer Science";
+    const effectiveWeakTopics =
+      Array.isArray(weakTopics) && weakTopics.length > 0
+        ? weakTopics
+        : [`${effectiveSubject} Core Fundamentals`, `${effectiveSubject} Advanced Concepts`, "System Performance & Optimization"];
 
     const prompt = `You are an elite academic advisor and tutor for a B.Tech Computer Science student.
-Subject: ${subject}
-The student scored low in these specific weak topics: ${weakTopics.join(", ")}.
+Subject: ${effectiveSubject}
+The student is focusing on these key topics: ${effectiveWeakTopics.join(", ")}.
 
 Generate a rigorous, engaging, and highly actionable 7-Day Study Roadmap specifically targeting these weaknesses.
 Respond ONLY with a valid JSON object matching this schema:
@@ -95,15 +96,15 @@ Ensure there are exactly 7 distinct, sequential days (day 1 to 7).`;
     });
 
     const rawContent = completion.choices[0].message.content;
-    const { overview, days, planText } = parseRoadmapResponse(rawContent, subject, weakTopics);
+    const { overview, days, planText } = parseRoadmapResponse(rawContent, effectiveSubject, effectiveWeakTopics);
 
     // Delete existing roadmap for this subject to replace with latest
-    await Roadmap.deleteMany({ user: req.user._id, subject });
+    await Roadmap.deleteMany({ user: req.user._id, subject: effectiveSubject });
 
     const roadmap = await Roadmap.create({
       user: req.user._id,
-      subject,
-      weakTopics,
+      subject: effectiveSubject,
+      weakTopics: effectiveWeakTopics,
       overview,
       days,
       planText: rawContent || planText,

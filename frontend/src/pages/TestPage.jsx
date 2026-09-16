@@ -447,7 +447,15 @@ const TestPage = () => {
             {/* Action Buttons */}
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => navigate("/dashboard", { state: { subject: activeSubject } })}
+                onClick={() =>
+                  navigate("/dashboard", {
+                    state: {
+                      subject: activeSubject,
+                      autoRoadmap: true,
+                      weakTopics: testResult?.weakTopics || [],
+                    },
+                  })
+                }
                 className="btn-gradient w-full py-3 rounded-xl font-black text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-2"
               >
                 <span>⚡ 7-Day Roadmap</span>
