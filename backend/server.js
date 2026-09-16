@@ -1,6 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import connectDB from "./config/db.js";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -24,12 +27,15 @@ import {
 
 dotenv.config();
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // 1. Enterprise Security Headers
 app.use(enterpriseSecurityHeaders);
 
-// 2. Global CORS — allow requests from any origin (Vercel frontend domain included)
+// 2. Global CORS
 app.use(
   cors({
     origin: "*",
@@ -48,15 +54,7 @@ app.use(sanitizeInput);
 // 5. Sliding-window rate limiting (150 requests / minute)
 app.use(rateLimiter({ maxRequests: 150, windowMs: 60000 }));
 
-// Root health check
-app.get("/", (req, res) => {
-  res.json({
-    status: "ok",
-    service: "LearnX Student Platform API",
-    version: "1.0.0",
-  });
-});
-
+// Health check endpoints for Render/Cloud probes
 app.get("/api", (req, res) => {
   res.json({ status: "ok", service: "LearnX API", version: "1.0.0" });
 });
@@ -83,6 +81,30 @@ app.use("/api/institution", institutionRoutes);
 app.use("/api/offline", offlineRoutes);
 app.use("/api/career", careerRoutes);
 
+// Serve static frontend files (built with Vite) on Render / production
+const distPath = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+
+  // Catch-all SPA handler: send index.html for client-side routing
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      return next();
+    }
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+} else {
+  // Development fallback when frontend is run separately on port 3000
+  app.get("/", (req, res) => {
+    res.json({
+      status: "ok",
+      service: "LearnX Student Platform API",
+      version: "1.0.0",
+      frontend: "Run 'npm run build' or start frontend with 'npm run dev'",
+    });
+  });
+}
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Unhandled API Error:", err);
@@ -91,14 +113,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect DB then start server (only for standalone server execution, not Vercel serverless)
+// Connect DB then start server (Render / local standalone execution)
 if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5001;
 
   connectDB()
     .then(() => {
       app.listen(PORT, () => {
-        console.log(`✅ LearnX API running on port ${PORT}`);
+        console.log(`✅ LearnX Platform running on port ${PORT}`);
       });
     })
     .catch((err) => {
