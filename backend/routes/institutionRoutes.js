@@ -6,6 +6,7 @@ import {
   getAtRiskStudents,
   getStudentDirectory,
   getStudentDrilldown,
+  generateStudentAIAnalysis,
   getInstitutionAnalytics,
   generateAIInstitutionalReport,
   generateRemedialPlan,
@@ -18,6 +19,7 @@ router.get("/weak-topics", protect, getWeakTopicsAnalytics);
 router.get("/at-risk", protect, getAtRiskStudents);
 router.get("/students", protect, getStudentDirectory);
 router.get("/students/:id", protect, getStudentDrilldown);
+router.post("/students/:id/ai-analysis", protect, generateStudentAIAnalysis);
 router.get("/analytics", protect, getInstitutionAnalytics);
 router.post("/generate-ai-report", protect, generateAIInstitutionalReport);
 router.post("/generate-remedial-plan", protect, generateRemedialPlan);
