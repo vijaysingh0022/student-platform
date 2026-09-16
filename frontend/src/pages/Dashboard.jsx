@@ -163,8 +163,8 @@ const Dashboard = () => {
           setRoadmap(null);
         }
 
-        // If autoRoadmap is requested from test page and no roadmap exists yet, auto-generate it!
-        if (location.state?.autoRoadmap && !loadedRoadmap) {
+        // If autoRoadmap is requested from test page, generate a fresh roadmap based on latest test diagnostics
+        if (location.state?.autoRoadmap && (!loadedRoadmap || location.state?.forceRegenerate)) {
           const weakTopics =
             location.state.weakTopics?.length > 0
               ? location.state.weakTopics

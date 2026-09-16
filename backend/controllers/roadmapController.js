@@ -52,21 +52,56 @@ const parseRoadmapResponse = (content, subject, weakTopics) => {
 // body: { subject, weakTopics: ["Normalization", "Indexing"] }
 export const generateRoadmap = async (req, res) => {
   try {
-    const { subject, weakTopics } = req.body;
-    const effectiveSubject = subject || "Computer Science";
-    const effectiveWeakTopics =
-      Array.isArray(weakTopics) && weakTopics.length > 0
-        ? weakTopics
-        : [`${effectiveSubject} Core Fundamentals`, `${effectiveSubject} Advanced Concepts`, "System Performance & Optimization"];
+    const { subject, weakTopics: inputWeakTopics } = req.body;
+    const effectiveSubject = subject || "DBMS";
+
+    // 1. Fetch student's latest test result for this subject
+    const latestTest = await TestResult.findOne({
+      user: req.user._id,
+      subject: effectiveSubject,
+    }).sort({ createdAt: -1 });
+
+    let calculatedWeakTopics = [];
+    let calculatedStrongTopics = [];
+    let scorePercent = latestTest?.scorePercent ?? 70;
+
+    if (latestTest && latestTest.topicBreakdown) {
+      const topicScores = Object.entries(latestTest.topicBreakdown).map(
+        ([topic, data]) => ({
+          topic,
+          percent: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+        })
+      );
+      calculatedWeakTopics = topicScores.filter((t) => t.percent < 60).map((t) => t.topic);
+      calculatedStrongTopics = topicScores.filter((t) => t.percent >= 60).map((t) => t.topic);
+    }
+
+    // Determine final weak topics
+    let finalWeakTopics = [];
+    if (Array.isArray(inputWeakTopics) && inputWeakTopics.length > 0) {
+      finalWeakTopics = inputWeakTopics;
+    } else if (calculatedWeakTopics.length > 0) {
+      finalWeakTopics = calculatedWeakTopics;
+    } else {
+      finalWeakTopics = [
+        `${effectiveSubject} Core Fundamentals`,
+        `${effectiveSubject} Advanced Concepts`,
+        "Problem Solving & Edge Cases",
+      ];
+    }
 
     const prompt = `You are an elite academic advisor and tutor for a B.Tech Computer Science student.
 Subject: ${effectiveSubject}
-The student is focusing on these key topics: ${effectiveWeakTopics.join(", ")}.
+Student's Recent Test Score: ${scorePercent}%
+Diagnosed Critical Weak Topics (<60% accuracy): ${finalWeakTopics.join(", ")}
+${calculatedStrongTopics.length > 0 ? `Mastered Topics (>=60% accuracy): ${calculatedStrongTopics.join(", ")}` : ""}
+${latestTest?.aiEvaluation?.aiSummary ? `Examiner Diagnostic Note: ${latestTest.aiEvaluation.aiSummary}` : ""}
 
-Generate a rigorous, engaging, and highly actionable 7-Day Study Roadmap specifically targeting these weaknesses.
+Generate a tailored, rigorous, and highly actionable 7-Day Study Roadmap specifically engineered to address and eliminate the student's diagnosed test weaknesses in ${finalWeakTopics.join(", ")}.
+
 Respond ONLY with a valid JSON object matching this schema:
 {
-  "overview": "Clear 1-2 sentence high-level learning strategy for the week.",
+  "overview": "Clear 1-2 sentence high-level learning strategy for the week directly referencing the student's test score and focus areas.",
   "days": [
     {
       "day": 1,

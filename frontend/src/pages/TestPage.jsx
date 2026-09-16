@@ -447,11 +447,13 @@ const TestPage = () => {
             {/* Action Buttons */}
             <div className="space-y-2 pt-2">
               <button
+                id="test-result-roadmap-btn"
                 onClick={() =>
                   navigate("/dashboard", {
                     state: {
                       subject: activeSubject,
                       autoRoadmap: true,
+                      forceRegenerate: true,
                       weakTopics: testResult?.weakTopics || [],
                     },
                   })

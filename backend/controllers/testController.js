@@ -91,6 +91,16 @@ Respond strictly in valid JSON format:
       };
     }
 
+    const topicScores = Object.entries(topicBreakdown).map(([topic, data]) => ({
+      topic,
+      correct: data.correct,
+      total: data.total,
+      percent: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+    }));
+
+    const weakTopics = topicScores.filter((t) => t.percent < 60).map((t) => t.topic);
+    const strongTopics = topicScores.filter((t) => t.percent >= 60).map((t) => t.topic);
+
     const result = await TestResult.create({
       user: req.user._id,
       subject,
@@ -101,7 +111,12 @@ Respond strictly in valid JSON format:
       aiEvaluation,
     });
 
-    res.status(201).json(result);
+    res.status(201).json({
+      ...result.toObject(),
+      topicScores,
+      weakTopics,
+      strongTopics,
+    });
   } catch (error) {
     console.error("Submit test error:", error);
     res.status(500).json({ message: error.message || "Failed to submit test" });
