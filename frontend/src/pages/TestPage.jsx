@@ -28,6 +28,7 @@ const TestPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [reviewMode, setReviewMode] = useState(false);
+  const [generatingAiQuestions, setGeneratingAiQuestions] = useState(false);
   const questionRefs = useRef({});
 
   useEffect(() => {
@@ -48,6 +49,32 @@ const TestPage = () => {
     };
     fetchQuestions();
   }, [activeSubject]);
+
+  const handleGenerateFreshQuestions = async () => {
+    setGeneratingAiQuestions(true);
+    setError("");
+    setAnswers({});
+    setTestResult(null);
+    setReviewMode(false);
+    try {
+      const { data } = await api.post("/tests/generate-questions", { subject: activeSubject });
+      if (Array.isArray(data) && data.length > 0) {
+        setQuestions(data);
+      } else {
+        const res = await api.get(`/tests/questions/${activeSubject}?refresh=true`);
+        setQuestions(res.data);
+      }
+    } catch (err) {
+      try {
+        const res = await api.get(`/tests/questions/${activeSubject}?refresh=true`);
+        setQuestions(res.data);
+      } catch (e) {
+        setError("Failed to generate fresh questions. Please try again.");
+      }
+    } finally {
+      setGeneratingAiQuestions(false);
+    }
+  };
 
   const handleSelect = (questionId, index) => {
     if (reviewMode) return; // Locked in review mode
@@ -180,6 +207,21 @@ const TestPage = () => {
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              id="generate-fresh-ai-test-btn"
+              onClick={handleGenerateFreshQuestions}
+              disabled={generatingAiQuestions || loading}
+              className="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+              title="Use AI to generate a brand new set of unique questions for this test"
+            >
+              {generatingAiQuestions ? (
+                <div className="w-3.5 h-3.5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span>✨</span>
+              )}
+              <span>{generatingAiQuestions ? "Generating New Questions..." : "Generate Fresh AI Test"}</span>
+            </button>
+
             <Link
               to="/offline-learning"
               className="px-3 py-1.5 rounded-xl text-xs font-extrabold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-1.5"
@@ -464,26 +506,43 @@ const TestPage = () => {
                 <span>→</span>
               </button>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  id="retake-new-ai-questions-btn"
+                  onClick={handleGenerateFreshQuestions}
+                  disabled={generatingAiQuestions}
+                  className="py-2.5 px-3 rounded-xl text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                >
+                  {generatingAiQuestions ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <span>✨</span>
+                  )}
+                  <span>{generatingAiQuestions ? "Generating..." : "Retake with New AI Questions"}</span>
+                </button>
+
                 <button
                   onClick={() => {
                     setTestResult(null);
                     setAnswers({});
+                    // Re-fetch questions to get freshly shuffled sample
+                    api.get(`/tests/questions/${activeSubject}`).then(res => setQuestions(res.data));
                   }}
-                  className="py-2.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-center"
+                  className="py-2.5 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-center"
                 >
-                  🔄 Retake Test
-                </button>
-                <button
-                  onClick={() => {
-                    setTestResult(null);
-                    navigate(`/test/${nextTrack.id}`);
-                  }}
-                  className="py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white text-center"
-                >
-                  Next: {nextTrack.shortName} →
+                  🔄 Shuffle & Retake
                 </button>
               </div>
+
+              <button
+                onClick={() => {
+                  setTestResult(null);
+                  navigate(`/test/${nextTrack.id}`);
+                }}
+                className="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white text-center"
+              >
+                Next Subject: {nextTrack.shortName} →
+              </button>
             </div>
           </div>
         </div>

@@ -2,14 +2,143 @@ import Question from "../models/Question.js";
 import TestResult from "../models/TestResult.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
 
-// @desc Get questions for a subject (for taking a test)
+// Fisher-Yates array shuffle helper
+const shuffleArray = (array) => {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+// Generate fresh AI questions for a subject
+export const generateFreshQuestionsForSubject = async (subject, count = 10) => {
+  try {
+    const openai = getAIClient();
+    const model = getAIModel();
+
+    const prompt = `You are a Principal Technical Interviewer and Academic Computer Science Examiner.
+Generate ${count} completely NEW, diverse, high-quality multiple-choice questions for the subject "${subject}".
+
+Requirements:
+1. Cover different core sub-topics within ${subject}.
+2. Questions must test practical problem-solving, code execution, architecture, or deep conceptual understanding (similar to GATE / Tier-1 Campus Recruitment Technical OA tests).
+3. Ensure every question has 4 plausible, distinct choices.
+4. Specify the exact zero-based index (0, 1, 2, or 3) of the correct answer.
+5. Provide a realistic topic name for each question.
+
+Respond strictly in valid JSON format:
+{
+  "questions": [
+    {
+      "topic": "Topic Name",
+      "questionText": "Clear technical question text...",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctAnswerIndex": 0
+    }
+  ]
+}`;
+
+    const response = await openai.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: "You are a JSON-only API that outputs rigorous computer science multiple choice assessment questions." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.8, // High temperature ensures fresh, varied questions on every invocation
+    });
+
+    const raw = response.choices[0]?.message?.content || "";
+    const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+    const parsed = JSON.parse(clean);
+
+    const questionsToSave = [];
+    if (parsed && Array.isArray(parsed.questions)) {
+      for (const q of parsed.questions) {
+        if (q.questionText && Array.isArray(q.options) && q.options.length === 4 && typeof q.correctAnswerIndex === "number") {
+          questionsToSave.push({
+            subject,
+            topic: q.topic || `${subject} Core`,
+            questionText: q.questionText,
+            options: q.options,
+            correctAnswerIndex: q.correctAnswerIndex,
+          });
+        }
+      }
+    }
+
+    if (questionsToSave.length > 0) {
+      const saved = await Question.insertMany(questionsToSave);
+      console.log(`✅ Saved ${saved.length} newly generated AI questions for ${subject}`);
+      return saved;
+    }
+  } catch (err) {
+    console.error(`AI Question Generation for ${subject} failed:`, err.message);
+  }
+  return [];
+};
+
+// @desc Generate fresh AI test questions on demand
+// @route POST /api/tests/generate-questions
+export const generateFreshQuestions = async (req, res) => {
+  try {
+    const { subject } = req.body;
+    const effectiveSubject = subject || "DSA";
+
+    let newQuestions = await generateFreshQuestionsForSubject(effectiveSubject, 10);
+
+    // If AI generation succeeded, return them directly (without correctAnswerIndex)
+    if (newQuestions && newQuestions.length > 0) {
+      const sanitized = newQuestions.map((q) => {
+        const obj = q.toObject ? q.toObject() : { ...q };
+        delete obj.correctAnswerIndex;
+        return obj;
+      });
+      return res.status(201).json(sanitized);
+    }
+
+    // Fallback: fetch and shuffle existing questions from DB
+    const allQuestions = await Question.find({ subject: effectiveSubject }).select("-correctAnswerIndex");
+    const shuffled = shuffleArray(allQuestions);
+    const selected = shuffled.slice(0, Math.min(10, shuffled.length));
+    res.json(selected);
+  } catch (error) {
+    console.error("Generate fresh questions error:", error);
+    res.status(500).json({ message: error.message || "Failed to generate fresh questions" });
+  }
+};
+
+// @desc Get questions for a subject (dynamically shuffled and sampled)
 // @route GET /api/tests/questions/:subject
 export const getQuestions = async (req, res) => {
   try {
     const { subject } = req.params;
-    // send questions WITHOUT correct answer index (don't leak answers to frontend)
-    const questions = await Question.find({ subject }).select("-correctAnswerIndex");
-    res.json(questions);
+    const { refresh } = req.query;
+
+    if (refresh === "true") {
+      try {
+        await generateFreshQuestionsForSubject(subject, 5);
+      } catch (e) {
+        console.warn("Refresh generation fallback:", e.message);
+      }
+    }
+
+    // Fetch all questions for this subject from DB
+    let questions = await Question.find({ subject }).select("-correctAnswerIndex");
+
+    // If no questions exist, generate a batch via AI on the fly
+    if (!questions || questions.length === 0) {
+      await generateFreshQuestionsForSubject(subject, 10);
+      questions = await Question.find({ subject }).select("-correctAnswerIndex");
+    }
+
+    // Always shuffle questions randomly so each attempt has a completely different order and mix!
+    const shuffled = shuffleArray(questions);
+    const selected = shuffled.slice(0, Math.min(10, shuffled.length));
+
+    res.json(selected);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
