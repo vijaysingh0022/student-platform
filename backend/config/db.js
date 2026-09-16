@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
 import Question from "../models/Question.js";
 import User from "../models/User.js";
-import bcrypt from "bcryptjs";
 import { PLACEMENT_QUESTIONS } from "../seed/placementQuestionsData.js";
-import TestResult from "../models/TestResult.js";
-import CareerProfile from "../models/CareerProfile.js";
 
 let isConnected = false;
 let connectionPromise = null;
@@ -15,7 +12,7 @@ export const autoSeed = async () => {
     if (qCount < PLACEMENT_QUESTIONS.length) {
       await Question.deleteMany({});
       await Question.insertMany(PLACEMENT_QUESTIONS);
-      console.log(`✅ Auto-seeded ${PLACEMENT_QUESTIONS.length} comprehensive assessment questions across all 8 CSE placement domains`);
+      console.log(`✅ Auto-seeded ${PLACEMENT_QUESTIONS.length} assessment questions across CSE domains`);
     }
 
     const userCount = await User.countDocuments();
@@ -31,44 +28,35 @@ export const autoSeed = async () => {
         attendanceRate: 85,
         role: "student",
       });
-      console.log("✅ Auto-seeded demo student (demo@example.com / password123)");
-    }
-
-    const facultyUser = await User.findOne({ email: "faculty@example.com" });
-    if (!facultyUser) {
-      await User.create({
-        name: "Prof. Rajesh Sharma",
-        email: "faculty@example.com",
-        password: "password123",
-        course: "Faculty / HoD",
-        department: "Computer Science & Engineering",
-        batch: "Faculty",
-        rollNo: "FAC-01",
-        attendanceRate: 100,
-        role: "teacher",
-      });
-      console.log("✅ Auto-seeded faculty account (faculty@example.com / password123)");
+      console.log("✅ Auto-seeded demo student (demo@example.com)");
     }
   } catch (err) {
-    console.error("Auto-seed error:", err.message);
+    console.warn("Auto-seed info:", err.message);
   }
 };
 
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) {
-    return;
+    return mongoose.connection;
   }
 
   if (connectionPromise) {
     return connectionPromise;
   }
 
+  const mongoURI = process.env.MONGO_URI;
+
+  if (!mongoURI) {
+    console.warn("⚠️ MONGO_URI is not set. Please add it to your Render Environment Variables.");
+  }
+
   connectionPromise = (async () => {
-    if (process.env.MONGO_URI) {
+    if (mongoURI) {
       try {
         console.log("Connecting to MongoDB Atlas...");
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-          serverSelectionTimeoutMS: 5000,
+        const conn = await mongoose.connect(mongoURI, {
+          serverSelectionTimeoutMS: 10000,
+          connectTimeoutMS: 10000,
           maxPoolSize: 10,
         });
         console.log(`✅ MongoDB Atlas connected: ${conn.connection.host}`);
@@ -78,37 +66,34 @@ const connectDB = async () => {
         }
         return conn;
       } catch (error) {
-        console.warn(`⚠️ Atlas connection failed (${error.message}).`);
-        if (process.env.VERCEL) {
-          connectionPromise = null;
+        console.error(`⚠️ MongoDB Atlas connection error (${error.message}).`);
+        connectionPromise = null;
+        if (process.env.NODE_ENV === "production" || process.env.RENDER) {
           throw error;
         }
-        console.log("🚀 Starting embedded Local MongoDB instance automatically so all features work immediately...");
       }
     }
 
-    // Fallback to in-memory Mongo server (only for local development)
-    if (!process.env.VERCEL) {
+    // Local development fallback
+    if (process.env.NODE_ENV !== "production" && !process.env.RENDER) {
       try {
         const { MongoMemoryServer } = await import("mongodb-memory-server");
         const mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         const conn = await mongoose.connect(uri);
-        console.log(`✅ Embedded Local MongoDB connected successfully at ${uri}`);
+        console.log(`✅ Embedded Local MongoDB connected at ${uri}`);
         if (!isConnected) {
           await autoSeed();
           isConnected = true;
         }
         return conn;
-      } catch (err) {
-        console.error("Critical MongoDB connection error:", err.message);
-        connectionPromise = null;
-        throw err;
+      } catch (memErr) {
+        console.error("Local memory server failed:", memErr.message);
       }
-    } else {
-      connectionPromise = null;
-      throw new Error("MONGO_URI is required when deploying to Vercel.");
     }
+
+    connectionPromise = null;
+    throw new Error("MONGO_URI is required to connect to MongoDB.");
   })();
 
   return connectionPromise;
