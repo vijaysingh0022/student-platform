@@ -1,6 +1,7 @@
 import CareerProfile from "../models/CareerProfile.js";
 import TestResult from "../models/TestResult.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
+import { recordAuditLog } from "../utils/auditLogger.js";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -289,6 +290,13 @@ export const updateTargetRole = async (req, res) => {
     }
     profile.targetRole = targetRole;
     await profile.save();
+
+    recordAuditLog({
+      req,
+      action: "TARGET_ROLE_UPDATED",
+      details: { targetRole: profile.targetRole },
+    }).catch((aErr) => console.warn("Career audit warning:", aErr.message));
+
     res.json({ message: "Target role updated", targetRole: profile.targetRole });
   } catch (error) {
     res.status(500).json({ message: "Error updating target role", error: error.message });

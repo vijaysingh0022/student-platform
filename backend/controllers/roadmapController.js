@@ -1,6 +1,7 @@
 import { getAIClient, getAIModel } from "../config/ai.js";
 import Roadmap from "../models/Roadmap.js";
 import TestResult from "../models/TestResult.js";
+import { recordAuditLog } from "../utils/auditLogger.js";
 
 // Helper to safely parse JSON study plan from LLM response
 const parseRoadmapResponse = (content, subject, weakTopics) => {
@@ -201,6 +202,16 @@ export const toggleRoadmapDay = async (req, res) => {
 
     day.completed = !day.completed;
     await roadmap.save();
+
+    recordAuditLog({
+      req,
+      action: "ROADMAP_DAY_TOGGLED",
+      details: {
+        subject: roadmap.subject,
+        dayNumber,
+        completed: day.completed,
+      },
+    }).catch((aErr) => console.warn("Roadmap audit warning:", aErr.message));
 
     res.json(roadmap);
   } catch (error) {

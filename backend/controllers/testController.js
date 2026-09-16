@@ -1,6 +1,8 @@
 import Question from "../models/Question.js";
 import TestResult from "../models/TestResult.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
+import { recordAuditLog } from "../utils/auditLogger.js";
+import { calculatePrediction } from "./predictionController.js";
 
 // Fisher-Yates array shuffle helper
 const shuffleArray = (array) => {
@@ -239,6 +241,24 @@ Respond strictly in valid JSON format:
       topicBreakdown,
       aiEvaluation,
     });
+
+    // Asynchronously recalculate and persist student placement forecast
+    calculatePrediction(req.user._id).catch((pErr) =>
+      console.warn("Auto-prediction recalculation warning:", pErr.message)
+    );
+
+    // Record immutable audit trail
+    recordAuditLog({
+      req,
+      action: "ASSESSMENT_SUBMITTED",
+      details: {
+        subject,
+        scorePercent,
+        correctAnswers: correctCount,
+        totalQuestions,
+        weakTopicsCount: weakTopics.length,
+      },
+    }).catch((aErr) => console.warn("Audit logging warning:", aErr.message));
 
     res.status(201).json({
       ...result.toObject(),
