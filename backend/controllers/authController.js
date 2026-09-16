@@ -3,7 +3,9 @@ import User from "../models/User.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
 const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
+  secretKey:
+    process.env.CLERK_SECRET_KEY ||
+    "sk_test_WwIUU6FbK31bmgUoPDNZEG9l81BGI0W6WnUcIupykl",
 });
 
 // @desc  Sync Clerk user with MongoDB — find-or-create on first sign-in

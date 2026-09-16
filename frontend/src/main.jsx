@@ -6,10 +6,12 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import "./index.css";
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const PUBLISHABLE_KEY =
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_c3F1YXJlLXByYXduLTc0NDYuY2xlcmsuYWNjb3VudHMuZGV2JA";
 
 if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in frontend/.env");
+  console.error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(

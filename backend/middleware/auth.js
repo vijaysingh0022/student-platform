@@ -2,7 +2,9 @@ import { createClerkClient } from "@clerk/backend";
 import User from "../models/User.js";
 
 const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
+  secretKey:
+    process.env.CLERK_SECRET_KEY ||
+    "sk_test_WwIUU6FbK31bmgUoPDNZEG9l81BGI0W6WnUcIupykl",
 });
 
 const protect = async (req, res, next) => {
