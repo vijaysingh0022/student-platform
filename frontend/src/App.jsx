@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
+import AdminLogin from "./pages/AdminLogin.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import TestPage from "./pages/TestPage.jsx";
@@ -101,6 +103,27 @@ function App() {
             <Route path="/quiz-generator" element={<QuizGenerator />} />
             <Route path="/security" element={<SecurityGovernance />} />
 
+            {/* Admin Portal — separate credentials required */}
+            <Route path="/admin-login" element={<AdminLogin />} />
+
+            {/* Admin-guarded routes */}
+            <Route
+              path="/teacher-dashboard"
+              element={
+                <AdminRoute>
+                  <TeacherDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/institution-dashboard"
+              element={
+                <AdminRoute>
+                  <TeacherDashboard />
+                </AdminRoute>
+              }
+            />
+
             {/* Protected routes */}
             <Route
               path="/dashboard"
@@ -115,22 +138,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <OfflineLearning />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/teacher-dashboard"
-              element={
-                <ProtectedRoute>
-                  <TeacherDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/institution-dashboard"
-              element={
-                <ProtectedRoute>
-                  <TeacherDashboard />
                 </ProtectedRoute>
               }
             />
