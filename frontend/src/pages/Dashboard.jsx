@@ -569,33 +569,6 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {/* Faculty & Institution Dashboard Banner */}
-          <div className="glass-card p-5 rounded-2xl border border-indigo-200 flex flex-col justify-between gap-3 bg-gradient-to-r from-indigo-50/90 to-cyan-50/90 shadow-xs hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-xl shrink-0">
-                🎓
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-xs font-extrabold text-slate-900">Faculty Portal</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-                    Analytics
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                  Class overview, weak topics, at-risk alerts & Dean's reports.
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/teacher-dashboard"
-              id="dashboard-teacher-cta"
-              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1 shadow-xs"
-            >
-              <span>Faculty Portal →</span>
-            </Link>
-          </div>
-
           {/* Offline & Low-Bandwidth Hub Banner */}
           <div className="glass-card p-5 rounded-2xl border border-amber-200 flex flex-col justify-between gap-3 bg-gradient-to-r from-amber-50/90 to-emerald-50/90 shadow-xs hover:shadow-md transition-shadow">
             <div className="flex items-start gap-3">

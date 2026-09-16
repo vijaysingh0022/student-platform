@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import SecurityGovernance from "./SecurityGovernance.jsx";
+import { ADMIN_SESSION_KEY } from "./AdminLogin.jsx";
 
 const RISK_BADGES = {
   "Critical Risk": "bg-rose-100 text-rose-800 border-rose-300",
@@ -17,6 +18,7 @@ const SEV_BADGES = {
 };
 
 const TeacherDashboard = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState("overview");
@@ -357,6 +359,20 @@ ${student.department || "Computer Science & Engineering"}`;
           >
             {generatingAiReport ? <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>✨</span>}
             <span>{generatingAiReport ? "Analyzing..." : "Generate AI Report"}</span>
+          </button>
+
+          {/* Sign Out Admin Button */}
+          <button
+            id="admin-signout-header-btn"
+            onClick={() => {
+              sessionStorage.removeItem(ADMIN_SESSION_KEY);
+              navigate("/admin-login");
+            }}
+            title="End admin session and lock portal"
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1.5 transition-all shadow-xs"
+          >
+            <span>🔒</span>
+            <span className="hidden sm:inline">Sign Out Admin</span>
           </button>
         </div>
       </div>
