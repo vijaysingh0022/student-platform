@@ -1,5 +1,6 @@
 import CareerProfile from "../models/CareerProfile.js";
 import TestResult from "../models/TestResult.js";
+import Roadmap from "../models/Roadmap.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 import { createRequire } from "module";
@@ -115,43 +116,144 @@ export const getCareerDashboard = async (req, res) => {
       profile = await CareerProfile.create({ user: req.user._id, targetRole: "Full Stack Software Engineer" });
     }
 
-    const testResults = await TestResult.find({ user: req.user._id });
+    const [testResults, roadmaps] = await Promise.all([
+      TestResult.find({ user: req.user._id }).sort({ createdAt: -1 }),
+      Roadmap.find({ user: req.user._id }),
+    ]);
+
     const targetRole = profile.targetRole || "Full Stack Software Engineer";
     const roleData = ROLE_BENCHMARKS[targetRole] || ROLE_BENCHMARKS["Full Stack Software Engineer"];
 
-    // Compute Subject Mastery Scores
-    const subjectMap = { DBMS: [], DSA: [], OS: [] };
+    // 1. Compute Subject Mastery Across All 9 Core CSE Domains
+    const subjectMap = {
+      DSA: [],
+      DBMS: [],
+      OS: [],
+      CN: [],
+      OOPS: [],
+      SYSTEM_DESIGN: [],
+      APTITUDE: [],
+      WEB_DEV: [],
+      MACHINE_LEARNING: [],
+    };
+
+    const topicScoreMap = {};
+
     testResults.forEach((tr) => {
       if (subjectMap[tr.subject]) {
         subjectMap[tr.subject].push(tr.scorePercent);
       }
+      if (tr.topicBreakdown) {
+        for (const [top, d] of Object.entries(tr.topicBreakdown)) {
+          const pct = d.total > 0 ? Math.round((d.correct / d.total) * 100) : 0;
+          if (!topicScoreMap[top] || tr.createdAt > topicScoreMap[top].date) {
+            topicScoreMap[top] = { percent: pct, date: tr.createdAt };
+          }
+        }
+      }
     });
 
-    const getAvg = (arr) => (arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 55);
+    const getSubjAvg = (subj, fallback = null) => {
+      const arr = subjectMap[subj] || [];
+      return arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : fallback;
+    };
 
-    const dbmsScore = getAvg(subjectMap.DBMS);
-    const dsaScore = getAvg(subjectMap.DSA);
-    const osScore = getAvg(subjectMap.OS);
+    // Calculate academic score on core relevant subjects
+    const relevantSubjectScores = (roleData.coreSubjects || ["DSA", "DBMS"])
+      .map((s) => getSubjAvg(s, null))
+      .filter((s) => s !== null);
 
-    const overallAvgScore = Math.round((dbmsScore + dsaScore + osScore) / 3);
+    const allTestedScores = Object.values(subjectMap)
+      .flat()
+      .filter((s) => typeof s === "number");
 
-    // Job Readiness Score Calculation
-    // Base: 40% from academic test scores, 30% from ATS resume match, 30% from test velocity/coverage
-    const testCoverageBonus = Math.min(30, testResults.length * 10);
-    const atsScore = profile.atsScore || 65;
-    const jobReadinessScore = Math.min(98, Math.max(35, Math.round(overallAvgScore * 0.4 + atsScore * 0.35 + testCoverageBonus)));
+    const overallAvgScore = allTestedScores.length > 0
+      ? Math.round(allTestedScores.reduce((a, b) => a + b, 0) / allTestedScores.length)
+      : 50;
 
-    // Skill Match Matrix
+    const academicScore = relevantSubjectScores.length > 0
+      ? Math.round(relevantSubjectScores.reduce((a, b) => a + b, 0) / relevantSubjectScores.length)
+      : overallAvgScore;
+
+    // 2. Roadmap Execution Rate
+    let totalCompletedDays = 0;
+    let totalRoadmapDays = 0;
+    roadmaps.forEach((rm) => {
+      if (Array.isArray(rm.days)) {
+        totalRoadmapDays += rm.days.length;
+        totalCompletedDays += rm.days.filter((d) => d.completed).length;
+      }
+    });
+    const roadmapExecutionRate = totalRoadmapDays > 0 ? Math.round((totalCompletedDays / totalRoadmapDays) * 100) : 0;
+
+    // 3. Resume ATS Score
+    const resumeTextLower = (profile.resumeText || "").toLowerCase();
+    const atsScore = profile.atsScore || (profile.resumeText ? 65 : 45);
+
+    // 4. Mock Interview Performance
+    const mockInterviewScore = profile.mockInterviewScore || 0;
+    const mockAttemptsCount = profile.mockAttemptsCount || 0;
+
+    // 5. Total Dynamic Job Readiness Score
+    const assessmentBreadthScore = Math.min(100, testResults.length * 15);
+    const mockComponentScore = mockAttemptsCount > 0 ? mockInterviewScore : (academicScore * 0.7);
+
+    const jobReadinessScore = Math.min(
+      99,
+      Math.max(
+        25,
+        Math.round(
+          academicScore * 0.35 +
+          atsScore * 0.25 +
+          (roadmapExecutionRate > 0 ? roadmapExecutionRate : academicScore * 0.6) * 0.15 +
+          mockComponentScore * 0.15 +
+          assessmentBreadthScore * 0.10
+        )
+      )
+    );
+
+    // 6. Dynamic Skill Match Matrix
     const skillMatchMatrix = roleData.requiredSkills.map((skill) => {
-      let score = 50;
-      if (skill.includes("DBMS") || skill.includes("SQL")) score = dbmsScore;
-      else if (skill.includes("DSA") || skill.includes("Graphs") || skill.includes("Trees")) score = dsaScore;
-      else if (skill.includes("OS") || skill.includes("Concurrency")) score = osScore;
-      else score = Math.round(overallAvgScore * 0.9);
+      let score = 40;
+      const skillLower = skill.toLowerCase();
+
+      // Match topic names
+      for (const [topName, topData] of Object.entries(topicScoreMap)) {
+        if (skillLower.includes(topName.toLowerCase()) || topName.toLowerCase().includes(skillLower)) {
+          score = Math.max(score, topData.percent);
+        }
+      }
+
+      // Match subject domain averages
+      if (skillLower.includes("dbms") || skillLower.includes("sql") || skillLower.includes("postgres") || skillLower.includes("database")) {
+        score = Math.max(score, getSubjAvg("DBMS", 45));
+      } else if (skillLower.includes("dsa") || skillLower.includes("algorithm") || skillLower.includes("graph") || skillLower.includes("tree") || skillLower.includes("complexity")) {
+        score = Math.max(score, getSubjAvg("DSA", 45));
+      } else if (skillLower.includes("os") || skillLower.includes("concurrency") || skillLower.includes("process") || skillLower.includes("thread")) {
+        score = Math.max(score, getSubjAvg("OS", 45));
+      } else if (skillLower.includes("react") || skillLower.includes("javascript") || skillLower.includes("node") || skillLower.includes("web") || skillLower.includes("rest api")) {
+        score = Math.max(score, getSubjAvg("WEB_DEV", 45));
+      } else if (skillLower.includes("system design") || skillLower.includes("scalability") || skillLower.includes("microservice") || skillLower.includes("cache") || skillLower.includes("redis")) {
+        score = Math.max(score, getSubjAvg("SYSTEM_DESIGN", 45));
+      } else if (skillLower.includes("network") || skillLower.includes("tcp") || skillLower.includes("http")) {
+        score = Math.max(score, getSubjAvg("CN", 45));
+      } else if (skillLower.includes("oop") || skillLower.includes("solid") || skillLower.includes("design pattern")) {
+        score = Math.max(score, getSubjAvg("OOPS", 45));
+      } else if (skillLower.includes("machine learning") || skillLower.includes("pytorch") || skillLower.includes("llm") || skillLower.includes("ai")) {
+        score = Math.max(score, getSubjAvg("MACHINE_LEARNING", 45));
+      }
+
+      // Check if keyword is found in student's uploaded resume
+      const keywords = skillLower.split(/[\s/,&]+/);
+      const inResume = keywords.some((k) => k.length > 2 && resumeTextLower.includes(k));
+      if (inResume) {
+        score = Math.min(99, score + 12);
+      }
 
       return {
         skill,
         masteryScore: score,
+        inResume,
         status: score >= 75 ? "Job Ready" : score >= 55 ? "Developing" : "Action Needed",
       };
     });
@@ -237,11 +339,13 @@ STUDENT METRICS:
 - Overall Job Readiness Score: ${jobReadinessScore}%
 - Academic Test Average: ${overallAvgScore}% across ${testResults.length} assessments
 - Resume ATS Score: ${atsScore}%
+- Completed 7-Day Roadmap Milestones: ${totalCompletedDays}/${totalRoadmapDays} days
+- Mock Interview Practice: ${mockAttemptsCount} questions answered (Avg score: ${mockInterviewScore}%)
 - Target Role Required Skills: ${roleData.requiredSkills.join(", ")}
 
 Respond strictly in valid JSON format:
 {
-  "readinessEvaluation": "2-sentence executive summary of job readiness for ${targetRole}.",
+  "readinessEvaluation": "2-sentence executive summary of job readiness for ${targetRole} directly referencing the student's actual test results, resume match, and roadmap progress.",
   "keyNextStep": "Top priority action item to increase candidate placement odds."
 }`;
 
@@ -256,7 +360,7 @@ Respond strictly in valid JSON format:
       aiCareerSynthesis = JSON.parse(clean);
     } catch (aiErr) {
       aiCareerSynthesis = {
-        readinessEvaluation: `Your current Job Readiness Score for ${targetRole} is ${jobReadinessScore}%. Continue completing assessments and updating your resume to maximize readiness.`,
+        readinessEvaluation: `Your current Job Readiness Score for ${targetRole} is ${jobReadinessScore}%. Based on your ${testResults.length} assessments and ATS resume profile, continue targeting your critical gaps.`,
         keyNextStep: `Focus on mastering required skills: ${roleData.requiredSkills.slice(0, 2).join(", ")}.`,
       };
     }
@@ -267,6 +371,9 @@ Respond strictly in valid JSON format:
       atsScore,
       testsTaken: testResults.length,
       averageScore: overallAvgScore,
+      completedRoadmapDays: totalCompletedDays,
+      mockInterviewScore,
+      mockAttemptsCount,
       resumeText: profile.resumeText,
       roadmapPhases: roleData.roadmapPhases,
       recommendedProjects: roleData.projects,
@@ -601,6 +708,31 @@ Provide a thorough evaluation. Respond strictly in valid JSON format:
         modelAnswer: `A strong answer would explain the core ${subject} mechanism step-by-step, mention relevant data structures and their Big-O complexity, discuss trade-offs, and provide a real-world application example.`,
         keyTakeaway: "Structure your answer as: 1) Define the concept, 2) Explain the mechanism, 3) Give Big-O/performance analysis, 4) Provide a real-world use case.",
       };
+    }
+
+    // Persist score & attempt count in CareerProfile
+    try {
+      let profile = await CareerProfile.findOne({ user: req.user._id });
+      if (!profile) {
+        profile = new CareerProfile({ user: req.user._id });
+      }
+      profile.mockAttemptsCount = (profile.mockAttemptsCount || 0) + 1;
+      const prevScore = profile.mockInterviewScore || 0;
+      const currentScaled = Math.round((evaluation.score / (evaluation.maxScore || 10)) * 100);
+      profile.mockInterviewScore = prevScore > 0 ? Math.round(prevScore * 0.7 + currentScaled * 0.3) : currentScaled;
+      await profile.save();
+
+      recordAuditLog({
+        req,
+        action: "MOCK_INTERVIEW_EVALUATED",
+        details: {
+          subject,
+          score: evaluation.score,
+          grade: evaluation.grade,
+        },
+      }).catch((aErr) => console.warn("Mock interview audit warning:", aErr.message));
+    } catch (saveErr) {
+      console.warn("Could not save mock interview score to profile:", saveErr.message);
     }
 
     res.json(evaluation);

@@ -148,6 +148,7 @@ const CareerReadiness = () => {
         difficulty: mockQ?.difficulty,
       });
       setMockFeedback(res);
+      fetchCareerData();
     } catch (err) {
       alert(err.response?.data?.message || err.message || "Failed to evaluate answer.");
     } finally {
