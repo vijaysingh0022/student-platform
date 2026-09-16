@@ -285,25 +285,6 @@ const Navbar = () => {
                   </Link>
 
                   <Link
-                    to="/security"
-                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                      location.pathname === "/security"
-                        ? "bg-violet-50 text-violet-900"
-                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold">Security & Compliance</div>
-                      <div className="text-[11px] text-slate-400 font-medium">RBAC, audit logs & privacy</div>
-                    </div>
-                  </Link>
-
-                  <Link
                     to="/offline-learning"
                     className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
                       location.pathname === "/offline-learning"
@@ -333,12 +314,6 @@ const Navbar = () => {
               className="text-xs font-semibold text-slate-600 hover:text-violet-600 transition-colors"
             >
               AI Quiz
-            </Link>
-            <Link
-              to="/security"
-              className="text-xs font-semibold text-slate-600 hover:text-violet-600 transition-colors"
-            >
-              Security
             </Link>
             <a
               href="/#interactive-demo"
@@ -557,14 +532,14 @@ const Navbar = () => {
                       type="button"
                       onClick={() => {
                         setProfileMenuOpen(false);
-                        navigate("/security");
+                        navigate("/career-readiness");
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 transition-colors text-left"
                     >
                       <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
-                      <span>Account & Security</span>
+                      <span>Career Engine</span>
                     </button>
 
                     <Link
@@ -802,13 +777,6 @@ const Navbar = () => {
                 className="block p-3 text-xs font-bold text-violet-700 bg-violet-50 rounded-xl"
               >
                 🧠 AI Quiz & MCQ Generator
-              </Link>
-              <Link
-                to="/security"
-                onClick={() => setMenuOpen(false)}
-                className="block p-3 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded-xl"
-              >
-                🛡️ Security & Privacy
               </Link>
               <div className="pt-2 flex flex-col gap-2">
                 <SignInButton mode="redirect" redirectUrl="/dashboard">

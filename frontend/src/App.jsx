@@ -41,7 +41,6 @@ function App() {
 
             {/* Public (no auth needed) */}
             <Route path="/quiz-generator" element={<QuizGenerator />} />
-            <Route path="/security" element={<SecurityGovernance />} />
 
             {/* Admin Portal — separate credentials required */}
             <Route path="/admin-login" element={<AdminLogin />} />
@@ -60,6 +59,14 @@ function App() {
               element={
                 <AdminRoute>
                   <TeacherDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/security"
+              element={
+                <AdminRoute>
+                  <SecurityGovernance />
                 </AdminRoute>
               }
             />

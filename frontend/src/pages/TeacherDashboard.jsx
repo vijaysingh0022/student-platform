@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import SecurityGovernance from "./SecurityGovernance.jsx";
 
 const RISK_BADGES = {
   "Critical Risk": "bg-rose-100 text-rose-800 border-rose-300",
@@ -216,6 +217,7 @@ ${student.department || "Computer Science & Engineering"}`;
     { id: "students", label: "Student Progress", icon: "👥" },
     { id: "institution", label: "Institution Analytics", icon: "🏛️" },
     { id: "reports", label: "Output: Insights & Reports", icon: "📋" },
+    { id: "security", label: "Security & Governance", icon: "🛡️" },
   ];
 
   // Filtered lists
@@ -1086,6 +1088,15 @@ ${student.department || "Computer Science & Engineering"}`;
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── TAB 7: SECURITY, AUDIT & COMPLIANCE GOVERNANCE ── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "security" && (
+        <div className="space-y-6 animate-fade-in-up">
+          <SecurityGovernance />
         </div>
       )}
 
