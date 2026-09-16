@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area
 } from "recharts";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOffline } from "../context/OfflineContext.jsx";
 import RoadmapVisualizer from "../components/RoadmapVisualizer.jsx";
@@ -113,9 +113,16 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
+  const location = useLocation();
   const { user } = useAuth();
   const { isOnline, isLowDataMode } = useOffline();
-  const [selectedSubject, setSelectedSubject] = useState("DBMS");
+  const [selectedSubject, setSelectedSubject] = useState(location.state?.subject || "DBMS");
+
+  useEffect(() => {
+    if (location.state?.subject) {
+      setSelectedSubject(location.state.subject);
+    }
+  }, [location.state]);
   const [skillGap, setSkillGap] = useState(null);
   const [results, setResults] = useState([]);
   const [roadmap, setRoadmap] = useState(null);

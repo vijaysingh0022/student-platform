@@ -447,10 +447,10 @@ const TestPage = () => {
             {/* Action Buttons */}
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/dashboard", { state: { subject: activeSubject } })}
                 className="btn-gradient w-full py-3 rounded-xl font-black text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-2"
               >
-                <span>⚡ Go to Dashboard & 7-Day Roadmap</span>
+                <span>⚡ 7-Day Roadmap</span>
                 <span>→</span>
               </button>
 
