@@ -3,9 +3,10 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
+    clerkId: { type: String, unique: true, sparse: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String, required: false, default: null },
     course: { type: String, default: "B.Tech CSE" },
     department: { type: String, default: "Computer Science & Engineering" },
     batch: { type: String, default: "2022-2026" },

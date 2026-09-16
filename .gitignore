@@ -2,11 +2,12 @@
 node_modules/
 */node_modules/
 
-# Environment Variables & Secrets — only ignore files with real production secrets
-.env.secret
-.env.production
-.env.local
-*.secret.env
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
 
 # Build outputs
 dist/

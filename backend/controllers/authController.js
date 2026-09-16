@@ -1,163 +1,98 @@
-import crypto from "crypto";
+import { createClerkClient } from "@clerk/backend";
 import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
-// @desc Register new student or faculty
-// @route POST /api/auth/register
-export const registerUser = async (req, res) => {
-  try {
-    const { name, email, password, course, role = "student" } = req.body;
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      await recordAuditLog({
-        req,
-        userEmail: email,
-        action: "AUTH_REGISTER",
-        status: "FAILED",
-        statusCode: 400,
-        details: { reason: "User already exists with this email" },
-      });
-      return res.status(400).json({ message: "User already exists" });
+// @desc  Sync Clerk user with MongoDB — find-or-create on first sign-in
+// @route POST /api/auth/sync
+// @access Requires valid Clerk Bearer token
+export const syncUser = async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No Clerk token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const { sub: clerkId } = await clerkClient.verifyToken(token);
+
+    if (!clerkId) {
+      return res.status(401).json({ message: "Invalid Clerk token" });
     }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      course: course || "B.Tech CSE",
-      role: role === "teacher" || role === "admin" ? role : "student",
-    });
+    // Fetch the full Clerk user record to get email, name, etc.
+    const clerkUser = await clerkClient.users.getUser(clerkId);
 
-    await recordAuditLog({
-      req,
-      userId: user._id,
-      userEmail: user.email,
-      userRole: user.role,
-      action: "AUTH_REGISTER",
-      status: "SUCCESS",
-      statusCode: 201,
-      details: { role: user.role, course: user.course },
-    });
+    const email =
+      clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)?.emailAddress ||
+      clerkUser.emailAddresses[0]?.emailAddress;
 
-    res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      course: user.course,
-      department: user.department,
-      token: generateToken(user._id),
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+    const name =
+      [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
+      email?.split("@")[0] ||
+      "LearnX User";
 
-// @desc Login user
-// @route POST /api/auth/login
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    // Upsert: find by clerkId or email (handles migration of pre-Clerk accounts)
+    let user = await User.findOne({ $or: [{ clerkId }, { email }] });
 
-    if (user && (await user.matchPassword(password))) {
+    if (!user) {
+      user = await User.create({
+        clerkId,
+        name,
+        email,
+        course: "B.Tech CSE",
+        department: "Computer Science & Engineering",
+        batch: "2022-2026",
+        role: "student",
+      });
+
       await recordAuditLog({
         req,
         userId: user._id,
         userEmail: user.email,
         userRole: user.role,
-        action: "AUTH_LOGIN",
+        action: "AUTH_CLERK_PROVISION",
         status: "SUCCESS",
-        statusCode: 200,
-        details: { loginMethod: "STANDARD_CREDENTIALS" },
+        statusCode: 201,
+        details: { clerkId, source: "clerk_sync" },
       });
+    } else if (!user.clerkId) {
+      // Link existing account (pre-Clerk user signing in with same email)
+      user.clerkId = clerkId;
+      await user.save();
 
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role || "student",
-        course: user.course,
-        department: user.department,
-        token: generateToken(user._id),
-      });
-    } else {
       await recordAuditLog({
         req,
-        userEmail: email || "unknown",
-        action: "AUTH_LOGIN",
-        status: "FAILED",
-        statusCode: 401,
-        details: { reason: "Invalid credentials" },
-      });
-
-      res.status(401).json({ message: "Invalid email or password" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc Enterprise & Institutional Single Sign-On (SSO)
-// @route POST /api/auth/sso/login
-// @body { provider: "google"|"microsoft"|"institution_edu", email, name, role }
-export const ssoLoginUser = async (req, res) => {
-  try {
-    const { provider = "google", email, name, role = "student" } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email is required for SSO authentication." });
-    }
-
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      // Auto-provision institutional user on first SSO handshake
-      const randomPassword = crypto.randomBytes(24).toString("hex") + "!A1";
-      user = await User.create({
-        name: name || email.split("@")[0].replace(/[._]/g, " ").toUpperCase(),
-        email,
-        password: randomPassword,
-        role: role === "teacher" || role === "admin" ? role : "student",
-        course: "B.Tech CSE (SSO Federated)",
-        department: "Computer Science & Engineering",
-        batch: "2022-2026",
+        userId: user._id,
+        userEmail: user.email,
+        userRole: user.role,
+        action: "AUTH_CLERK_LINK",
+        status: "SUCCESS",
+        statusCode: 200,
+        details: { clerkId, source: "clerk_link_existing" },
       });
     }
 
-    await recordAuditLog({
-      req,
-      userId: user._id,
-      userEmail: user.email,
-      userRole: user.role,
-      action: "SSO_LOGIN",
-      status: "SUCCESS",
-      statusCode: 200,
-      details: {
-        ssoProvider: provider,
-        federationProtocol: provider === "institution_edu" ? "SAML 2.0" : "OAuth 2.0 / OpenID Connect",
-        verifiedDomain: email.split("@")[1] || "institution.edu",
-      },
-    });
-
-    const token = generateToken(user._id);
-
-    res.json({
-      success: true,
+    return res.json({
       _id: user._id,
+      clerkId: user.clerkId,
       name: user.name,
       email: user.email,
-      role: user.role || "student",
+      role: user.role,
       course: user.course,
       department: user.department,
-      ssoProvider: provider,
-      token,
+      batch: user.batch,
+      rollNo: user.rollNo,
+      attendanceRate: user.attendanceRate,
     });
   } catch (error) {
-    console.error("ssoLoginUser error:", error);
-    res.status(500).json({ message: "SSO Authentication failed: " + error.message });
+    console.error("syncUser error:", error);
+    return res.status(500).json({ message: "Sync failed: " + error.message });
   }
 };
 

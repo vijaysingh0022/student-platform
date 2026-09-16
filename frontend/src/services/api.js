@@ -1,64 +1,131 @@
 import axios from "axios";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 
+// Base axios instance
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
 });
 
-// Attach JWT token to every request if user is logged in
-api.interceptors.request.use((config) => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user?.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
-    }
-  } catch (e) {
-    // Ignore JSON parse error
-  }
-  return config;
-});
-
-// Auto-handle 401 unauthorized / stale tokens
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("user");
-      if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-        window.location.href = "/login";
+// Automatic request interceptor: retrieves token from Clerk if active in browser session
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      if (typeof window !== "undefined" && window.Clerk?.session) {
+        const token = await window.Clerk.session.getToken();
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
+    } catch (err) {
+      console.warn("Could not attach Clerk token to request:", err.message);
     }
-    return Promise.reject(error);
-  }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
-// Quiz Generator APIs
-export const generateQuiz = (data) => {
-  if (typeof FormData !== "undefined" && data instanceof FormData) {
-    return api.post("/quiz/generate", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  }
-  return api.post("/quiz/generate", data);
+// ─── Hook-based API client (for React components with Clerk auth context) ─────
+export const useApi = () => {
+  const { getToken, isSignedIn } = useClerkAuth();
+
+  const authApi = {
+    get: async (url, config = {}) => {
+      const token = isSignedIn ? await getToken() : null;
+      return api.get(url, mergeAuth(config, token));
+    },
+    post: async (url, data, config = {}) => {
+      const token = isSignedIn ? await getToken() : null;
+      return api.post(url, data, mergeAuth(config, token));
+    },
+    put: async (url, data, config = {}) => {
+      const token = isSignedIn ? await getToken() : null;
+      return api.put(url, data, mergeAuth(config, token));
+    },
+    patch: async (url, data, config = {}) => {
+      const token = isSignedIn ? await getToken() : null;
+      return api.patch(url, data, mergeAuth(config, token));
+    },
+    delete: async (url, config = {}) => {
+      const token = isSignedIn ? await getToken() : null;
+      return api.delete(url, mergeAuth(config, token));
+    },
+  };
+
+  return { authApi, api };
 };
-export const evaluateQuiz = (payload) => api.post("/quiz/evaluate", payload);
-export const getQuizById = (quizId) => api.get(`/quiz/${quizId}`);
-export const getRecentQuizzes = () => api.get("/quiz/recent");
 
-// SSO Authentication API
-export const ssoLogin = (payload) => api.post("/auth/sso/login", payload);
+const mergeAuth = (config, token) => ({
+  ...config,
+  headers: {
+    ...(config.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  },
+});
 
-// Security & Governance APIs
-export const getAuditLogs = (params) => api.get("/security/audit-logs", { params });
-export const switchRole = (targetRole) => api.post("/security/switch-role", { targetRole });
-export const getComplianceReport = () => api.get("/security/compliance-report");
+// ─── Named API Helpers for Quiz, Security, Privacy, and System ─────────────
 
-// Data Privacy & GDPR APIs
-export const exportUserData = () => api.get("/privacy/export-data");
-export const updatePrivacyConsent = (payload) => api.post("/privacy/consent", payload);
-export const purgeUserData = () => api.delete("/privacy/purge");
+// AI Quiz Generator
+export const generateQuiz = async (formDataOrPayload, config = {}) => {
+  const isFormData = typeof FormData !== "undefined" && formDataOrPayload instanceof FormData;
+  return api.post("/quiz/generate", formDataOrPayload, {
+    ...config,
+    headers: {
+      ...(config.headers || {}),
+      ...(isFormData ? { "Content-Type": "multipart/form-data" } : {}),
+    },
+  });
+};
 
-// Cloud Health & Interoperability APIs
-export const getSystemHealth = () => api.get("/system/health");
-export const getInteropSpec = () => api.get("/system/interop-spec");
+export const evaluateQuiz = async (payload, config = {}) => {
+  return api.post("/quiz/evaluate", payload, config);
+};
+
+export const getRecentQuizzes = async (config = {}) => {
+  return api.get("/quiz/recent", config);
+};
+
+export const getQuizById = async (quizId, config = {}) => {
+  return api.get(`/quiz/${quizId}`, config);
+};
+
+// Security & Governance
+export const getAuditLogs = async (params = {}, config = {}) => {
+  return api.get("/security/audit-logs", { ...config, params });
+};
+
+export const switchRole = async (targetRole, config = {}) => {
+  return api.post("/security/switch-role", { role: targetRole }, config);
+};
+
+export const getComplianceReport = async (config = {}) => {
+  return api.get("/security/compliance-report", config);
+};
+
+// Privacy & Consent
+export const exportUserData = async (config = {}) => {
+  return api.get("/privacy/export-data", config);
+};
+
+export const updatePrivacyConsent = async (consents, config = {}) => {
+  return api.post("/privacy/consent", consents, config);
+};
+
+export const purgeUserData = async (confirmation, config = {}) => {
+  return api.delete("/privacy/purge", { ...config, data: confirmation });
+};
+
+// System Health & Interoperability
+export const getSystemHealth = async (config = {}) => {
+  return api.get("/system/health", config);
+};
+
+export const getInteropSpec = async (config = {}) => {
+  return api.get("/system/interop-spec", config);
+};
+
+// Legacy SSO fallback
+export const ssoLogin = async (provider, config = {}) => {
+  return api.post("/auth/sso", { provider }, config);
+};
 
 export default api;

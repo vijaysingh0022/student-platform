@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { UserButton, SignInButton, useUser, useClerk } from "@clerk/clerk-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOffline } from "../context/OfflineContext.jsx";
 import { LearnXLogo } from "./LearnXLogo.jsx";
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { isSignedIn } = useUser();
+  const { signOut } = useClerk();
   const { isOnline, isLowDataMode, pendingSyncCount, isSimulatorActive } = useOffline();
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,9 +80,13 @@ const Navbar = () => {
     setNotificationsOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (err) {
+      console.error("Sign out error:", err);
+    }
   };
 
   const isActive = (path) => {
@@ -475,8 +482,8 @@ const Navbar = () => {
                 >
                   <div className="relative">
                     <img
-                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                      alt={user.name || "User"}
+                      src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"}
+                      alt={user?.name || "User"}
                       className="w-7 h-7 rounded-full object-cover ring-2 ring-white group-hover:ring-violet-200 transition-all shadow-xs"
                     />
                     <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
@@ -573,17 +580,18 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            /* Logged Out Actions */
+            /* Logged Out — Clerk Sign In */
             <div className="flex items-center gap-2 sm:gap-3">
+              <SignInButton mode="redirect" redirectUrl="/dashboard">
+                <button
+                  id="nav-login"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all"
+                >
+                  Sign In
+                </button>
+              </SignInButton>
               <Link
-                to="/login"
-                id="nav-login"
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all"
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
+                to="/sign-up"
                 id="nav-register"
                 className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-violet-600 to-sky-600 hover:from-violet-500 hover:to-sky-500 text-white shadow-sm hover:shadow-glow-purple transition-all duration-200"
               >
@@ -629,8 +637,8 @@ const Navbar = () => {
               <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
                 <div className="flex items-center gap-3">
                   <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                    alt={user.name || "User"}
+                    src={user?.imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"}
+                    alt={user?.name || "User"}
                     className="w-9 h-9 rounded-full object-cover ring-2 ring-violet-200"
                   />
                   <div>
@@ -732,15 +740,10 @@ const Navbar = () => {
                 </Link>
               </div>
 
-              {/* Sign Out Button */}
-              <div className="pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs hover:bg-rose-100 transition-colors"
-                >
-                  <span>Sign Out</span>
-                </button>
+              {/* Clerk UserButton for sign out + profile management */}
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between px-1">
+                <span className="text-xs text-slate-400">Account</span>
+                <UserButton afterSignOutUrl="/" />
               </div>
             </>
           ) : (
@@ -760,15 +763,16 @@ const Navbar = () => {
                 🛡️ Security & Privacy
               </Link>
               <div className="pt-2 flex flex-col gap-2">
+                <SignInButton mode="redirect" redirectUrl="/dashboard">
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="w-full text-center py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    Sign In
+                  </button>
+                </SignInButton>
                 <Link
-                  to="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full text-center py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  to="/register"
+                  to="/sign-up"
                   onClick={() => setMenuOpen(false)}
                   className="w-full text-center py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-sky-600 text-xs font-bold text-white shadow-sm"
                 >

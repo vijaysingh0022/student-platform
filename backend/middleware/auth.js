@@ -1,27 +1,41 @@
-import jwt from "jsonwebtoken";
+import { createClerkClient } from "@clerk/backend";
 import User from "../models/User.js";
 
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY,
+});
+
 const protect = async (req, res, next) => {
-  let token;
+  const authHeader = req.headers.authorization;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select("-password");
-
-      if (!req.user) {
-        return res.status(401).json({ message: "User session expired or user not found. Please log in again." });
-      }
-
-      return next();
-    } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token invalid or expired" });
-    }
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Not authorized, no token provided" });
   }
 
-  if (!token) {
-    return res.status(401).json({ message: "Not authorized, no token provided" });
+  const token = authHeader.split(" ")[1];
+
+  try {
+    // Verify Clerk session token
+    const { sub: clerkId } = await clerkClient.verifyToken(token);
+
+    if (!clerkId) {
+      return res.status(401).json({ message: "Not authorized, invalid Clerk token" });
+    }
+
+    // Find the user in our MongoDB by clerkId
+    const user = await User.findOne({ clerkId }).select("-password");
+
+    if (!user) {
+      return res.status(401).json({
+        message: "User not synced. Please call /api/auth/sync after sign-in.",
+      });
+    }
+
+    req.user = user;
+    return next();
+  } catch (error) {
+    console.error("Clerk token verification error:", error.message);
+    return res.status(401).json({ message: "Not authorized, token invalid or expired" });
   }
 };
 
