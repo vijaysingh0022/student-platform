@@ -772,7 +772,7 @@ const LandingPage = () => {
               <li><Link to="/dashboard" className="hover:text-slate-900 transition-colors">Student Dashboard</Link></li>
               <li><Link to="/career-readiness" className="hover:text-slate-900 transition-colors">Career Engine</Link></li>
               <li><Link to="/placement-readiness" className="hover:text-slate-900 transition-colors">Placement AI</Link></li>
-              <li><Link to="/teacher-dashboard" className="hover:text-slate-900 transition-colors">Faculty Portal</Link></li>
+              <li><Link to="/admin-login" className="text-violet-600 font-bold hover:text-violet-800 transition-colors flex items-center gap-1"><span>🔐</span> Faculty & Admin Portal</Link></li>
               <li><Link to="/offline-learning" className="hover:text-slate-900 transition-colors">Offline Hub</Link></li>
             </ul>
           </div>

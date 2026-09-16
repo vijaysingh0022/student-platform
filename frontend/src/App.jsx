@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -26,7 +26,7 @@ const ClerkSignInPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 py-12">
       <SignIn
         routing="path"
         path="/sign-in"
@@ -44,6 +44,14 @@ const ClerkSignInPage = () => {
           },
         }}
       />
+      <div className="w-full max-w-sm mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+        <p className="text-xs text-slate-400">
+          Faculty member or Administrator?{" "}
+          <Link to="/admin-login" className="text-violet-400 hover:text-violet-300 font-bold underline ml-1">
+            Admin Portal Login →
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };
@@ -56,7 +64,7 @@ const ClerkSignUpPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 px-4 py-12">
       <SignUp
         routing="path"
         path="/sign-up"
@@ -74,6 +82,14 @@ const ClerkSignUpPage = () => {
           },
         }}
       />
+      <div className="w-full max-w-sm mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+        <p className="text-xs text-slate-400">
+          Faculty member or Administrator?{" "}
+          <Link to="/admin-login" className="text-violet-400 hover:text-violet-300 font-bold underline ml-1">
+            Admin Portal Login →
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

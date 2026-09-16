@@ -327,7 +327,7 @@ const Navbar = () => {
           </div>
         ) : (
           /* Public / Unauthenticated Navigation */
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-5">
             <Link
               to="/quiz-generator"
               className="text-xs font-semibold text-slate-600 hover:text-violet-600 transition-colors"
@@ -346,6 +346,14 @@ const Navbar = () => {
             >
               Live Demo
             </a>
+            <Link
+              to="/admin-login"
+              id="nav-admin-portal-link"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200/80 transition-all shadow-xs"
+            >
+              <span>🔐</span>
+              <span>Admin Portal</span>
+            </Link>
           </div>
         )}
 
@@ -559,6 +567,15 @@ const Navbar = () => {
                       <span>Account & Security</span>
                     </button>
 
+                    <Link
+                      to="/admin-login"
+                      onClick={() => setProfileMenuOpen(false)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-violet-700 hover:bg-violet-50 transition-colors text-left"
+                    >
+                      <span>🔐</span>
+                      <span>Faculty & Admin Portal</span>
+                    </Link>
+
                     <div className="my-1.5 border-t border-slate-100" />
 
                     <button
@@ -580,8 +597,17 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            /* Logged Out — Clerk Sign In */
+            /* Logged Out — Clerk Sign In + Admin Portal */
             <div className="flex items-center gap-2 sm:gap-3">
+              <Link
+                to="/admin-login"
+                id="nav-admin-login-btn"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-all shadow-xs"
+                title="Faculty & Admin Portal"
+              >
+                <span>🔐</span>
+                <span>Admin Login</span>
+              </Link>
               <SignInButton mode="redirect" redirectUrl="/dashboard">
                 <button
                   id="nav-login"
@@ -738,6 +764,16 @@ const Navbar = () => {
                   </span>
                   <span className="text-[10px] text-slate-400 font-normal">Sync & Cache</span>
                 </Link>
+                <Link
+                  to="/admin-login"
+                  onClick={() => setMenuOpen(false)}
+                  className={`col-span-2 flex items-center justify-between p-2.5 rounded-xl text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span>🔐</span> Faculty & Admin Portal
+                  </span>
+                  <span className="text-[10px] text-violet-600 font-bold">Admin →</span>
+                </Link>
               </div>
 
               {/* Clerk UserButton for sign out + profile management */}
@@ -748,6 +784,18 @@ const Navbar = () => {
             </>
           ) : (
             <div className="space-y-2 pt-2">
+              <Link
+                to="/admin-login"
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center justify-between p-3 text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-xl"
+              >
+                <span className="flex items-center gap-2">
+                  <span>🔐</span> Faculty & Admin Portal
+                </span>
+                <span className="text-[10px] font-extrabold bg-violet-200/80 px-2 py-0.5 rounded text-violet-800">
+                  Admin Login →
+                </span>
+              </Link>
               <Link
                 to="/quiz-generator"
                 onClick={() => setMenuOpen(false)}
