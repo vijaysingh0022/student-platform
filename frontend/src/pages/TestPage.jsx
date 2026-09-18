@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api.js";
 import { LearnXIcon } from "../components/LearnXLogo.jsx";
+import { useAppState } from "../context/AppStateContext.jsx";
 
 const PLACEMENT_TRACKS = [
   { id: "DSA", name: "Data Structures & Algorithms", shortName: "DSA", icon: "⚡", questionsCount: 12, tag: "Top Priority", color: "from-blue-600 to-indigo-600" },
@@ -19,6 +20,7 @@ const TestPage = () => {
   const { subject: urlSubject } = useParams();
   const navigate = useNavigate();
   const activeSubject = urlSubject || "DSA";
+  const { onTestSubmitted } = useAppState();
 
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
@@ -100,6 +102,8 @@ const TestPage = () => {
 
       const { data } = await api.post("/tests/submit", payload);
       setTestResult(data);
+      // 🔄 Trigger global reactive refresh — updates Dashboard, Career Engine, Placement Prediction
+      onTestSubmitted(activeSubject, data);
     } catch (err) {
       setError(err.response?.data?.message || "Submission failed. Please try again.");
     } finally {
@@ -491,7 +495,7 @@ const TestPage = () => {
               <button
                 id="test-result-roadmap-btn"
                 onClick={() =>
-                  navigate("/dashboard", {
+                  navigate(`/roadmap/${activeSubject}`, {
                     state: {
                       subject: activeSubject,
                       autoRoadmap: true,
@@ -500,9 +504,9 @@ const TestPage = () => {
                     },
                   })
                 }
-                className="btn-gradient w-full py-3 rounded-xl font-black text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-2"
+                className="btn-gradient w-full py-3 rounded-xl font-black text-xs sm:text-sm text-white shadow-md flex items-center justify-center gap-2 active:scale-98 transition-transform"
               >
-                <span>⚡ 7-Day Roadmap</span>
+                <span>⚡ Go to 7-Day Learning Roadmap</span>
                 <span>→</span>
               </button>
 

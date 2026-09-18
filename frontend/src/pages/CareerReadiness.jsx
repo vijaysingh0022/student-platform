@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAppState } from "../context/AppStateContext.jsx";
 
 const DIFF_COLORS = { "Hard": "text-rose-700 bg-rose-50 border-rose-200", "Medium": "text-amber-700 bg-amber-50 border-amber-200", "Easy": "text-emerald-700 bg-emerald-50 border-emerald-200" };
 
 const CareerReadiness = () => {
   const { user } = useAuth();
+  const { careerVersion, onResumeAnalyzed } = useAppState();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -49,8 +51,16 @@ const CareerReadiness = () => {
     }
   };
 
+  // Initial load
   useEffect(() => { fetchCareerData(); }, []);
 
+  // Re-fetch whenever any module updates career-relevant data (tests, roadmap days, resume)
+  useEffect(() => {
+    if (careerVersion > 0) {
+      fetchCareerData();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [careerVersion]);
   const handleRoleChange = async (newRole) => {
     setTargetRole(newRole);
     setUpdatingRole(true);
@@ -76,6 +86,8 @@ const CareerReadiness = () => {
       const { data: res } = await api.post("/career/analyze-resume", { resumeText, targetRole });
       setResumeAnalysis(res);
       fetchCareerData();
+      // 🔄 Cascade: update Placement Prediction too
+      onResumeAnalyzed();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to analyze resume.");
     } finally {
@@ -105,6 +117,8 @@ const CareerReadiness = () => {
       if (res.resumeText) setResumeText(res.resumeText);
       if (res.filename) setUploadedFilename(res.filename);
       fetchCareerData();
+      // 🔄 Cascade: update Placement Prediction too
+      onResumeAnalyzed();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to parse and evaluate resume file. Please ensure it is a valid PDF, DOCX, or text file.");
     } finally {

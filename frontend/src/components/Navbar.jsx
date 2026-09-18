@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { UserButton, SignInButton, useUser, useClerk } from "@clerk/clerk-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOffline } from "../context/OfflineContext.jsx";
+import { useAppState } from "../context/AppStateContext.jsx";
 import { LearnXLogo } from "./LearnXLogo.jsx";
 
 const Navbar = () => {
@@ -10,8 +11,12 @@ const Navbar = () => {
   const { isSignedIn } = useUser();
   const { signOut } = useClerk();
   const { isOnline, isLowDataMode, pendingSyncCount, isSimulatorActive } = useOffline();
+  const { refreshing, testVersion } = useAppState();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // True when any background module is syncing
+  const isSyncing = Object.values(refreshing).some(Boolean);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -93,11 +98,14 @@ const Navbar = () => {
     if (path === "/test/DSA" || path === "/assessment") {
       return location.pathname.startsWith("/test") || location.pathname === "/assessment";
     }
+    if (path === "/roadmap") {
+      return location.pathname.startsWith("/roadmap");
+    }
     return location.pathname === path;
   };
 
   // Check if any sublink in the More dropdown is active
-  const isMoreActive = ["/placement-readiness", "/teacher-dashboard", "/institution-dashboard", "/security", "/offline-learning"].includes(
+  const isMoreActive = ["/roadmap", "/placement-readiness", "/teacher-dashboard", "/institution-dashboard", "/security", "/offline-learning"].includes(
     location.pathname
   );
 
@@ -197,6 +205,22 @@ const Navbar = () => {
               </span>
             </Link>
 
+            {/* 7-Day Roadmap */}
+            <Link
+              to="/roadmap"
+              id="nav-roadmap"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                isActive("/roadmap")
+                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              <span>7-Day Roadmap</span>
+            </Link>
+
             {/* Career Engine */}
             <Link
               to="/career-readiness"
@@ -246,6 +270,25 @@ const Navbar = () => {
                     boxShadow: "0 20px 40px -15px rgba(15,23,42,0.12), 0 0 1px 1px rgba(15,23,42,0.05)",
                   }}
                 >
+                  <Link
+                    to="/roadmap"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname.startsWith("/roadmap")
+                        ? "bg-violet-50 text-violet-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">7-Day Study Roadmap</div>
+                      <div className="text-[11px] text-slate-400 font-medium">Personalized AI learning paths</div>
+                    </div>
+                  </Link>
+
                   <Link
                     to="/placement-readiness"
                     className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
@@ -317,6 +360,14 @@ const Navbar = () => {
         <div className="flex items-center gap-2 sm:gap-3">
           {user ? (
             <>
+              {/* Live Data Sync Badge — shows briefly when AppState is refreshing */}
+              {isSyncing && (
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold bg-violet-50 border border-violet-200 text-violet-700 animate-pulse">
+                  <div className="w-3 h-3 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <span>Syncing</span>
+                </div>
+              )}
+
               {/* Network / Offline Sync Status Badge */}
               <Link
                 to="/offline-learning"
@@ -671,6 +722,15 @@ const Navbar = () => {
                   }`}
                 >
                   <span>🤖</span> AI Tutor
+                </Link>
+                <Link
+                  to="/roadmap"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold ${
+                    isActive("/roadmap") ? "bg-violet-100 text-violet-900 font-bold" : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>🗺️</span> 7-Day Roadmap
                 </Link>
                 <Link
                   to="/career-readiness"

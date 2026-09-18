@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAppState } from "../context/AppStateContext.jsx";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
@@ -33,6 +34,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const PlacementPrediction = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { testVersion, careerVersion } = useAppState();
 
   const [loading, setLoading] = useState(true);
   const [recalculating, setRecalculating] = useState(false);
@@ -62,6 +64,17 @@ const PlacementPrediction = () => {
   useEffect(() => {
     fetchPrediction();
   }, []);
+
+  // Auto-refresh prediction when tests are submitted or career data changes
+  useEffect(() => {
+    if (testVersion > 0 || careerVersion > 0) {
+      // Use silent refresh — don't show loading spinner for background updates
+      api.get("/prediction/readiness")
+        .then(({ data }) => setPrediction(data))
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testVersion, careerVersion]);
 
   const handleRecalculate = async () => {
     setRecalculating(true);
@@ -635,10 +648,10 @@ const PlacementPrediction = () => {
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <Link
-            to="/dashboard"
+            to="/roadmap"
             className="px-5 py-2.5 rounded-xl text-xs font-semibold glass-card hover:bg-slate-100 text-slate-800 transition-colors"
           >
-            Go to Roadmap
+            Go to 7-Day Roadmap
           </Link>
           <Link
             to="/test/DBMS"

@@ -15,6 +15,7 @@ import TeacherDashboard from "./pages/TeacherDashboard.jsx";
 import OfflineLearning from "./pages/OfflineLearning.jsx";
 import QuizGenerator from "./pages/QuizGenerator.jsx";
 import SecurityGovernance from "./pages/SecurityGovernance.jsx";
+import RoadmapPage from "./pages/RoadmapPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -133,6 +134,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Tutor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/roadmap"
+              element={
+                <ProtectedRoute>
+                  <RoadmapPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/roadmap/:subject"
+              element={
+                <ProtectedRoute>
+                  <RoadmapPage />
                 </ProtectedRoute>
               }
             />

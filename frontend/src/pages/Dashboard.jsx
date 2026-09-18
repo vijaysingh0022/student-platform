@@ -7,6 +7,7 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOffline } from "../context/OfflineContext.jsx";
+import { useAppState } from "../context/AppStateContext.jsx";
 import RoadmapVisualizer from "../components/RoadmapVisualizer.jsx";
 import { LearnXLogo, LearnXIcon } from "../components/LearnXLogo.jsx";
 
@@ -116,6 +117,7 @@ const Dashboard = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { isOnline, isLowDataMode } = useOffline();
+  const { testVersion, onRoadmapDayToggled, jobReadinessScore } = useAppState();
   const [selectedSubject, setSelectedSubject] = useState(location.state?.subject || "DBMS");
 
   useEffect(() => {
@@ -190,7 +192,8 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  }, [selectedSubject]);
+  // Re-fetch when subject changes OR when a new test is submitted (testVersion increments)
+  }, [selectedSubject, testVersion]);
 
   // Auto-scroll to Roadmap when requested
   useEffect(() => {
@@ -259,6 +262,7 @@ const Dashboard = () => {
   const streakDays = Math.max(3, (totalTestsAllSubjects % 7) + 1);
   const studentXP = 850 + totalTestsAllSubjects * 120 + (overallScore * 5);
   const studentLevel = Math.floor(studentXP / 400) + 1;
+  const dailyGoalDone = Math.min(totalTestsAllSubjects, 3);
 
   const currentChallenge = DAILY_CHALLENGES[dailyChallengeIdx % DAILY_CHALLENGES.length];
 
@@ -309,12 +313,26 @@ const Dashboard = () => {
               </div>
             </div>
 
+            {/* Live Job Readiness Chip — updates in real-time via AppStateContext */}
+            {jobReadinessScore !== null && (
+              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
+                <span className="text-2xl">💼</span>
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-300 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Job Ready
+                  </p>
+                  <p className="text-base font-extrabold text-white leading-none mt-0.5">{jobReadinessScore}%</p>
+                </div>
+              </div>
+            )}
+
             {/* Daily Goal Completion */}
             <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
               <span className="text-2xl">🎯</span>
               <div>
                 <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-300">Daily Target</p>
-                <p className="text-base font-extrabold text-white leading-none mt-0.5">2 / 3 Done</p>
+                <p className="text-base font-extrabold text-white leading-none mt-0.5">{dailyGoalDone} / 3 Done</p>
               </div>
             </div>
           </div>
@@ -809,6 +827,21 @@ const Dashboard = () => {
 
             {/* 6. AI 7-Day Roadmap Section */}
             <div className="glass-card p-6 md:p-8 border border-slate-200 shadow-sm bg-white rounded-3xl" id="dashboard-roadmap">
+              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🗺️</span>
+                  <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
+                    7-Day AI Learning Roadmap ({selectedSubject})
+                  </span>
+                </div>
+                <Link
+                  to={`/roadmap/${selectedSubject}`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  <span>Full 7-Day Roadmap View</span>
+                  <span>→</span>
+                </Link>
+              </div>
               {roadmap ? (
                 <RoadmapVisualizer
                   roadmap={roadmap}

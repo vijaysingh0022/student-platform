@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
+import { useAppState } from "../context/AppStateContext.jsx";
 
 const RoadmapVisualizer = ({ roadmap, onRoadmapUpdated, onRegenerate, generating }) => {
   const navigate = useNavigate();
+  const { onRoadmapDayToggled } = useAppState();
   const [filter, setFilter] = useState("all"); // 'all' | 'active' | 'completed'
   const [expandedDays, setExpandedDays] = useState({ 1: true });
   const [copied, setCopied] = useState(false);
@@ -54,6 +56,8 @@ const RoadmapVisualizer = ({ roadmap, onRoadmapUpdated, onRegenerate, generating
       if (onRoadmapUpdated) {
         onRoadmapUpdated(data);
       }
+      // 🔄 Notify global state: roadmap progress changed -> Career score updates
+      onRoadmapDayToggled(roadmap.subject, data);
     } catch (err) {
       console.error("Failed to toggle day:", err);
     } finally {
