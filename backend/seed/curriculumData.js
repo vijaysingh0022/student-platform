@@ -137,6 +137,22 @@ export const CURRICULUM_UNITS = [
     description: "Binary search trees, AVL self-balancing rotations, heaps, priority queues, and graph traversals.",
     order: 4,
   },
+  {
+    unitId: "dsa-u5",
+    subjectId: "dsa",
+    unitNumber: 5,
+    title: "Unit 5 — Balanced Trees & Self-Balancing Structures",
+    description: "AVL Tree rotations, Red-Black Trees, B-Trees, and height-balancing invariants.",
+    order: 5,
+  },
+  {
+    unitId: "dsa-u6",
+    subjectId: "dsa",
+    unitNumber: 6,
+    title: "Unit 6 — Graph Theory & Advanced Algorithms",
+    description: "Breadth-First Search (BFS), Depth-First Search (DFS), Shortest Path (Dijkstra), and Minimum Spanning Trees.",
+    order: 6,
+  },
 
   // ─── DBMS UNITS ────────────────────────────────────────────────────────────
   {
@@ -310,6 +326,24 @@ export const CURRICULUM_CHAPTERS = [
     chapterNumber: 1,
     title: "Binary Trees & Self-Balancing Structures",
     description: "Tree traversals, binary search tree operations, and AVL rotations.",
+    order: 1,
+  },
+  {
+    chapterId: "dsa-u5-c1",
+    unitId: "dsa-u5",
+    subjectId: "dsa",
+    chapterNumber: 1,
+    title: "Self-Balancing Trees & AVL Rotations",
+    description: "Single and double rotations (LL, RR, LR, RL) for height balance.",
+    order: 1,
+  },
+  {
+    chapterId: "dsa-u6-c1",
+    unitId: "dsa-u6",
+    subjectId: "dsa",
+    chapterNumber: 1,
+    title: "Graph Traversal & Shortest Paths",
+    description: "Breadth-First Search, Depth-First Search, and Dijkstra shortest path algorithm.",
     order: 1,
   },
 
@@ -1335,12 +1369,532 @@ class Checkout:
         "Always favor composition and interfaces over deep inheritance trees.",
         "Single Responsibility is the most violated principle in real-world codebases."
       ],
-      commonMistakes: [
-        "Inheriting for code reuse rather than genuine is-a polymorphism, violating LSP.",
-        "Creating giant 'God' interfaces with 50 methods, violating ISP.",
-        "Hardcoding concrete database clients inside business logic controllers, violating DIP."
-      ],
       relatedTopics: ["Factory Pattern", "Dependency Injection", "Design Patterns", "Polymorphism"]
+    }
+  },
+
+  // ─── DSA UNIT 1 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "algorithm-complexity",
+    chapterId: "dsa-u1-c1",
+    unitId: "dsa-u1",
+    subjectId: "dsa",
+    topicNumber: 1,
+    title: "Asymptotic Analysis & Big-O Notation",
+    estimatedMinutes: 25,
+    difficulty: "Beginner",
+    summary: "Asymptotic growth rate analysis, Big-O, Big-Omega, Big-Theta, and recurrence relation solutions.",
+    subtopics: ["Big-O Upper Bound", "Big-Omega Lower Bound", "Big-Theta Tight Bound", "Space-Time Tradeoffs"],
+    content: {
+      introduction: "Asymptotic Analysis is the foundational tool used to evaluate the efficiency of algorithms independently of machine hardware, programming language, or compiler optimizations.",
+      concepts: [
+        "Big-O (Worst-Case Upper Bound): Describes the upper limit of running time.",
+        "Big-Omega (Best-Case Lower Bound): Describes the minimum running time.",
+        "Big-Theta (Tight Bound): Characterizes running time when upper and lower bounds coincide."
+      ],
+      importantPoints: [
+        "Drop constant factors: O(2N) simplifies to O(N).",
+        "Focus on highest-degree terms: O(N^2 + 5N + 100) simplifies to O(N^2)."
+      ],
+      examples: [
+        "Single loop over N elements: O(N).",
+        "Nested loops over N elements: O(N^2).",
+        "Halving search space at each step: O(log N)."
+      ],
+      algorithmSteps: [
+        "1. Identify input size N.",
+        "2. Count primitive operations executed as a function of N.",
+        "3. Keep dominant term and drop lower-order terms."
+      ],
+      codeSnippets: [
+        {
+          language: "cpp",
+          title: "Linear vs Quadratic Growth Example",
+          code: `#include <iostream>\nusing namespace std;\n\nvoid analyzeLoops(int n) {\n    // Linear loop: O(n)\n    for(int i=0; i<n; i++) cout << i << " ";\n    cout << endl;\n    // Quadratic nested loop: O(n^2)\n    for(int i=0; i<n; i++) {\n        for(int j=0; j<n; j++) cout << "(" << i << "," << j << ") ";\n    }\n}`,
+          explanation: "Comparison of O(n) single loop vs O(n^2) nested loop."
+        }
+      ],
+      timeComplexity: "O(1) calculation method for asymptotic classification",
+      spaceComplexity: "O(1) auxiliary space",
+      keyTakeaways: ["Always express time complexity in terms of input size N."],
+      commonMistakes: ["Confusing Big-O worst case with average case behavior."]
+    }
+  },
+
+  // ─── DSA UNIT 3 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "linked-lists",
+    chapterId: "dsa-u3-c1",
+    unitId: "dsa-u3",
+    subjectId: "dsa",
+    topicNumber: 1,
+    title: "Singly & Doubly Linked List Operations",
+    estimatedMinutes: 25,
+    difficulty: "Beginner",
+    summary: "Dynamic memory allocation, node pointer manipulation, insertion, deletion, and Floyd's Cycle Detection.",
+    subtopics: ["Node Pointer Structures", "Head & Tail References", "Cycle Detection", "Reversal Algorithm"],
+    content: {
+      introduction: "Linked Lists store elements in non-contiguous memory locations connected via explicit node pointers.",
+      concepts: [
+        "Node Structure: Contains data field and pointer to next node.",
+        "Singly vs Doubly: Doubly linked lists maintain both next and prev pointers.",
+        "Floyd's Cycle Finding: Two-pointer slow and fast approach to detect loops in O(N) time and O(1) space."
+      ],
+      importantPoints: ["Insertion at head is O(1) whereas array insertion at index 0 is O(N)."],
+      examples: ["Reversing a Singly Linked List in-place."],
+      algorithmSteps: ["1. Initialize prev = NULL, curr = head.", "2. Save next node.", "3. Reverse pointer: curr->next = prev.", "4. Advance pointers."],
+      codeSnippets: [
+        {
+          language: "python",
+          title: "Python Linked List Reversal",
+          code: `class Node:\n    def __init__(self, val):\n        self.val = val\n        self.next = None\n\ndef reverse_list(head):\n    prev, curr = None, head\n    while curr:\n        nxt = curr.next\n        curr.next = prev\n        prev = curr\n        curr = nxt\n    return prev`,
+          explanation: "In-place iterative linked list reversal."
+        }
+      ],
+      timeComplexity: "Insertion at head: O(1), Search: O(N)",
+      spaceComplexity: "O(1) auxiliary space for pointer manipulations",
+      keyTakeaways: ["Handle boundary cases: empty list, single node, two nodes."],
+      commonMistakes: ["Losing reference to next node during pointer assignment leading to memory leaks."]
+    }
+  },
+
+  // ─── DSA UNIT 4 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "binary-search-trees",
+    chapterId: "dsa-u4-c1",
+    unitId: "dsa-u4",
+    subjectId: "dsa",
+    topicNumber: 1,
+    title: "Binary Search Trees & Traversal Algorithms",
+    estimatedMinutes: 30,
+    difficulty: "Intermediate",
+    summary: "Hierarchical tree structures, BST invariant property, Inorder, Preorder, Postorder traversals, and deletion algorithms.",
+    subtopics: ["BST Invariant", "Inorder Traversal (Sorted Output)", "Preorder/Postorder", "Deletion Scenarios"],
+    content: {
+      introduction: "A Binary Search Tree (BST) is a binary tree where left child < root < right child for every subtree.",
+      concepts: [
+        "BST Invariant: Enables O(log N) average lookup, insertion, and deletion.",
+        "Inorder Traversal: Visits Left -> Root -> Right, generating strictly sorted sequence."
+      ],
+      importantPoints: ["Inorder traversal of BST always produces sorted keys."],
+      examples: ["Inserting keys [50, 30, 70, 20, 40] into empty BST."],
+      algorithmSteps: ["1. Compare key with root node.", "2. Recurse left if key < root, right if key > root."],
+      codeSnippets: [
+        {
+          language: "java",
+          title: "Java Inorder Traversal",
+          code: `class TreeNode {\n    int val;\n    TreeNode left, right;\n    TreeNode(int x) { val = x; }\n}\n\nvoid inorder(TreeNode root) {\n    if (root == null) return;\n    inorder(root.left);\n    System.out.print(root.val + " ");\n    inorder(root.right);\n}`,
+          explanation: "Recursive inorder traversal of Binary Search Tree."
+        }
+      ],
+      timeComplexity: "Average: O(log N), Worst-case (skewed): O(N)",
+      spaceComplexity: "O(H) recursion stack space where H is tree height",
+      keyTakeaways: ["BST lookup degenerates to O(N) when inserted with sorted inputs."],
+      commonMistakes: ["Forgetting to update parent pointers during node deletion."]
+    }
+  },
+
+  // ─── DSA UNIT 5 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "avl-tree-rotations",
+    chapterId: "dsa-u5-c1",
+    unitId: "dsa-u5",
+    subjectId: "dsa",
+    topicNumber: 1,
+    title: "AVL Trees & Self-Balancing Rotations",
+    estimatedMinutes: 30,
+    difficulty: "Advanced",
+    summary: "Strict height-balanced binary search tree with Balance Factor in {-1, 0, 1} and LL, RR, LR, RL tree rotations.",
+    subtopics: ["Balance Factor Invariant", "LL & RR Single Rotations", "LR & RL Double Rotations", "Strict O(log N) Guarantee"],
+    content: {
+      introduction: "AVL Trees are self-balancing binary search trees where height difference between left and right subtrees never exceeds 1.",
+      concepts: [
+        "Balance Factor = Height(Left) - Height(Right). Must be -1, 0, or +1.",
+        "Single Rotations: LL rotation fixes left-heavy subtree; RR rotation fixes right-heavy subtree.",
+        "Double Rotations: LR rotation = Left rotate left child then Right rotate root."
+      ],
+      importantPoints: ["AVL trees guarantee strict O(log N) lookup time even in worst-case insertions."],
+      examples: ["LL Rotation when key 10 is inserted into root 30 -> child 20."],
+      algorithmSteps: ["1. Perform standard BST insertion.", "2. Update node height.", "3. Compute balance factor.", "4. Apply single or double rotation if imbalanced."],
+      codeSnippets: [
+        {
+          language: "cpp",
+          title: "C++ Right Rotation (LL Fix)",
+          code: `struct Node {\n    int key, height;\n    Node *left, *right;\n};\n\nNode* rightRotate(Node* y) {\n    Node* x = y->left;\n    Node* T2 = x->right;\n    x->right = y;\n    y->left = T2;\n    y->height = max(height(y->left), height(y->right)) + 1;\n    x->height = max(height(x->left), height(x->right)) + 1;\n    return x;\n}`,
+          explanation: "Right rotation to re-balance an LL-imbalanced AVL node."
+        }
+      ],
+      timeComplexity: "O(log N) for Search, Insertion, and Deletion guaranteed",
+      spaceComplexity: "O(N) node storage space",
+      keyTakeaways: ["AVL trees provide faster lookups than Red-Black trees due to stricter height balancing."],
+      commonMistakes: ["Failing to update height attributes after pointer re-assignments."]
+    }
+  },
+
+  // ─── DSA UNIT 6 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "graph-bfs-dfs",
+    chapterId: "dsa-u6-c1",
+    unitId: "dsa-u6",
+    subjectId: "dsa",
+    topicNumber: 1,
+    title: "Graph Traversal (BFS & DFS) & Shortest Path",
+    estimatedMinutes: 35,
+    difficulty: "Advanced",
+    summary: "Breadth-First Search queue traversal, Depth-First Search recursion stack, connected components, and Dijkstra's algorithm.",
+    subtopics: ["Adjacency List/Matrix Representation", "BFS Queue Level Order", "DFS Recursion Stack", "Dijkstra Priority Queue"],
+    content: {
+      introduction: "Graphs represent complex networks of vertices connected by edges. Traversals visit every vertex systematically.",
+      concepts: [
+        "BFS (Breadth-First Search): Uses Queue data structure to explore level-by-level, finding unweighted shortest paths.",
+        "DFS (Depth-First Search): Uses Stack/Recursion to explore deeply along branches before backtracking.",
+        "Dijkstra's Algorithm: Uses Min-Heap Priority Queue to find shortest paths in non-negative edge-weighted graphs."
+      ],
+      importantPoints: ["BFS finds the shortest path in unweighted graphs."],
+      examples: ["Social network degree of separation lookup using BFS."],
+      algorithmSteps: ["1. Mark source visited.", "2. Enqueue source into Queue.", "3. While queue not empty, pop u, visit unvisited neighbors v."],
+      codeSnippets: [
+        {
+          language: "python",
+          title: "Python Breadth-First Search",
+          code: `from collections import deque\n\ndef bfs(adj, start):\n    visited = set([start])\n    queue = deque([start])\n    while queue:\n        node = queue.popleft()\n        print(node, end=" ")\n        for neighbor in adj[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)`,
+          explanation: "Standard BFS traversal using deque."
+        }
+      ],
+      timeComplexity: "O(V + E) for BFS & DFS; O((V + E) log V) for Dijkstra",
+      spaceComplexity: "O(V) visited set and queue memory",
+      keyTakeaways: ["Always maintain a visited set to avoid infinite loops in cyclic graphs."],
+      commonMistakes: ["Forgetting to mark nodes visited upon enqueueing leading to duplicate queue entries."]
+    }
+  },
+
+  // ─── DBMS UNIT 3 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "acid-transactions",
+    chapterId: "dbms-u3-c1",
+    unitId: "dbms-u3",
+    subjectId: "dbms",
+    topicNumber: 1,
+    title: "ACID Properties & Transaction Concurrency",
+    estimatedMinutes: 25,
+    difficulty: "Intermediate",
+    summary: "Atomicity, Consistency, Isolation, Durability, 2-Phase Locking (2PL), serializability, and isolation levels.",
+    subtopics: ["Atomicity & Rollbacks", "Isolation Levels", "2-Phase Locking (2PL)", "Deadlock Detection"],
+    content: {
+      introduction: "Database transactions ensure reliable execution of database operations under concurrent user access and system failures.",
+      concepts: [
+        "Atomicity: All-or-nothing execution.",
+        "Consistency: Database transitions from one valid state to another.",
+        "Isolation: Concurrent transactions execute independently without mutual interference.",
+        "Durability: Committed transactions persist permanently across crashes."
+      ],
+      importantPoints: ["Serializable isolation level provides the highest guarantees but lowest concurrency throughput."],
+      examples: ["Bank transfer of $500 from Account A to Account B."],
+      algorithmSteps: ["1. BEGIN TRANSACTION", "2. DEBIT Account A", "3. CREDIT Account B", "4. COMMIT TRANSACTION"],
+      codeSnippets: [
+        {
+          language: "sql",
+          title: "SQL Transaction Control",
+          code: `BEGIN TRANSACTION;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 'A';\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 'B';\nCOMMIT;`,
+          explanation: "Atomic bank transfer transaction block."
+        }
+      ],
+      timeComplexity: "O(1) transaction lock acquisition overhead",
+      spaceComplexity: "O(L) log buffer storage for WAL (Write-Ahead Logging)",
+      keyTakeaways: ["Write-Ahead Logging (WAL) ensures Durability across system crashes."],
+      commonMistakes: ["Failing to handle deadlock exceptions in application business logic."]
+    }
+  },
+
+  // ─── OS UNIT 2 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "deadlocks-bankers",
+    chapterId: "os-u2-c1",
+    unitId: "os-u2",
+    subjectId: "os",
+    topicNumber: 1,
+    title: "Process Synchronization & Banker's Algorithm",
+    estimatedMinutes: 30,
+    difficulty: "Intermediate",
+    summary: "Mutual exclusion, semaphores, deadlock prevention, detection, and Banker's safety state algorithm.",
+    subtopics: ["4 Deadlock Conditions", "Mutex & Semaphores", "Banker's Safety Algorithm", "Resource Allocation Graph"],
+    content: {
+      introduction: "Process synchronization coordinates concurrent execution to prevent data races and deadlock states.",
+      concepts: [
+        "4 Deadlock Necessary Conditions: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.",
+        "Banker's Algorithm: Tests for safety by simulating allocation of maximum declared resources."
+      ],
+      importantPoints: ["All 4 conditions must hold simultaneously for a deadlock to occur."],
+      examples: ["Dining Philosophers problem synchronization using semaphores."],
+      algorithmSteps: ["1. Calculate Need = Max - Allocation.", "2. Find process P whose Need <= Available.", "3. Assume P finishes and releases Allocation to Available.", "4. Repeat until all finish."],
+      codeSnippets: [
+        {
+          language: "cpp",
+          title: "C++ Mutex Synchronization",
+          code: `#include <mutex>\n#include <thread>\n\nstd::mutex mtx;\nint counter = 0;\n\nvoid increment() {\n    std::lock_guard<std::mutex> lock(mtx);\n    counter++;\n}`,
+          explanation: "Thread-safe counter increment using mutex lock_guard."
+        }
+      ],
+      timeComplexity: "O(N^2 * M) safety check for N processes and M resource types",
+      spaceComplexity: "O(N * M) allocation matrix memory",
+      keyTakeaways: ["Banker's algorithm guarantees deadlock avoidance by maintaining a safe state."],
+      commonMistakes: ["Holding mutex locks while making blocking I/O calls causing circular waits."]
+    }
+  },
+
+  // ─── COMPUTER NETWORKS UNIT 1 & 2 TOPICS ───────────────────────────────────
+  {
+    topicId: "osi-model-layers",
+    chapterId: "cn-u1-c1",
+    unitId: "cn-u1",
+    subjectId: "cn",
+    topicNumber: 1,
+    title: "OSI 7-Layer & TCP/IP Reference Model",
+    estimatedMinutes: 20,
+    difficulty: "Beginner",
+    summary: "Physical, Data Link, Network, Transport, Session, Presentation, Application layers, and data encapsulation.",
+    subtopics: ["Physical to Application Layer", "Data Encapsulation Headers", "MAC vs IP vs Port Addresses", "PDU Types"],
+    content: {
+      introduction: "The OSI 7-Layer model standardizes network communication functions across heterogeneous hardware systems.",
+      concepts: [
+        "7 OSI Layers: Physical, Data Link, Network, Transport, Session, Presentation, Application.",
+        "Encapsulation: Headers added at each layer (Bits -> Frames -> Packets -> Segments -> Data)."
+      ],
+      importantPoints: ["Switches operate at Layer 2 (Data Link), Routers at Layer 3 (Network)."],
+      examples: ["Web browser fetching web page over HTTPS (Layer 7 Application down to Layer 1 Physical)."],
+      algorithmSteps: ["1. Application creates Data.", "2. Transport adds TCP Port header.", "3. Network adds IP header.", "4. Data Link adds MAC Ethernet header."],
+      codeSnippets: [
+        {
+          language: "python",
+          title: "Python Socket Application Layer Test",
+          code: `import socket\n\ns = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\ns.connect(("example.com", 80))\ns.sendall(b"GET / HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n")\nresponse = s.recv(4096)\nprint(response.decode()[:100])`,
+          explanation: "Low-level socket HTTP GET request across OSI layers."
+        }
+      ],
+      timeComplexity: "O(L) header processing per protocol layer",
+      spaceComplexity: "O(H) header memory overhead per packet",
+      keyTakeaways: ["TCP/IP combines OSI layers 5-7 into the single Application layer."],
+      commonMistakes: ["Confusing Layer 2 MAC addresses with Layer 3 IP addresses."]
+    }
+  },
+
+  // ─── OOPS UNIT 1 TOPIC ─────────────────────────────────────────────────────
+  {
+    topicId: "oop-four-pillars",
+    chapterId: "oops-u1-c1",
+    unitId: "oops-u1",
+    subjectId: "oops",
+    topicNumber: 1,
+    title: "The 4 Pillars of Object-Oriented Programming",
+    estimatedMinutes: 25,
+    difficulty: "Beginner",
+    summary: "Encapsulation, Data Abstraction, Inheritance, and Method Overloading/Overriding Polymorphism.",
+    subtopics: ["Encapsulation & Access Modifiers", "Abstraction Interfaces", "Inheritance Code Reuse", "Polymorphism Virtual Functions"],
+    content: {
+      introduction: "OOP structures programs around self-contained objects encapsulating state data and behavior methods.",
+      concepts: [
+        "Encapsulation: Bundling data and methods into a single class with private access control.",
+        "Abstraction: Hiding internal implementation details behind clean public interfaces.",
+        "Inheritance: Creating sub-classes that derive attributes and methods from super-classes.",
+        "Polymorphism: Overriding methods to execute different runtime behavior through uniform interface pointers."
+      ],
+      importantPoints: ["Polymorphism enables open-closed extensibility."],
+      examples: ["Shape super-class with Circle and Rectangle derived classes overriding draw()."],
+      algorithmSteps: ["1. Define Class interface.", "2. Encapsulate data variables private.", "3. Expose getter/setter methods."],
+      codeSnippets: [
+        {
+          language: "java",
+          title: "Java Polymorphism Example",
+          code: `abstract class Shape {\n    abstract double area();\n}\n\nclass Circle extends Shape {\n    double r;\n    Circle(double r) { this.r = r; }\n    double area() { return Math.PI * r * r; }\n}\n\nclass Rectangle extends Shape {\n    double w, h;\n    Rectangle(double w, double h) { this.w = w; this.h = h; }\n    double area() { return w * h; }\n}`,
+          explanation: "Polymorphic area calculation in Java."
+        }
+      ],
+      timeComplexity: "O(1) method dispatch overhead via virtual method tables (vtables)",
+      spaceComplexity: "O(1) memory overhead per object instance",
+      keyTakeaways: ["Favor composition over inheritance to avoid tight coupling."],
+      commonMistakes: ["Making class data members public, violating encapsulation."]
+    }
+  },
+
+  // ─── SYSTEM DESIGN UNIT 1 TOPIC ────────────────────────────────────────────
+  {
+    topicId: "system-design-scalability",
+    chapterId: "sd-u1-c1",
+    unitId: "sd-u1",
+    subjectId: "system-design",
+    topicNumber: 1,
+    title: "System Design: Scalability, Caching & Load Balancing",
+    estimatedMinutes: 35,
+    difficulty: "Advanced",
+    summary: "Horizontal scaling, Round-Robin load balancing, Redis caching strategies, and Consistent Hashing.",
+    subtopics: ["Horizontal vs Vertical Scaling", "Load Balancer Algorithms", "Cache Eviction (LRU)", "Consistent Hashing"],
+    content: {
+      introduction: "System Design focuses on building distributed web systems capable of serving millions of concurrent requests reliably.",
+      concepts: [
+        "Horizontal Scaling: Adding more server instances behind a load balancer.",
+        "Caching (Redis/Memcached): Storing hot data in memory to reduce database read pressure.",
+        "Consistent Hashing: Distributes keys evenly across dynamically scaling cache server clusters."
+      ],
+      importantPoints: ["Caching read-heavy data reduces database latency from 50ms to <1ms."],
+      examples: ["Designing URL Shortener (TinyURL) or Twitter Feed Architecture."],
+      algorithmSteps: ["1. Client sends request to DNS.", "2. DNS resolves to Load Balancer IP.", "3. Load Balancer forwards to stateless Web Server.", "4. Server checks Redis cache before querying DB."],
+      codeSnippets: [
+        {
+          language: "javascript",
+          title: "Node.js Redis Caching Middleware",
+          code: `const redis = require('redis');\nconst client = redis.createClient();\n\nasync function getCachedData(req, res, next) {\n    const cacheKey = req.originalUrl;\n    const data = await client.get(cacheKey);\n    if (data) {\n        return res.json(JSON.parse(data));\n    }\n    next();\n}`,
+          explanation: "Express middleware serving cached JSON responses from Redis."
+        }
+      ],
+      timeComplexity: "O(1) Redis memory cache lookup",
+      spaceComplexity: "O(N) cache memory footprint",
+      keyTakeaways: ["Design for stateless web servers to allow easy horizontal auto-scaling."],
+      commonMistakes: ["Using single point of failure (SPOF) database instances without read replicas."]
+    }
+  },
+
+  // ─── WEB DEV UNIT 1 TOPIC ──────────────────────────────────────────────────
+  {
+    topicId: "web-http-rest",
+    chapterId: "web-u1-c1",
+    unitId: "web-dev",
+    subjectId: "web-dev",
+    topicNumber: 1,
+    title: "HTTP Protocol, REST APIs & Full Stack Architecture",
+    estimatedMinutes: 25,
+    difficulty: "Beginner",
+    summary: "HTTP methods (GET, POST, PUT, DELETE), status codes, REST architectural constraints, and CORS.",
+    subtopics: ["HTTP Request/Response Lifecycle", "RESTful Resource Paths", "HTTP Status Codes", "CORS Headers"],
+    content: {
+      introduction: "REST (Representational State Transfer) is the standard architectural style for client-server web API communications.",
+      concepts: [
+        "Stateless Communications: Every request contains all context needed to execute.",
+        "CRUD Mappings: GET (Read), POST (Create), PUT (Update), DELETE (Remove)."
+      ],
+      importantPoints: ["HTTP status codes 2xx indicate success, 4xx client errors, 5xx server errors."],
+      examples: ["RESTful API endpoint `GET /api/v1/users/123` returning JSON user payload."],
+      algorithmSteps: ["1. Client sends HTTP request.", "2. Server parses URL route & headers.", "3. Controller queries database.", "4. Server returns HTTP response."],
+      codeSnippets: [
+        {
+          language: "javascript",
+          title: "Express.js REST Controller",
+          code: `const express = require('express');\nconst app = express();\n\napp.get('/api/users/:id', async (req, res) => {\n    const user = await User.findById(req.params.id);\n    if (!user) return res.status(404).json({ message: "User not found" });\n    res.json(user);\n});`,
+          explanation: "Express RESTful GET endpoint returning JSON response."
+        }
+      ],
+      timeComplexity: "O(1) route parsing overhead",
+      spaceComplexity: "O(R) response payload buffer space",
+      keyTakeaways: ["Always use nouns for REST resource endpoints, not verbs."],
+      commonMistakes: ["Returning HTTP 200 OK status for server failure responses."]
+    }
+  },
+
+  // ─── APTITUDE UNIT 1 TOPIC ─────────────────────────────────────────────────
+  {
+    topicId: "quantitative-aptitude-reasoning",
+    chapterId: "apt-u1-c1",
+    unitId: "aptitude",
+    subjectId: "aptitude",
+    topicNumber: 1,
+    title: "Quantitative Reasoning: Time, Speed, Distance & Work",
+    estimatedMinutes: 20,
+    difficulty: "Beginner",
+    summary: "Speed-distance-time formulas, relative speed, train problems, and time-and-work efficiency ratios.",
+    subtopics: ["Speed = Distance / Time", "Relative Speed Same/Opposite Direction", "Work = Rate * Time", "Pipes & Cisterns"],
+    content: {
+      introduction: "Quantitative aptitude evaluates numerical problem-solving efficiency required during Round 1 placement assessments.",
+      concepts: [
+        "Speed = Distance / Time.",
+        "Relative Speed: Add speeds when objects move in opposite directions; subtract when moving in same direction."
+      ],
+      importantPoints: ["Convert km/h to m/s by multiplying with (5/18)."],
+      examples: ["Two trains 150m and 200m long moving in opposite directions at 54 km/h and 36 km/h."],
+      algorithmSteps: ["1. Convert units to SI (m/s).", "2. Calculate total distance = length1 + length2.", "3. Calculate relative speed = speed1 + speed2.", "4. Time = Distance / Relative Speed."],
+      codeSnippets: [
+        {
+          language: "python",
+          title: "Python Relative Speed Calculator",
+          code: `def time_to_cross(l1, l2, s1_kmh, s2_kmh):\n    total_dist = l1 + l2 # meters\n    rel_speed_ms = (s1_kmh + s2_kmh) * (5 / 18) # m/s\n    return total_dist / rel_speed_ms\n\nprint("Cross time:", time_to_cross(150, 200, 54, 36), "seconds")`,
+          explanation: "Calculates time taken for two trains to cross each other."
+        }
+      ],
+      timeComplexity: "O(1) formula calculation",
+      spaceComplexity: "O(1) auxiliary space",
+      keyTakeaways: ["Always double check unit consistency (meters vs kilometers, seconds vs hours)."],
+      commonMistakes: ["Subtracting speeds when moving in opposite directions instead of adding."]
+    }
+  },
+
+  // ─── COA UNIT 1 TOPIC ──────────────────────────────────────────────────────
+  {
+    topicId: "instruction-set-architecture",
+    chapterId: "coa-u1-c1",
+    unitId: "coa",
+    subjectId: "coa",
+    topicNumber: 1,
+    title: "Instruction Set Architecture & Von Neumann Model",
+    estimatedMinutes: 25,
+    difficulty: "Beginner",
+    summary: "Von Neumann architecture, fetch-decode-execute cycle, registers, memory bus, and CISC vs RISC processors.",
+    subtopics: ["Von Neumann Architecture", "Fetch-Decode-Execute Cycle", "RISC vs CISC", "ALU & Registers"],
+    content: {
+      introduction: "Computer Organization defines the hardware implementation of the Instruction Set Architecture (ISA).",
+      concepts: [
+        "Von Neumann Model: Shared memory storing both data and program instructions.",
+        "Fetch-Decode-Execute Cycle: CPU reads instruction from memory (PC), decodes opcode, and executes in ALU."
+      ],
+      importantPoints: ["Von Neumann bottleneck occurs due to shared bus for data and instructions."],
+      examples: ["MIPS 32-bit R-type instruction execution in ALU."],
+      algorithmSteps: ["1. Fetch instruction from address in Program Counter (PC).", "2. Increment PC.", "3. Decode instruction opcode.", "4. Execute in ALU."],
+      codeSnippets: [
+        {
+          language: "cpp",
+          title: "C++ CPU Fetch-Execute Simulation",
+          code: `struct CPU {\n    int PC = 0;\n    int registers[8] = {0};\n    void step(int instruction) {\n        int opcode = (instruction >> 12) & 0xF;\n        int reg1 = (instruction >> 8) & 0xF;\n        int reg2 = instruction & 0xFF;\n        if (opcode == 1) registers[reg1] += reg2; // ADD\n        PC++;\n    }\n};`,
+          explanation: "Basic simulation of CPU instruction fetch-decode-execute step."
+        }
+      ],
+      timeComplexity: "O(1) clock cycle step per instruction pipeline stage",
+      spaceComplexity: "O(R) register file memory",
+      keyTakeaways: ["Pipelining improves CPU instruction throughput by overlapping execution stages."],
+      commonMistakes: ["Confusing RISC simple single-cycle instructions with CISC complex instructions."]
+    }
+  },
+
+  // ─── SOFTWARE ENGINEERING UNIT 1 TOPIC ─────────────────────────────────────
+  {
+    topicId: "sdlc-agile-scrum",
+    chapterId: "se-u1-c1",
+    unitId: "se",
+    subjectId: "software-engineering",
+    topicNumber: 1,
+    title: "Software Development Life Cycle (SDLC) & Agile Scrum",
+    estimatedMinutes: 20,
+    difficulty: "Beginner",
+    summary: "Waterfall vs Agile methodology, Scrum roles (Product Owner, Scrum Master, Team), Sprints, and User Stories.",
+    subtopics: ["SDLC Phases", "Agile Manifesto Values", "Scrum Roles & Ceremonies", "Sprint Backlog"],
+    content: {
+      introduction: "Software Engineering applies structured processes to design, develop, test, and maintain large-scale software systems.",
+      concepts: [
+        "Waterfall Model: Sequential phases (Requirements -> Design -> Implementation -> Verification -> Maintenance).",
+        "Agile Methodology: Iterative development delivering working software increments in 2-4 week Sprints."
+      ],
+      importantPoints: ["Agile prioritizes responding to change over following a rigid plan."],
+      examples: ["Planning a 2-week Sprint backlog for LearnX feature release."],
+      algorithmSteps: ["1. Backlog Grooming.", "2. Sprint Planning.", "3. Daily Standup (15 min).", "4. Sprint Review & Retrospective."],
+      codeSnippets: [
+        {
+          language: "python",
+          title: "Python User Story Velocity Calculator",
+          code: `def calculate_sprint_velocity(completed_story_points):\n    return sum(completed_story_points) / len(completed_story_points)\n\npoints = [24, 30, 28, 32]\nprint("Average Velocity:", calculate_sprint_velocity(points), "points/sprint")`,
+          explanation: "Calculates average team velocity across past Agile sprints."
+        }
+      ],
+      timeComplexity: "O(1) velocity computation",
+      spaceComplexity: "O(1) memory overhead",
+      keyTakeaways: ["Daily Standups focus on: what I did yesterday, what I will do today, and any blockers."],
+      commonMistakes: ["Treating Sprints as mini-waterfall phases within a 2-week cycle."]
     }
   }
 ];
+
