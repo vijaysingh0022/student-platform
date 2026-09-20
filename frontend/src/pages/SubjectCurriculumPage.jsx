@@ -174,7 +174,7 @@ const SubjectCurriculumPage = () => {
 
               {/* Quick Unit Navigation List */}
               <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Unit Navigation</div>
+                <div className="text-xs font-black text-slate-400 uppercase tracking-wider">Units Menu</div>
                 <div className="space-y-1">
                   {units.map((u) => (
                     <button
@@ -191,6 +191,13 @@ const SubjectCurriculumPage = () => {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Illustration Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 via-sky-50 to-blue-50 border border-indigo-100 text-center space-y-2">
+                <div className="text-3xl">🎓</div>
+                <div className="text-xs font-black text-slate-900">A better version of you is loading...</div>
+                <div className="text-[10px] font-medium text-slate-500">Keep learning one topic every day!</div>
               </div>
             </div>
           </div>

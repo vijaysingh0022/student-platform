@@ -182,29 +182,33 @@ const TopicLearningPage = () => {
           )}
         </div>
 
-        {/* ─── 6 TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          {[
-            { id: "content", label: "📖 Content", icon: "📌" },
-            { id: "examples", label: "💡 Examples", icon: "💡" },
-            { id: "code", label: "💻 Code", icon: "💻" },
-            { id: "visualisation", label: "🎨 Visualisation", icon: "🎨" },
-            { id: "practice", label: "📝 Practice", icon: "📝" },
-            { id: "notes", label: "📓 Notes", icon: "📓" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all flex-shrink-0 flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-            >
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Grid Layout: Main Learning Content & Right Action Sidebar */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content (3 cols) */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* ─── 6 TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+              {[
+                { id: "content", label: "Content" },
+                { id: "examples", label: "Examples" },
+                { id: "code", label: "Code" },
+                { id: "visualisation", label: "Visualisation" },
+                { id: "practice", label: "Practice" },
+                { id: "notes", label: "Notes" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex-shrink-0 flex items-center gap-2 ${
+                    activeTab === tab.id
+                      ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
 
         {/* ─── TAB 1: CONTENT ──────────────────────────────────────────────────────── */}
         {activeTab === "content" && (
@@ -380,8 +384,77 @@ const TopicLearningPage = () => {
           </div>
         )}
 
-        {/* AI TUTOR INTEGRATED PANEL */}
-        <AITutorPanel topicTitle={topic.title} subjectName={breadcrumbs.subject.name} />
+          </div>
+
+          {/* Right Action Sidebar (1 col) matching reference screenshot */}
+          <div className="space-y-6 lg:col-span-1">
+            {/* Card 1: Mark your progress */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4 sticky top-24">
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Mark your progress</h4>
+
+              {!completedState ? (
+                <button
+                  id="mark-topic-completed-btn-side"
+                  onClick={handleMarkComplete}
+                  disabled={markingCompleted}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <span>✓ Mark as Read</span>
+                </button>
+              ) : (
+                <div className="w-full py-2 px-4 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs text-center border border-emerald-200">
+                  ✓ Marked as Read
+                </div>
+              )}
+
+              <p className="text-[11px] text-slate-500 font-medium text-center">
+                After reading, test your understanding.
+              </p>
+
+              <Link
+                to={`/learn/${subjectId}/${topicId}/quiz`}
+                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs text-center flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+              >
+                <span>📝 Start Questions</span>
+              </Link>
+            </div>
+
+            {/* Card 2: Quick Links */}
+            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Quick Links</h4>
+              <div className="space-y-2 text-xs font-bold text-slate-700">
+                <button
+                  onClick={() => window.print()}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
+                >
+                  <span>📥</span>
+                  <span>Download Notes (PDF)</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("notes")}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
+                >
+                  <span>📓</span>
+                  <span>Add to My Notes</span>
+                </button>
+                <button
+                  onClick={handleAskTutor}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
+                >
+                  <span>🤖</span>
+                  <span>Ask AI Tutor</span>
+                </button>
+                <Link
+                  to="/tutor"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
+                >
+                  <span>💬</span>
+                  <span>View Discussions</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* ─── COMPLETION & QUIZ CTA FOOTER ───────────────────────────────── */}
         <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-md space-y-4">

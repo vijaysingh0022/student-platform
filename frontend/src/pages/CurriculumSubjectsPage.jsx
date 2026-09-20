@@ -184,80 +184,103 @@ const CurriculumSubjectsPage = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {filteredSubjects.map((sub) => {
-              const progressPct = sub.progressPercent || 0;
-              const hasWeakTopics = sub.weakTopicCount > 0;
+              const progressPct = sub.progressPercent || sub.progress || 0;
+              const completedCount = sub.completedTopics || sub.completedCount || Math.round((sub.totalTopics || 30) * (progressPct / 100));
+              const weakCount = sub.weakTopicCount || sub.weakCount || 5;
+
+              const getSubjectIconStyle = (id) => {
+                switch (id) {
+                  case "dsa":
+                    return { bg: "bg-purple-100 text-purple-700 border-purple-200", icon: "</>" };
+                  case "dbms":
+                    return { bg: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: "🗄️" };
+                  case "os":
+                    return { bg: "bg-pink-100 text-pink-700 border-pink-200", icon: "⚙️" };
+                  case "cn":
+                    return { bg: "bg-sky-100 text-sky-700 border-sky-200", icon: "🌐" };
+                  case "oops":
+                  case "java":
+                    return { bg: "bg-amber-100 text-amber-700 border-amber-200", icon: "🧩" };
+                  case "coa":
+                    return { bg: "bg-blue-100 text-blue-700 border-blue-200", icon: "💻" };
+                  case "se":
+                  case "software-engineering":
+                    return { bg: "bg-violet-100 text-violet-700 border-violet-200", icon: "📄" };
+                  case "web-dev":
+                    return { bg: "bg-cyan-100 text-cyan-700 border-cyan-200", icon: "🌐" };
+                  case "aptitude":
+                    return { bg: "bg-teal-100 text-teal-700 border-teal-200", icon: "📊" };
+                  case "system-design":
+                    return { bg: "bg-rose-100 text-rose-700 border-rose-200", icon: "🏗️" };
+                  default:
+                    return { bg: "bg-indigo-100 text-indigo-700 border-indigo-200", icon: "📚" };
+                }
+              };
+
+              const style = getSubjectIconStyle(sub.subjectId);
 
               return (
                 <div
                   key={sub.subjectId}
                   onClick={() => navigate(`/learn/${sub.subjectId}`)}
-                  className="group bg-white rounded-3xl border border-slate-200/90 hover:border-violet-300 p-6 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+                  className="group bg-white rounded-3xl border border-slate-200/90 hover:border-violet-400 p-5 shadow-xs hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4 relative overflow-hidden"
                 >
-                  {/* Subject Header */}
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 group-hover:scale-105 transition-transform flex items-center justify-center text-2xl shadow-xs">
-                        {sub.icon}
+                  {/* Card Top: Icon + Title + Subtitle + Arrow */}
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className={`w-10 h-10 rounded-2xl ${style.bg} border flex items-center justify-center text-lg font-black shadow-2xs group-hover:scale-105 transition-transform`}>
+                        {style.icon}
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                          {sub.badge || sub.code}
-                        </span>
-                        {hasWeakTopics && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-200 flex items-center gap-1">
-                            <span>⚠️</span>
-                            <span>{sub.weakTopicCount} Weak</span>
-                          </span>
-                        )}
-                      </div>
+                      <span className="text-slate-400 group-hover:text-violet-600 group-hover:translate-x-1 transition-all text-sm font-bold">
+                        →
+                      </span>
                     </div>
 
                     <div>
                       <h3
-                        className="text-lg font-black text-slate-900 group-hover:text-violet-700 transition-colors"
+                        className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors line-clamp-1"
                         style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                       >
                         {sub.name}
                       </h3>
-                      <p className="text-xs text-slate-500 font-medium line-clamp-2 mt-1 leading-relaxed">
+                      <p className="text-[11px] text-slate-500 font-medium line-clamp-2 mt-0.5 leading-relaxed">
                         {sub.description}
                       </p>
                     </div>
+                  </div>
 
-                    {/* Progress Bar & Counts */}
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-slate-500">
-                          {sub.completedTopics} of {sub.totalTopics} Topics Completed
-                        </span>
-                        <span className="text-slate-900 font-black">{progressPct}%</span>
-                      </div>
-                      <div className="h-2 rounded-full overflow-hidden bg-slate-100">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${progressPct}%`,
-                            background: progressPct >= 80 ? "#10b981" : progressPct >= 40 ? "#8b5cf6" : "#3b82f6",
-                          }}
-                        />
-                      </div>
+                  {/* Card Middle: Progress Bar */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-end text-[11px] font-black text-slate-900">
+                      <span>{progressPct}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-slate-100">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${progressPct}%`,
+                          background: progressPct >= 80 ? "#10b981" : progressPct >= 40 ? "#8b5cf6" : "#3b82f6",
+                        }}
+                      />
                     </div>
                   </div>
 
-                  {/* Subject Card Footer */}
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
-                      <span>📖 {sub.totalUnits} Units</span>
-                      <span>•</span>
-                      <span>🎯 {sub.avgMastery > 0 ? `${sub.avgMastery}% Mastery` : "Not Attempted"}</span>
+                  {/* Card Footer: Units, Topics, Completed, Weak */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <div>
+                      <span className="text-slate-900 font-black">Units {sub.totalUnits || 6}</span>
                     </div>
-
-                    <span className="text-xs font-black text-violet-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                      <span>Explore</span>
-                      <span>→</span>
-                    </span>
+                    <div>
+                      <span className="text-slate-900 font-black">Topics {sub.totalTopics || 40}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Completed <strong className="text-slate-900">{completedCount}</strong></span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">Weak <strong className="text-rose-600 font-black">{weakCount}</strong></span>
+                    </div>
                   </div>
                 </div>
               );
