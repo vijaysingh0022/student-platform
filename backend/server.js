@@ -18,6 +18,8 @@ import careerRoutes from "./routes/careerRoutes.js";
 import securityRoutes from "./routes/securityRoutes.js";
 import privacyRoutes from "./routes/privacyRoutes.js";
 import systemRoutes from "./routes/systemRoutes.js";
+import learningRoutes from "./routes/learningRoutes.js";
+import noteRoutes from "./routes/noteRoutes.js";
 
 import {
   enterpriseSecurityHeaders,
@@ -79,7 +81,16 @@ app.use("/api/prediction", predictionRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/institution", institutionRoutes);
 app.use("/api/offline", offlineRoutes);
-app.use("/api/career", careerRoutes);
+app.use("/api/learning", learningRoutes);
+app.use("/api/notes", noteRoutes);
+
+// Alias mounts for direct REST conventions requested by prompt
+app.use("/api/subjects", learningRoutes);
+app.use("/api/units", learningRoutes);
+app.use("/api/chapters", learningRoutes);
+app.use("/api/topics", learningRoutes);
+app.use("/api/progress", learningRoutes);
+app.use("/api/practice", learningRoutes);
 
 // Serve static frontend files (built with Vite) on Render / production
 const distPath = path.join(__dirname, "../frontend/dist");

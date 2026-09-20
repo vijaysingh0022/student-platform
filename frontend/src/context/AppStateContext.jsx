@@ -36,6 +36,7 @@ export const AppStateProvider = ({ children }) => {
   const [testVersion, setTestVersion] = useState(0);
   const [careerVersion, setCareerVersion] = useState(0);
   const [roadmapVersion, setRoadmapVersion] = useState(0);
+  const [learningVersion, setLearningVersion] = useState(0);
 
   // ── De-bounce refs ────────────────────────────────────────────────────────
   const debounceRef = useRef({});
@@ -43,6 +44,25 @@ export const AppStateProvider = ({ children }) => {
   const debounced = useCallback((key, fn, delay = 400) => {
     if (debounceRef.current[key]) clearTimeout(debounceRef.current[key]);
     debounceRef.current[key] = setTimeout(fn, delay);
+  }, []);
+
+  // ── refreshLearning ───────────────────────────────────────────────────────
+  const refreshLearning = useCallback(() => {
+    setLearningVersion((v) => v + 1);
+  }, []);
+
+  // ── onTopicCompleted — called when user finishes a topic ──────────────────
+  const onTopicCompleted = useCallback((topicId, subjectId) => {
+    setLearningVersion((v) => v + 1);
+    refreshCareer();
+  }, []);
+
+  // ── onTopicQuizSubmitted — called when user finishes a topic quiz ─────────
+  const onTopicQuizSubmitted = useCallback((topicId, subjectId, quizResult) => {
+    setLearningVersion((v) => v + 1);
+    setTestVersion((v) => v + 1);
+    refreshCareer();
+    refreshPrediction();
   }, []);
 
   // ── refreshTests ──────────────────────────────────────────────────────────
@@ -167,19 +187,21 @@ export const AppStateProvider = ({ children }) => {
         roadmaps,
         totalTestsTaken,
         subjectAverages,
-        jobReadinessScore,
-        roadmapProgress,
         testVersion,
         careerVersion,
         roadmapVersion,
+        learningVersion,
         refreshing,
         onTestSubmitted,
         onRoadmapDayToggled,
         onResumeAnalyzed,
+        onTopicCompleted,
+        onTopicQuizSubmitted,
         refreshTests,
         refreshCareer,
         refreshPrediction,
         refreshRoadmap,
+        refreshLearning,
       }}
     >
       {children}

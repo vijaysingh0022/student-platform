@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
-import api from "../services/api.js";
+import api, { getStudentLearningDashboard } from "../services/api.js";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, AreaChart, Area
 } from "recharts";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useOffline } from "../context/OfflineContext.jsx";
 import { useAppState } from "../context/AppStateContext.jsx";
 import RoadmapVisualizer from "../components/RoadmapVisualizer.jsx";
 import { LearnXLogo, LearnXIcon } from "../components/LearnXLogo.jsx";
+import GamificationWidget from "../components/GamificationWidget.jsx";
 
 const SUBJECTS = [
   { id: "DSA", name: "Data Structures & Algos", icon: "⚡", totalTopics: 6, tag: "Must Prepare" },
@@ -115,9 +116,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const Dashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { isOnline, isLowDataMode } = useOffline();
-  const { testVersion, onRoadmapDayToggled, jobReadinessScore } = useAppState();
+  const { testVersion, learningVersion, onRoadmapDayToggled, jobReadinessScore } = useAppState();
   const [selectedSubject, setSelectedSubject] = useState(location.state?.subject || "DBMS");
 
   useEffect(() => {
@@ -128,6 +130,7 @@ const Dashboard = () => {
   const [skillGap, setSkillGap] = useState(null);
   const [results, setResults] = useState([]);
   const [roadmap, setRoadmap] = useState(null);
+  const [learningData, setLearningData] = useState(null);
   const [generatingRoadmap, setGeneratingRoadmap] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -149,12 +152,38 @@ const Dashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [skillGapRes, resultsRes] = await Promise.all([
+        const [skillGapRes, resultsRes, learningRes] = await Promise.all([
           api.get(`/tests/skill-gap/${selectedSubject}`).catch(() => ({ data: null })),
-          api.get("/tests/results"),
+          api.get("/tests/results").catch(() => ({ data: [] })),
+          getStudentLearningDashboard().catch(() => ({ data: null }))
         ]);
         setSkillGap(skillGapRes.data);
         setResults(resultsRes.data || []);
+        if (learningRes?.data) {
+          // Normalize API response to a consistent internal shape
+          const raw = learningRes.data;
+          setLearningData({
+            continueLearning: raw.continueLearning || null,
+            weakTopics: (raw.weakTopics || []).map((wt) => ({
+              ...wt,
+              topicTitle: wt.topicTitle || wt.title || wt.topicId,
+            })),
+            recommendedNext: raw.recommendations?.[0] ? {
+              ...raw.recommendations[0],
+              topicTitle: raw.recommendations[0].topicTitle || raw.recommendations[0].title,
+            } : null,
+            summary: {
+              totalTopicsRead: raw.stats?.readTopics || raw.stats?.completedTopics || 0,
+              totalTopics: raw.stats?.totalTopics || 0,
+              totalTopicsCompleted: raw.stats?.completedTopics || 0,
+              totalQuizzesTaken: raw.stats?.quizzesTaken || 0,
+              strongTopicsCount: raw.stats?.strongTopicsCount || 0,
+              needsPracticeCount: raw.stats?.needsPracticeCount || 0,
+              weakTopicsCount: raw.stats?.weakTopicsCount || raw.weakTopics?.length || 0,
+              overallProgressPercent: raw.stats?.overallProgressPercent || 0,
+            },
+          });
+        }
         
         let loadedRoadmap = null;
         try {
@@ -192,8 +221,8 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  // Re-fetch when subject changes OR when a new test is submitted (testVersion increments)
-  }, [selectedSubject, testVersion]);
+  // Re-fetch when subject changes, when a test is submitted, or when learning progress changes
+  }, [selectedSubject, testVersion, learningVersion]);
 
   // Auto-scroll to Roadmap when requested
   useEffect(() => {
@@ -378,7 +407,252 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* 2. Subject Mastery Selector & Quick-Start Cards */}
+      {/* Gamification Level, XP, Streak & Badges Bar */}
+      <GamificationWidget xp={studentXP} streak={streakDays} />
+
+      {/* 2. NEW CORE LEARNING SYSTEM: Continue Learning, Weak Topics & Subject Mastery */}
+      <div className="space-y-4" id="core-learning-system">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-extrabold text-indigo-800 mb-1">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+              <span>Structured Curriculum Track</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Core Learning & Subject Mastery
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Self-paced structured learning: Subject ➔ Unit ➔ Chapter ➔ Topic ➔ Diagnostic Quizzes ➔ AI Tutoring.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/learn"
+              id="dashboard-explore-curriculum-btn"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all inline-flex items-center gap-1.5"
+            >
+              <span>📚 Explore Full Curriculum (8 Subjects)</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Learning Quick Stats Bar */}
+        {learningData?.summary && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Topics Read</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-slate-900">{learningData.summary.totalTopicsRead || 0}</span>
+                <span className="text-[10px] text-slate-400">/ {learningData.summary.totalTopics || 8}</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-indigo-600">{learningData.summary.totalTopicsCompleted || 0}</span>
+                <span className="text-[10px] text-slate-400">topics</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quizzes Taken</span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-violet-600">{learningData.summary.totalQuizzesTaken || 0}</span>
+                <span className="text-[10px] text-slate-400">tests</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                <span>🟢</span> Strong (≥80%)
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-emerald-700">{learningData.summary.strongTopicsCount || 0}</span>
+                <span className="text-[10px] text-emerald-600">Mastered</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
+                <span>🟡</span> Needs Practice
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-amber-700">{learningData.summary.needsPracticeCount || 0}</span>
+                <span className="text-[10px] text-amber-600">60–79%</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-rose-50/60 border border-rose-200 shadow-xs flex flex-col justify-between">
+              <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1">
+                <span>🔴</span> Weak Topics
+              </span>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className="text-xl font-extrabold text-rose-700">{learningData.summary.weakTopicsCount || 0}</span>
+                <span className="text-[10px] text-rose-600">&lt;60%</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Continue Learning & Weak Topics Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Left / Main 2 cols: Continue Learning Banner */}
+          <div className="lg:col-span-2 rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-900 via-slate-900 to-violet-950 p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between gap-6">
+            <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="relative z-10 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-500 text-white uppercase tracking-wider">
+                  📖 Continue Learning
+                </span>
+                {learningData?.continueLearning ? (
+                  <span className="text-xs font-semibold text-indigo-200">
+                    {learningData.continueLearning.subjectName}
+                  </span>
+                ) : (
+                  <span className="text-xs font-semibold text-indigo-200">Recommended Next Track</span>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  {learningData?.continueLearning
+                    ? learningData.continueLearning.topicTitle
+                    : learningData?.recommendedNext
+                    ? learningData.recommendedNext.topicTitle
+                    : "Arrays & Dynamic Memory Allocation"}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+                  {learningData?.continueLearning
+                    ? `${learningData.continueLearning.unitTitle || ""} • ${learningData.continueLearning.chapterTitle || ""}`
+                    : "Master high-frequency concepts with structured theory, multi-language code implementations (C++, Java, Python, JS), and diagnostic quizzes."}
+                </p>
+              </div>
+            </div>
+
+            <div className="relative z-10 flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
+              {(() => {
+                const targetSub = learningData?.continueLearning?.subjectId || learningData?.recommendedNext?.subjectId || "dsa";
+                const targetTopic = learningData?.continueLearning?.topicId || learningData?.recommendedNext?.topicId || "dsa-arrays-intro";
+                const targetTitle = learningData?.continueLearning?.topicTitle || learningData?.recommendedNext?.topicTitle || "Data Structures";
+
+                return (
+                  <>
+                    <Link
+                      to={`/learn/${targetSub}/${targetTopic}`}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition-all inline-flex items-center gap-2"
+                    >
+                      <span>📖 Learn Topic</span>
+                      <span>→</span>
+                    </Link>
+                    <Link
+                      to={`/learn/${targetSub}/${targetTopic}/quiz`}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-indigo-100 bg-white/10 hover:bg-white/20 border border-white/15 transition-all inline-flex items-center gap-2"
+                    >
+                      <span>📝 Take Diagnostic Quiz</span>
+                    </Link>
+                    <Link
+                      to={`/tutor?topic=${encodeURIComponent(targetTitle)}`}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-black/30 hover:bg-black/40 border border-white/10 transition-all inline-flex items-center gap-2"
+                    >
+                      <span>🤖 Ask AI Tutor</span>
+                    </Link>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Right 1 col: Your Weak Topics Diagnostic Box */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎯</span>
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                    Your Weak Topics
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                  {learningData?.weakTopics?.length || 0} Flagged
+                </span>
+              </div>
+
+              {learningData?.weakTopics && learningData.weakTopics.length > 0 ? (
+                <div className="space-y-3 mt-3">
+                  {learningData.weakTopics.slice(0, 3).map((wt) => (
+                    <div key={wt.topicId} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-violet-300 transition-all space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold text-slate-900 leading-snug">{wt.topicTitle}</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">{wt.subjectName}</p>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 shrink-0">
+                          {wt.masteryPercentage || wt.lastAttemptScore || 0}%
+                        </span>
+                      </div>
+
+                      {wt.weakConcepts && wt.weakConcepts.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {wt.weakConcepts.slice(0, 2).map((c) => (
+                            <span key={c} className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                              {c}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1 text-[11px] font-bold">
+                        <Link
+                          to={`/learn/${wt.subjectId}/${wt.topicId}`}
+                          className="text-indigo-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Revise</span>
+                        </Link>
+                        <span className="text-slate-300">•</span>
+                        <Link
+                          to={`/learn/${wt.subjectId}/${wt.topicId}/quiz`}
+                          className="text-violet-600 hover:underline inline-flex items-center gap-1"
+                        >
+                          <span>Practice</span>
+                        </Link>
+                        <span className="text-slate-300">•</span>
+                        <Link
+                          to={`/tutor?topic=${encodeURIComponent(wt.topicTitle)}&weakConcepts=${encodeURIComponent(wt.weakConcepts?.join(", ") || "")}`}
+                          className="text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
+                        >
+                          <span>AI Tutor</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 text-center text-slate-400 text-xs mt-2">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-xl mb-2">
+                    ✓
+                  </div>
+                  <p className="font-bold text-slate-700">No Weak Topics Flagged!</p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Take topic quizzes to identify diagnostic concept weaknesses and track your mastery score.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/learn"
+              className="text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 pt-2 border-t border-slate-100 block"
+            >
+              View All 8 Subject Modules →
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Subject Mastery Selector & Quick-Start Cards */}
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>

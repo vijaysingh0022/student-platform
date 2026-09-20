@@ -16,6 +16,10 @@ import OfflineLearning from "./pages/OfflineLearning.jsx";
 import QuizGenerator from "./pages/QuizGenerator.jsx";
 import SecurityGovernance from "./pages/SecurityGovernance.jsx";
 import RoadmapPage from "./pages/RoadmapPage.jsx";
+import CurriculumSubjectsPage from "./pages/CurriculumSubjectsPage.jsx";
+import SubjectCurriculumPage from "./pages/SubjectCurriculumPage.jsx";
+import TopicLearningPage from "./pages/TopicLearningPage.jsx";
+import TopicQuizPage from "./pages/TopicQuizPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -150,6 +154,40 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoadmapPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Core Learning System Routes */}
+            <Route
+              path="/learn"
+              element={
+                <ProtectedRoute>
+                  <CurriculumSubjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn/:subjectId"
+              element={
+                <ProtectedRoute>
+                  <SubjectCurriculumPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn/:subjectId/:topicId"
+              element={
+                <ProtectedRoute>
+                  <TopicLearningPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn/:subjectId/:topicId/quiz"
+              element={
+                <ProtectedRoute>
+                  <TopicQuizPage />
                 </ProtectedRoute>
               }
             />

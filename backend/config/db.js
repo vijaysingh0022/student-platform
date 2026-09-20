@@ -1,13 +1,23 @@
 import mongoose from "mongoose";
 import Question from "../models/Question.js";
 import User from "../models/User.js";
+import { Subject, Unit, Chapter, Topic } from "../models/Curriculum.js";
+import TopicQuestion from "../models/TopicQuestion.js";
 import { PLACEMENT_QUESTIONS } from "../seed/placementQuestionsData.js";
+import {
+  CURRICULUM_SUBJECTS,
+  CURRICULUM_UNITS,
+  CURRICULUM_CHAPTERS,
+  CURRICULUM_TOPICS,
+} from "../seed/curriculumData.js";
+import { TOPIC_QUESTIONS } from "../seed/topicQuestionsData.js";
 
 let isConnected = false;
 let connectionPromise = null;
 
 export const autoSeed = async () => {
   try {
+    // 1. Placement assessment questions
     const qCount = await Question.countDocuments();
     if (qCount < PLACEMENT_QUESTIONS.length) {
       await Question.deleteMany({});
@@ -15,6 +25,7 @@ export const autoSeed = async () => {
       console.log(`✅ Auto-seeded ${PLACEMENT_QUESTIONS.length} assessment questions across CSE domains`);
     }
 
+    // 2. Demo Student User
     const userCount = await User.countDocuments();
     if (userCount === 0) {
       await User.create({
@@ -29,6 +40,43 @@ export const autoSeed = async () => {
         role: "student",
       });
       console.log("✅ Auto-seeded demo student (demo@example.com)");
+    }
+
+    // 3. Curriculum Subjects, Units, Chapters, Topics
+    const subjectCount = await Subject.countDocuments();
+    if (subjectCount < CURRICULUM_SUBJECTS.length) {
+      await Subject.deleteMany({});
+      await Subject.insertMany(CURRICULUM_SUBJECTS);
+      console.log(`✅ Auto-seeded ${CURRICULUM_SUBJECTS.length} curriculum subjects`);
+    }
+
+    const unitCount = await Unit.countDocuments();
+    if (unitCount < CURRICULUM_UNITS.length) {
+      await Unit.deleteMany({});
+      await Unit.insertMany(CURRICULUM_UNITS);
+      console.log(`✅ Auto-seeded ${CURRICULUM_UNITS.length} curriculum units`);
+    }
+
+    const chapterCount = await Chapter.countDocuments();
+    if (chapterCount < CURRICULUM_CHAPTERS.length) {
+      await Chapter.deleteMany({});
+      await Chapter.insertMany(CURRICULUM_CHAPTERS);
+      console.log(`✅ Auto-seeded ${CURRICULUM_CHAPTERS.length} curriculum chapters`);
+    }
+
+    const topicCount = await Topic.countDocuments();
+    if (topicCount < CURRICULUM_TOPICS.length) {
+      await Topic.deleteMany({});
+      await Topic.insertMany(CURRICULUM_TOPICS);
+      console.log(`✅ Auto-seeded ${CURRICULUM_TOPICS.length} curriculum topics`);
+    }
+
+    // 4. Topic-specific concept questions
+    const topicQCount = await TopicQuestion.countDocuments();
+    if (topicQCount < TOPIC_QUESTIONS.length) {
+      await TopicQuestion.deleteMany({});
+      await TopicQuestion.insertMany(TOPIC_QUESTIONS);
+      console.log(`✅ Auto-seeded ${TOPIC_QUESTIONS.length} topic-specific diagnostic questions`);
     }
   } catch (err) {
     console.warn("Auto-seed info:", err.message);

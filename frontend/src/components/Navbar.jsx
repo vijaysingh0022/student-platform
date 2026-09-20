@@ -95,6 +95,9 @@ const Navbar = () => {
   };
 
   const isActive = (path) => {
+    if (path === "/learn") {
+      return location.pathname.startsWith("/learn");
+    }
     if (path === "/test/DSA" || path === "/assessment") {
       return location.pathname.startsWith("/test") || location.pathname === "/assessment";
     }
@@ -105,7 +108,7 @@ const Navbar = () => {
   };
 
   // Check if any sublink in the More dropdown is active
-  const isMoreActive = ["/roadmap", "/placement-readiness", "/teacher-dashboard", "/institution-dashboard", "/security", "/offline-learning"].includes(
+  const isMoreActive = ["/learn", "/roadmap", "/placement-readiness", "/teacher-dashboard", "/institution-dashboard", "/security", "/offline-learning"].includes(
     location.pathname
   );
 
@@ -152,6 +155,22 @@ const Navbar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
               <span>Dashboard</span>
+            </Link>
+
+            {/* Learn / Curriculum */}
+            <Link
+              to="/learn"
+              id="nav-learn"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                isActive("/learn")
+                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <span>Learn</span>
             </Link>
 
             {/* Take Test */}
@@ -270,6 +289,25 @@ const Navbar = () => {
                     boxShadow: "0 20px 40px -15px rgba(15,23,42,0.12), 0 0 1px 1px rgba(15,23,42,0.05)",
                   }}
                 >
+                  <Link
+                    to="/learn"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname.startsWith("/learn")
+                        ? "bg-violet-50 text-violet-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">Core Learning System</div>
+                      <div className="text-[11px] text-slate-400 font-medium">8 CSE Subjects, Quizzes & Mastery</div>
+                    </div>
+                  </Link>
+
                   <Link
                     to="/roadmap"
                     className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
@@ -695,6 +733,15 @@ const Navbar = () => {
                   }`}
                 >
                   <span>⚡</span> Dashboard
+                </Link>
+                <Link
+                  to="/learn"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-semibold ${
+                    isActive("/learn") ? "bg-violet-100 text-violet-900 font-bold" : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>📚</span> Learn
                 </Link>
                 <Link
                   to="/test/DSA"

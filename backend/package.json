@@ -8,7 +8,8 @@
     "start": "node index.js",
     "build": "echo 'Backend ready'",
     "dev": "nodemon server.js",
-    "seed": "node seed/seedQuestions.js"
+    "seed": "node seed/seedQuestions.js",
+    "seed:curriculum": "node seed/seedAllCurriculum.js"
   },
   "engines": {
     "node": ">=18"

@@ -123,6 +123,43 @@ export const getInteropSpec = async (config = {}) => {
   return api.get("/system/interop-spec", config);
 };
 
+// ─── Core Learning System APIs ──────────────────────────────────────────────
+export const getCurriculumSubjects = async (config = {}) => {
+  return api.get("/learning/subjects", config);
+};
+
+export const getSubjectCurriculum = async (subjectId, config = {}) => {
+  return api.get(`/learning/subjects/${subjectId}`, config);
+};
+
+export const getTopicDetails = async (topicId, config = {}) => {
+  return api.get(`/learning/topics/${topicId}`, config);
+};
+
+export const markTopicAsRead = async (topicId, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/read`, {}, config);
+};
+
+export const markTopicAsCompleted = async (topicId, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/complete`, {}, config);
+};
+
+export const getTopicQuizQuestions = async (topicId, count = 10, config = {}) => {
+  return api.get(`/learning/topics/${topicId}/quiz?count=${count}`, config);
+};
+
+export const submitTopicQuizAnswers = async (topicId, payload, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/quiz/submit`, payload, config);
+};
+
+export const getStudentLearningDashboard = async (config = {}) => {
+  return api.get("/learning/student/dashboard-summary", config);
+};
+
+export const getFacultyLearningStats = async (config = {}) => {
+  return api.get("/learning/faculty/analytics", config);
+};
+
 // Legacy SSO fallback
 export const ssoLogin = async (provider, config = {}) => {
   return api.post("/auth/sso", { provider }, config);
