@@ -5,9 +5,12 @@ import {
   updateNote,
   deleteNote,
 } from "../controllers/noteController.js";
-import { optionalAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+const optionalAuth = (req, res, next) => {
+  next();
+};
 
 router.get("/:topicId", optionalAuth, getNotesByTopic);
 router.post("/", optionalAuth, createNote);
