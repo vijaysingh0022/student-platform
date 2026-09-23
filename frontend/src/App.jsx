@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -24,6 +24,9 @@ import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
 function App() {
+  const location = useLocation();
+  const isLandingPage = location.pathname === "/";
+
   return (
     <OfflineProvider>
       <div className="relative min-h-screen">
@@ -33,7 +36,8 @@ function App() {
 
         {/* Main content */}
         <div className="relative z-10">
-          <Navbar />
+          {/* Global Navbar — hidden on landing page which has its own navbar */}
+          {!isLandingPage && <Navbar />}
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
