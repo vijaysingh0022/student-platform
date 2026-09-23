@@ -25,7 +25,12 @@ import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
 function App() {
   const location = useLocation();
-  const isLandingPage = location.pathname === "/";
+
+  // Pages that have their own built-in navbar — suppress the global one
+  const pagesWithOwnNavbar = ["/", "/sign-in", "/sign-up", "/login", "/register", "/admin-login"];
+  const showGlobalNavbar = !pagesWithOwnNavbar.some(
+    (path) => location.pathname === path || location.pathname.startsWith("/sign-in") || location.pathname.startsWith("/sign-up")
+  );
 
   return (
     <OfflineProvider>
@@ -36,8 +41,8 @@ function App() {
 
         {/* Main content */}
         <div className="relative z-10">
-          {/* Global Navbar — hidden on landing page which has its own navbar */}
-          {!isLandingPage && <Navbar />}
+          {/* Global Navbar — hidden on pages that have their own built-in header */}
+          {showGlobalNavbar && <Navbar />}
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<LandingPage />} />
