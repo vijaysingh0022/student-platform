@@ -6,6 +6,61 @@ import { useAppState } from "../context/AppStateContext.jsx";
 
 const DIFF_COLORS = { "Hard": "text-rose-700 bg-rose-50 border-rose-200", "Medium": "text-amber-700 bg-amber-50 border-amber-200", "Easy": "text-emerald-700 bg-emerald-50 border-emerald-200" };
 
+// Grouped career roles for organized dropdown
+const ROLE_CATEGORIES = [
+  {
+    group: "🖥️ Software Development",
+    roles: [
+      "Full Stack Software Engineer",
+      "Frontend / UI Engineer",
+      "Backend Systems Engineer",
+      "Software Architect / Tech Lead",
+      "Mobile App Developer (Android/iOS)",
+      "Game Developer",
+    ],
+  },
+  {
+    group: "📊 Data, AI & Analytics",
+    roles: [
+      "AI & Machine Learning Engineer",
+      "Data Scientist",
+      "Data Engineer & Analytics",
+      "Database Administrator (DBA)",
+    ],
+  },
+  {
+    group: "☁️ Cloud, DevOps & Infrastructure",
+    roles: [
+      "DevOps & Cloud Engineer",
+      "Cloud Solutions Architect",
+      "Site Reliability Engineer (SRE)",
+      "Network Engineer",
+    ],
+  },
+  {
+    group: "🔐 Security & Embedded",
+    roles: [
+      "Cybersecurity Engineer",
+      "Embedded Systems / IoT Engineer",
+      "QA / Test Automation Engineer",
+    ],
+  },
+  {
+    group: "🌐 Emerging & Specialized",
+    roles: [
+      "Blockchain / Web3 Developer",
+      "Product Manager (Technical)",
+      "Scaler / Competitive Programmer",
+    ],
+  },
+  {
+    group: "🎯 Career Stage",
+    roles: [
+      "Freshers / FAANG SDE Aspirant",
+    ],
+  },
+];
+
 const CareerReadiness = () => {
   const { user } = useAuth();
   const { careerVersion, onResumeAnalyzed } = useAppState();
@@ -241,10 +296,14 @@ const CareerReadiness = () => {
             value={targetRole}
             onChange={(e) => handleRoleChange(e.target.value)}
             disabled={updatingRole}
-            className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 border border-slate-300 text-slate-900 focus:outline-none focus:border-violet-600 cursor-pointer"
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 border border-slate-300 text-slate-900 focus:outline-none focus:border-violet-600 cursor-pointer max-w-[240px]"
           >
-            {(data?.availableRoles || ["Full Stack Software Engineer"]).map((role) => (
-              <option key={role} value={role}>{role}</option>
+            {ROLE_CATEGORIES.map((cat) => (
+              <optgroup key={cat.group} label={cat.group}>
+                {cat.roles.map((role) => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </optgroup>
             ))}
           </select>
           {updatingRole && <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin border-violet-600" />}
