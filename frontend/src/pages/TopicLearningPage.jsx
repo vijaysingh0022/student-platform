@@ -25,6 +25,7 @@ const TopicLearningPage = () => {
     let isMounted = true;
     const fetchTopic = async () => {
       setLoading(true);
+      setActiveTab("content");
       try {
         const res = await getTopicDetails(topicId);
         if (isMounted) {
@@ -107,6 +108,38 @@ const TopicLearningPage = () => {
     return acc;
   }, {});
 
+  // Determine if this topic requires/supports algorithm or data structure visualization
+  const hasVisualization = Boolean(
+    topic?.hasVisualization ||
+    content?.hasVisualization ||
+    (() => {
+      const title = (topic?.title || "").toLowerCase();
+      const subId = (subjectId || "").toLowerCase();
+      const subtopics = (topic?.subtopics || []).join(" ").toLowerCase();
+      const concepts = (content?.concepts || []).join(" ").toLowerCase();
+      const combined = `${title} ${subtopics} ${concepts}`;
+
+      const visualKeywords = [
+        "sort", "search", "tree", "graph", "stack", "queue", "array", "linked list",
+        "heap", "traversal", "binary search", "bfs", "dfs", "dijkstra", "scheduling",
+        "round robin", "page replacement", "fifo", "lru", "sliding window", "two pointer",
+        "hashing", "hash table", "matrix", "recursion", "trie", "pathfinding", "visualizer",
+        "partition", "bubble", "quick", "merge sort", "insertion sort"
+      ];
+
+      return visualKeywords.some(keyword => combined.includes(keyword)) || subId === "dsa";
+    })()
+  );
+
+  const tabs = [
+    { id: "content", label: "Content" },
+    { id: "examples", label: "Examples" },
+    { id: "code", label: "Code" },
+    ...(hasVisualization ? [{ id: "visualisation", label: "Visualisation" }] : []),
+    { id: "practice", label: "Practice" },
+    { id: "notes", label: "Notes" },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
@@ -186,16 +219,9 @@ const TopicLearningPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content (3 cols) */}
           <div className="lg:col-span-3 space-y-6">
-            {/* ─── 6 TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
+            {/* ─── TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
-              {[
-                { id: "content", label: "Content" },
-                { id: "examples", label: "Examples" },
-                { id: "code", label: "Code" },
-                { id: "visualisation", label: "Visualisation" },
-                { id: "practice", label: "Practice" },
-                { id: "notes", label: "Notes" },
-              ].map((tab) => (
+              {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -363,8 +389,8 @@ const TopicLearningPage = () => {
           </div>
         )}
 
-        {/* ─── TAB 4: VISUALISATION ───────────────────────────────────────────────── */}
-        {activeTab === "visualisation" && (
+        {/* ─── TAB 4: VISUALISATION (Only when relevant) ─────────────────────────── */}
+        {hasVisualization && activeTab === "visualisation" && (
           <div className="space-y-6 animate-fade-in">
             <SortingVisualizer topicTitle={topic.title} />
           </div>
