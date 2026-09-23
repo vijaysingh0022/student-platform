@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api, { getStudentLearningDashboard } from "../services/api.js";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, AreaChart, Area
+  ResponsiveContainer, LineChart, Line
 } from "recharts";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -103,9 +103,9 @@ const DAILY_CHALLENGES = [
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900/95 text-white border border-slate-700 rounded-xl p-3 shadow-2xl backdrop-blur-md">
+      <div className="bg-slate-900/95 text-white border border-slate-700 rounded-xl p-3 shadow-xl backdrop-blur-md">
         <p className="text-slate-300 text-xs font-medium">{label}</p>
-        <p className="text-sky-400 font-extrabold text-base mt-0.5">
+        <p className="text-violet-400 font-black text-sm mt-0.5">
           {payload[0].value}% Accuracy
         </p>
       </div>
@@ -118,15 +118,16 @@ const Dashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isOnline, isLowDataMode } = useOffline();
-  const { testVersion, learningVersion, onRoadmapDayToggled, jobReadinessScore } = useAppState();
-  const [selectedSubject, setSelectedSubject] = useState(location.state?.subject || "DBMS");
+  const { isOnline } = useOffline();
+  const { testVersion, learningVersion, jobReadinessScore } = useAppState();
+  const [selectedSubject, setSelectedSubject] = useState(location.state?.subject || "DSA");
 
   useEffect(() => {
     if (location.state?.subject) {
       setSelectedSubject(location.state.subject);
     }
   }, [location.state]);
+
   const [skillGap, setSkillGap] = useState(null);
   const [results, setResults] = useState([]);
   const [roadmap, setRoadmap] = useState(null);
@@ -160,7 +161,6 @@ const Dashboard = () => {
         setSkillGap(skillGapRes.data);
         setResults(resultsRes.data || []);
         if (learningRes?.data) {
-          // Normalize API response to a consistent internal shape
           const raw = learningRes.data;
           setLearningData({
             continueLearning: raw.continueLearning || null,
@@ -194,7 +194,6 @@ const Dashboard = () => {
           setRoadmap(null);
         }
 
-        // If autoRoadmap is requested from test page, generate a fresh roadmap based on latest test diagnostics
         if (location.state?.autoRoadmap && (!loadedRoadmap || location.state?.forceRegenerate)) {
           const weakTopics =
             location.state.weakTopics?.length > 0
@@ -221,10 +220,8 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  // Re-fetch when subject changes, when a test is submitted, or when learning progress changes
   }, [selectedSubject, testVersion, learningVersion]);
 
-  // Auto-scroll to Roadmap when requested
   useEffect(() => {
     if (!loading && (location.state?.autoRoadmap || location.hash === "#dashboard-roadmap")) {
       const timer = setTimeout(() => {
@@ -263,15 +260,13 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center">
+      <div className="min-h-[80vh] flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div
-            className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center p-3 animate-pulse bg-violet-50 border border-violet-200 shadow-sm"
-          >
+          <div className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center p-3 animate-pulse bg-violet-50 border border-violet-200 shadow-sm">
             <LearnXIcon size={36} />
           </div>
-          <div className="w-10 h-10 mx-auto rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "rgba(124,58,237,0.3)", borderTopColor: "#7c3aed" }} />
-          <p className="text-slate-700 font-bold text-sm">Loading your LearnX command center...</p>
+          <div className="w-8 h-8 mx-auto rounded-full border-2 border-t-transparent animate-spin border-violet-600 border-t-transparent" />
+          <p className="text-slate-700 font-bold text-sm">Loading your personalized dashboard...</p>
         </div>
       </div>
     );
@@ -285,9 +280,8 @@ const Dashboard = () => {
 
   const totalTestsAllSubjects = results.length;
   const overallScore = skillGap?.overallScore ?? 0;
-  const scoreColor = overallScore >= 70 ? "#0284c7" : overallScore >= 40 ? "#7c3aed" : "#dc2626";
+  const scoreColor = overallScore >= 70 ? "#059669" : overallScore >= 40 ? "#7c3aed" : "#dc2626";
 
-  // Gamified student XP & streaks
   const streakDays = Math.max(3, (totalTestsAllSubjects % 7) + 1);
   const studentXP = 850 + totalTestsAllSubjects * 120 + (overallScore * 5);
   const studentLevel = Math.floor(studentXP / 400) + 1;
@@ -296,493 +290,483 @@ const Dashboard = () => {
   const currentChallenge = DAILY_CHALLENGES[dailyChallengeIdx % DAILY_CHALLENGES.length];
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 space-y-8" id="dashboard-page">
+    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-8 animate-fade-in" id="dashboard-page">
 
-      {/* 1. Premier Header: Greeting, Streak, XP, & Daily Goal Bar */}
-      <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-r from-slate-900 via-indigo-950 to-violet-950 text-white border border-slate-800 shadow-xl relative overflow-hidden">
-        {/* Background glow orb */}
-        <div className="absolute -right-16 -top-16 w-80 h-80 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-sky-500/20 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. HERO HEADER: Greeting & Gamified Performance Overview */}
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white border border-slate-800 shadow-xl p-6 sm:p-8">
+        {/* Glow ambient background accents */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-violet-600/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-sky-600/15 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          {/* User Info */}
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-violet-200 mb-2.5 backdrop-blur-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-violet-300 backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>LearnX Scholar • Level {studentLevel}</span>
             </div>
             <h1
               className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight"
               style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
-              {getGreeting()}, {user?.name?.split(" ")[0] || "Scholar"}! 🚀
+              {getGreeting()}, {user?.name?.split(" ")[0] || "Scholar"}! 👋
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-              "More Than Learning, A Brighter You." Ready to close your technical skill gaps today?
+            <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+              Track your topic mastery, test diagnostic weaknesses, and level up your engineering skills step by step.
             </p>
           </div>
 
-          {/* Gamified Stat Chips */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Streak Chip */}
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
-              <span className="text-2xl animate-bounce">🔥</span>
+          {/* Gamified Stat Badges */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Streak */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-3">
+              <span className="text-2xl">🔥</span>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-amber-300">Daily Streak</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Streak</p>
                 <p className="text-base font-extrabold text-white leading-none mt-0.5">{streakDays} Days</p>
               </div>
             </div>
 
-            {/* XP Chip */}
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
+            {/* XP */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-3">
               <span className="text-2xl">⚡</span>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-sky-300">Total XP</p>
-                <p className="text-base font-extrabold text-white leading-none mt-0.5">{studentXP} XP</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300">Total XP</p>
+                <p className="text-base font-extrabold text-white leading-none mt-0.5">{studentXP}</p>
               </div>
             </div>
 
-            {/* Live Job Readiness Chip — updates in real-time via AppStateContext */}
-            {jobReadinessScore !== null && (
-              <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
-                <span className="text-2xl">💼</span>
-                <div>
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-300 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Job Ready
-                  </p>
-                  <p className="text-base font-extrabold text-white leading-none mt-0.5">{jobReadinessScore}%</p>
-                </div>
-              </div>
-            )}
-
-            {/* Daily Goal Completion */}
-            <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-sm">
-              <span className="text-2xl">🎯</span>
+            {/* Job Readiness */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-3">
+              <span className="text-2xl">💼</span>
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-300">Daily Target</p>
-                <p className="text-base font-extrabold text-white leading-none mt-0.5">{dailyGoalDone} / 3 Done</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 5 Pillars Quick Access Ribbon */}
-        <div className="relative z-10 mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 text-center">
-          <Link
-            to={`/test/${selectedSubject}`}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 transition-colors border border-white/10 flex items-center justify-center gap-2 text-xs font-bold text-white group"
-          >
-            <span className="text-base group-hover:scale-110 transition-transform">📖</span>
-            <span className="truncate">Personalized Study</span>
-          </Link>
-          <Link
-            to="/tutor"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 transition-colors border border-white/10 flex items-center justify-center gap-2 text-xs font-bold text-white group"
-          >
-            <span className="text-base group-hover:scale-110 transition-transform">🤖</span>
-            <span className="truncate">24/7 AI Tutor</span>
-          </Link>
-          <Link
-            to={`/test/${selectedSubject}`}
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 transition-colors border border-white/10 flex items-center justify-center gap-2 text-xs font-bold text-white group"
-          >
-            <span className="text-base group-hover:scale-110 transition-transform">📝</span>
-            <span className="truncate">Practice MCQs</span>
-          </Link>
-          <Link
-            to="#dashboard-analytics"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 transition-colors border border-white/10 flex items-center justify-center gap-2 text-xs font-bold text-white group"
-          >
-            <span className="text-base group-hover:scale-110 transition-transform">📊</span>
-            <span className="truncate">Skill Analytics</span>
-          </Link>
-          <Link
-            to="/career-readiness"
-            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 transition-colors border border-white/10 flex items-center justify-center gap-2 text-xs font-bold text-white group col-span-2 sm:col-span-1"
-          >
-            <span className="text-base group-hover:scale-110 transition-transform">💼</span>
-            <span className="truncate">Career & ATS</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Gamification Level, XP, Streak & Badges Bar */}
-      <GamificationWidget xp={studentXP} streak={streakDays} />
-
-      {/* 2. NEW CORE LEARNING SYSTEM: Continue Learning, Weak Topics & Subject Mastery */}
-      <div className="space-y-4" id="core-learning-system">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-extrabold text-indigo-800 mb-1">
-              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
-              <span>Structured Curriculum Track</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Core Learning & Subject Mastery
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
-              Self-paced structured learning: Subject ➔ Unit ➔ Chapter ➔ Topic ➔ Diagnostic Quizzes ➔ AI Tutoring.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to="/learn"
-              id="dashboard-explore-curriculum-btn"
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all inline-flex items-center gap-1.5"
-            >
-              <span>📚 Explore Full Curriculum (8 Subjects)</span>
-              <span>→</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Learning Quick Stats Bar */}
-        {learningData?.summary && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Topics Read</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-slate-900">{learningData.summary.totalTopicsRead || 0}</span>
-                <span className="text-[10px] text-slate-400">/ {learningData.summary.totalTopics || 8}</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completed</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-indigo-600">{learningData.summary.totalTopicsCompleted || 0}</span>
-                <span className="text-[10px] text-slate-400">topics</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quizzes Taken</span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-violet-600">{learningData.summary.totalQuizzesTaken || 0}</span>
-                <span className="text-[10px] text-slate-400">tests</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                <span>🟢</span> Strong (≥80%)
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-emerald-700">{learningData.summary.strongTopicsCount || 0}</span>
-                <span className="text-[10px] text-emerald-600">Mastered</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
-                <span>🟡</span> Needs Practice
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-amber-700">{learningData.summary.needsPracticeCount || 0}</span>
-                <span className="text-[10px] text-amber-600">60–79%</span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-rose-50/60 border border-rose-200 shadow-xs flex flex-col justify-between">
-              <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1">
-                <span>🔴</span> Weak Topics
-              </span>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-xl font-extrabold text-rose-700">{learningData.summary.weakTopicsCount || 0}</span>
-                <span className="text-[10px] text-rose-600">&lt;60%</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Continue Learning & Weak Topics Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Left / Main 2 cols: Continue Learning Banner */}
-          <div className="lg:col-span-2 rounded-3xl border border-indigo-200 bg-gradient-to-br from-indigo-900 via-slate-900 to-violet-950 p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between gap-6">
-            <div className="absolute top-0 right-0 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-            
-            <div className="relative z-10 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-500 text-white uppercase tracking-wider">
-                  📖 Continue Learning
-                </span>
-                {learningData?.continueLearning ? (
-                  <span className="text-xs font-semibold text-indigo-200">
-                    {learningData.continueLearning.subjectName}
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold text-indigo-200">Recommended Next Track</span>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  {learningData?.continueLearning
-                    ? learningData.continueLearning.topicTitle
-                    : learningData?.recommendedNext
-                    ? learningData.recommendedNext.topicTitle
-                    : "Arrays & Dynamic Memory Allocation"}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-                  {learningData?.continueLearning
-                    ? `${learningData.continueLearning.unitTitle || ""} • ${learningData.continueLearning.chapterTitle || ""}`
-                    : "Master high-frequency concepts with structured theory, multi-language code implementations (C++, Java, Python, JS), and diagnostic quizzes."}
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Job Ready</p>
+                <p className="text-base font-extrabold text-white leading-none mt-0.5">
+                  {jobReadinessScore !== null ? `${jobReadinessScore}%` : "84%"}
                 </p>
               </div>
             </div>
 
-            <div className="relative z-10 flex flex-wrap items-center gap-3 pt-4 border-t border-white/10">
-              {(() => {
-                const targetSub = learningData?.continueLearning?.subjectId || learningData?.recommendedNext?.subjectId || "dsa";
-                const targetTopic = learningData?.continueLearning?.topicId || learningData?.recommendedNext?.topicId || "dsa-arrays-intro";
-                const targetTitle = learningData?.continueLearning?.topicTitle || learningData?.recommendedNext?.topicTitle || "Data Structures";
-
-                return (
-                  <>
-                    <Link
-                      to={`/learn/${targetSub}/${targetTopic}`}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md transition-all inline-flex items-center gap-2"
-                    >
-                      <span>📖 Learn Topic</span>
-                      <span>→</span>
-                    </Link>
-                    <Link
-                      to={`/learn/${targetSub}/${targetTopic}/quiz`}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-indigo-100 bg-white/10 hover:bg-white/20 border border-white/15 transition-all inline-flex items-center gap-2"
-                    >
-                      <span>📝 Take Diagnostic Quiz</span>
-                    </Link>
-                    <Link
-                      to={`/tutor?topic=${encodeURIComponent(targetTitle)}`}
-                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-black/30 hover:bg-black/40 border border-white/10 transition-all inline-flex items-center gap-2"
-                    >
-                      <span>🤖 Ask AI Tutor</span>
-                    </Link>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Right 1 col: Your Weak Topics Diagnostic Box */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between gap-3">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🎯</span>
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
-                    Your Weak Topics
-                  </h3>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
-                  {learningData?.weakTopics?.length || 0} Flagged
-                </span>
+            {/* Daily Target */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-3">
+              <span className="text-2xl">🎯</span>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-300">Daily Target</p>
+                <p className="text-base font-extrabold text-white leading-none mt-0.5">{dailyGoalDone} / 3</p>
               </div>
-
-              {learningData?.weakTopics && learningData.weakTopics.length > 0 ? (
-                <div className="space-y-3 mt-3">
-                  {learningData.weakTopics.slice(0, 3).map((wt) => (
-                    <div key={wt.topicId} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-violet-300 transition-all space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-xs font-bold text-slate-900 leading-snug">{wt.topicTitle}</p>
-                          <p className="text-[10px] text-slate-400 font-semibold">{wt.subjectName}</p>
-                        </div>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 shrink-0">
-                          {wt.masteryPercentage || wt.lastAttemptScore || 0}%
-                        </span>
-                      </div>
-
-                      {wt.weakConcepts && wt.weakConcepts.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {wt.weakConcepts.slice(0, 2).map((c) => (
-                            <span key={c} className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
-                              {c}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 pt-1 text-[11px] font-bold">
-                        <Link
-                          to={`/learn/${wt.subjectId}/${wt.topicId}`}
-                          className="text-indigo-600 hover:underline inline-flex items-center gap-1"
-                        >
-                          <span>Revise</span>
-                        </Link>
-                        <span className="text-slate-300">•</span>
-                        <Link
-                          to={`/learn/${wt.subjectId}/${wt.topicId}/quiz`}
-                          className="text-violet-600 hover:underline inline-flex items-center gap-1"
-                        >
-                          <span>Practice</span>
-                        </Link>
-                        <span className="text-slate-300">•</span>
-                        <Link
-                          to={`/tutor?topic=${encodeURIComponent(wt.topicTitle)}&weakConcepts=${encodeURIComponent(wt.weakConcepts?.join(", ") || "")}`}
-                          className="text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
-                        >
-                          <span>AI Tutor</span>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 text-center text-slate-400 text-xs mt-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-xl mb-2">
-                    ✓
-                  </div>
-                  <p className="font-bold text-slate-700">No Weak Topics Flagged!</p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Take topic quizzes to identify diagnostic concept weaknesses and track your mastery score.
-                  </p>
-                </div>
-              )}
             </div>
-
-            <Link
-              to="/learn"
-              className="text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 pt-2 border-t border-slate-100 block"
-            >
-              View All 8 Subject Modules →
-            </Link>
           </div>
+        </div>
+
+        {/* Navigation Quick Shortcuts */}
+        <div className="relative z-10 mt-6 pt-5 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <Link
+            to="/learn"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-bold text-white group"
+          >
+            <span>📚</span>
+            <span className="truncate">Subjects Curriculum</span>
+          </Link>
+          <Link
+            to={`/test/${selectedSubject}`}
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-bold text-white group"
+          >
+            <span>📝</span>
+            <span className="truncate">Diagnostic Quizzes</span>
+          </Link>
+          <Link
+            to="/tutor"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-bold text-white group"
+          >
+            <span>🤖</span>
+            <span className="truncate">24/7 AI Tutor</span>
+          </Link>
+          <Link
+            to="/placement-readiness"
+            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 text-xs font-bold text-white group"
+          >
+            <span>🚀</span>
+            <span className="truncate">Placement Predictor</span>
+          </Link>
         </div>
       </div>
 
-      {/* 3. Subject Mastery Selector & Quick-Start Cards */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Core Technical Tracks
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
-              Select a domain to inspect your diagnostic skill gap, roadmaps, and test history.
-            </p>
+      {/* 2. CORE LEARNING SECTION (Continue Learning & Flagged Weak Topics) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left 2 Cols: Continue Learning Hero Card */}
+        <div className="lg:col-span-2 rounded-3xl border border-indigo-100 bg-white p-6 sm:p-7 shadow-sm flex flex-col justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700">
+                <span>📖 Next Learning Milestone</span>
+              </div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                {learningData?.continueLearning ? learningData.continueLearning.subjectName : "Recommended Track"}
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                {learningData?.continueLearning
+                  ? learningData.continueLearning.topicTitle
+                  : learningData?.recommendedNext
+                  ? learningData.recommendedNext.topicTitle
+                  : "Arrays & Dynamic Memory Allocation"}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-xl">
+                {learningData?.continueLearning
+                  ? `${learningData.continueLearning.unitTitle || "Unit 1"} • ${learningData.continueLearning.chapterTitle || "Chapter 1"}`
+                  : "Master high-frequency concepts with structured theory, multi-language code playground, algorithm visualizers, and topic tests."}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/test/${selectedSubject}`}
-              id="dashboard-take-test-btn"
-              className="btn-gradient px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap inline-flex items-center gap-1.5 text-white shadow-sm"
-            >
-              <span>📝 Take {selectedSubject} Diagnostic Test</span>
-            </Link>
+
+          <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-100">
+            {(() => {
+              const targetSub = (learningData?.continueLearning?.subjectId || learningData?.recommendedNext?.subjectId || "dsa").toLowerCase();
+              const targetTopic = learningData?.continueLearning?.topicId || learningData?.recommendedNext?.topicId || "dsa-u1-c1-t1";
+              const targetTitle = learningData?.continueLearning?.topicTitle || learningData?.recommendedNext?.topicTitle || "Data Structures";
+
+              return (
+                <>
+                  <Link
+                    to={`/learn/${targetSub}/${targetTopic}`}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all inline-flex items-center gap-2"
+                  >
+                    <span>📖 Start Study Session</span>
+                    <span>→</span>
+                  </Link>
+                  <Link
+                    to={`/learn/${targetSub}/${targetTopic}/quiz`}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all inline-flex items-center gap-2"
+                  >
+                    <span>📝 Take Topic Quiz</span>
+                  </Link>
+                  <Link
+                    to={`/tutor?topic=${encodeURIComponent(targetTitle)}`}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-all inline-flex items-center gap-2"
+                  >
+                    <span>🤖 Ask AI Tutor</span>
+                  </Link>
+                </>
+              );
+            })()}
           </div>
         </div>
 
-        {/* 3 Domain Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Right 1 Col: Weak Topics Diagnostic Radar */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col justify-between gap-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🎯</span>
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                  Weak Topics Radar
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                {learningData?.weakTopics?.length || 0} Need Practice
+              </span>
+            </div>
+
+            {learningData?.weakTopics && learningData.weakTopics.length > 0 ? (
+              <div className="space-y-3 mt-3">
+                {learningData.weakTopics.slice(0, 3).map((wt) => (
+                  <div key={wt.topicId} className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-bold text-slate-900 leading-snug">{wt.topicTitle}</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">{wt.subjectName || "Core CSE"}</p>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 shrink-0">
+                        {wt.masteryPercentage || wt.lastAttemptScore || 0}%
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 text-[11px] font-bold">
+                      <Link
+                        to={`/learn/${(wt.subjectId || "dsa").toLowerCase()}/${wt.topicId}`}
+                        className="text-indigo-600 hover:underline"
+                      >
+                        Revise
+                      </Link>
+                      <span className="text-slate-300">•</span>
+                      <Link
+                        to={`/learn/${(wt.subjectId || "dsa").toLowerCase()}/${wt.topicId}/quiz`}
+                        className="text-violet-600 hover:underline"
+                      >
+                        Retake Quiz
+                      </Link>
+                      <span className="text-slate-300">•</span>
+                      <Link
+                        to={`/tutor?topic=${encodeURIComponent(wt.topicTitle)}`}
+                        className="text-slate-600 hover:text-slate-900"
+                      >
+                        Ask Tutor
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-xs">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-xl mb-2 border border-emerald-100">
+                  ✓
+                </div>
+                <p className="font-bold text-slate-700">No Weak Topics Flagged</p>
+                <p className="text-[11px] text-slate-400 mt-1 max-w-[200px] mx-auto">
+                  Take diagnostic quizzes in any subject to test your concept mastery.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <Link
+            to="/learn"
+            className="text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 pt-3 border-t border-slate-100 block"
+          >
+            Explore All 10 Subjects →
+          </Link>
+        </div>
+      </div>
+
+      {/* 3. INTERACTIVE SUBJECT SELECTOR & DIAGNOSTIC TRACKS */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Core Technical Tracks & Diagnostics
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Select any domain below to inspect calibrated diagnostic scores, weakness radar, and 7-day study roadmaps.
+            </p>
+          </div>
+
+          <Link
+            to={`/test/${selectedSubject}`}
+            id="dashboard-take-test-btn"
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-sm transition-all inline-flex items-center gap-1.5 self-start sm:self-auto"
+          >
+            <span>📝 Take {selectedSubject} Diagnostic Test</span>
+            <span>→</span>
+          </Link>
+        </div>
+
+        {/* Modern Subject Pills Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {SUBJECTS.map((sub) => {
             const isSelected = sub.id === selectedSubject;
             const subTests = results.filter((r) => r.subject === sub.id);
             const latestScore = subTests.length > 0 ? subTests[subTests.length - 1].scorePercent : null;
 
             return (
-              <div
+              <button
                 key={sub.id}
                 onClick={() => setSelectedSubject(sub.id)}
-                className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 flex flex-col justify-between gap-4 ${
+                className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 ${
                   isSelected
-                    ? "bg-white border-violet-500 ring-2 ring-violet-500/20 shadow-lg scale-[1.01]"
-                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md"
+                    ? "bg-violet-50/70 border-violet-500 ring-2 ring-violet-500/20 shadow-sm"
+                    : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs"
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-100 flex items-center justify-center text-2xl">
-                      {sub.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-base font-extrabold text-slate-900 leading-tight">{sub.name}</h3>
-                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">{sub.totalTopics} High-Yield Topics</p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xl">{sub.icon}</span>
                   {isSelected && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-violet-100 text-violet-800 border border-violet-200">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-violet-600 text-white">
                       Active
                     </span>
                   )}
                 </div>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <div>
-                    <p className="text-[10px] text-slate-500 font-semibold uppercase">Latest Score</p>
-                    <p className={`font-extrabold text-sm ${latestScore !== null ? (latestScore >= 70 ? "text-emerald-600" : latestScore >= 40 ? "text-violet-600" : "text-rose-600") : "text-slate-400"}`}>
-                      {latestScore !== null ? `${latestScore}%` : "No Test Yet"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-slate-500 font-semibold uppercase">Tests Logged</p>
-                    <p className="font-extrabold text-slate-800 text-sm">{subTests.length} Attempts</p>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 line-clamp-1">{sub.name}</h4>
+                  <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400 font-semibold">
+                    <span>{subTests.length} tests</span>
+                    <span className={latestScore !== null ? (latestScore >= 60 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold") : "text-slate-400"}>
+                      {latestScore !== null ? `${latestScore}%` : "No test"}
+                    </span>
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* 3. Continue Learning / Active Milestone Hero Card */}
-      <div className="glass-card p-6 rounded-3xl border border-violet-200/80 bg-gradient-to-r from-violet-50 via-purple-50 to-sky-50 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-violet-600 text-white uppercase tracking-wider">
-                Active Itinerary
-              </span>
-              <span className="text-xs font-bold text-violet-800">{selectedSubject} Mastery Track</span>
+      {/* 4. DIAGNOSTIC ANALYTICS & 7-DAY AI ROADMAP */}
+      <div id="dashboard-analytics" className="space-y-6">
+        {!skillGap ? (
+          <div className="p-10 text-center border border-slate-200 shadow-sm bg-white rounded-3xl">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mb-3 border border-violet-100">
+              🎯
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              {skillGap?.weakTopics?.length > 0
-                ? `Remediation Priority: Master ${skillGap.weakTopics[0]}`
-                : `Advanced Concept Sprint: ${selectedSubject} Core Competencies`}
-            </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {skillGap?.weakTopics?.length > 0
-                ? `Your diagnostics flagged ${skillGap.weakTopics.join(", ")} below the 60% mastery threshold. Follow the AI roadmap to boost your score.`
-                : `You've demonstrated solid fundamentals! Continue taking comprehensive assessments to maintain placement readiness.`}
+            <h3 className="text-lg font-bold text-slate-900 mb-1">No {selectedSubject} diagnostic tests taken yet</h3>
+            <p className="text-xs text-slate-500 mb-5 max-w-md mx-auto">
+              Take your first calibrated {selectedSubject} test to unlock diagnostic skill radar, accuracy graphs, and your AI study roadmap.
             </p>
-          </div>
-
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full md:w-auto">
             <Link
               to={`/test/${selectedSubject}`}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-bold text-white btn-gradient flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap"
+              id="dashboard-first-test-btn"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all"
             >
-              <span>⚡ Start Practice Test</span>
-              <span>→</span>
-            </Link>
-            <Link
-              to={`/tutor?topic=${encodeURIComponent(skillGap?.weakTopics?.[0] || selectedSubject)}`}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl text-xs font-bold bg-white text-slate-800 hover:bg-slate-100 transition-colors border border-slate-200 flex items-center justify-center gap-1.5 shadow-xs whitespace-nowrap"
-            >
-              <span>🤖 Ask AI Tutor</span>
+              Start {selectedSubject} Diagnostic Test →
             </Link>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Metric Cards Row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Overall Mastery", value: `${overallScore}%`, icon: "🎯", color: scoreColor },
+                { label: "Tests Logged", value: results.filter(r => r.subject === selectedSubject).length, icon: "📝", color: "#6366f1" },
+                { label: "Weak Topics", value: skillGap.weakTopics?.length ?? 0, icon: "⚠️", color: "#dc2626" },
+                { label: "Mastered Topics", value: skillGap.strongTopics?.length ?? 0, icon: "✅", color: "#059669" },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="border border-slate-200 shadow-xs bg-white p-4 rounded-2xl"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xl">{stat.icon}</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{stat.label}</span>
+                  </div>
+                  <p className="text-2xl font-black mt-1" style={{ color: stat.color, fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Diagnostic Accuracy & Mastery Velocity Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Accuracy Chart */}
+              <div className="p-6 border border-slate-200 shadow-xs bg-white rounded-3xl" id="dashboard-skill-gap-chart">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-extrabold text-slate-900 text-sm" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Topic-Wise Diagnostic Accuracy
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Benchmark: 60%</span>
+                </div>
+                <p className="text-xs text-slate-400 mb-4">Topic scores across your {selectedSubject} attempts</p>
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart data={skillGap.topicScores}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="topic" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="percent" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Longitudinal Mastery Velocity */}
+              <div className="p-6 border border-slate-200 shadow-xs bg-white rounded-3xl" id="dashboard-progress-chart">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-extrabold text-slate-900 text-sm" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Score Progression Over Time
+                  </h3>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">{progressData.length} Attempts</span>
+                </div>
+                <p className="text-xs text-slate-400 mb-4">Mastery velocity across test history</p>
+                {progressData.length > 1 ? (
+                  <ResponsiveContainer width="100%" height={210}>
+                    <LineChart data={progressData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Line type="monotone" dataKey="score" stroke="#7c3aed" strokeWidth={3} dot={{ fill: "#7c3aed", strokeWidth: 2, r: 4 }} activeDot={{ r: 6, fill: "#7c3aed" }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[210px] flex flex-col items-center justify-center text-center p-4">
+                    <div className="text-3xl mb-2">📈</div>
+                    <p className="text-xs text-slate-400 font-medium">Take at least 2 tests in {selectedSubject} to render your longitudinal velocity graph.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 7-Day AI Roadmap Section */}
+            <div className="p-6 sm:p-7 border border-slate-200 shadow-xs bg-white rounded-3xl" id="dashboard-roadmap">
+              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🗺️</span>
+                  <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
+                    7-Day AI Learning Roadmap ({selectedSubject})
+                  </span>
+                </div>
+                <Link
+                  to={`/roadmap/${selectedSubject}`}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors flex items-center gap-1"
+                >
+                  <span>Full 7-Day Roadmap</span>
+                  <span>→</span>
+                </Link>
+              </div>
+
+              {roadmap ? (
+                <RoadmapVisualizer
+                  roadmap={roadmap}
+                  onRoadmapUpdated={(updated) => setRoadmap(updated)}
+                  onRegenerate={skillGap.weakTopics?.length > 0 ? handleGenerateRoadmap : null}
+                  generating={generatingRoadmap}
+                />
+              ) : generatingRoadmap ? (
+                <div className="text-center py-10 space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-2xl flex items-center justify-center text-2xl bg-violet-50 border border-violet-200 animate-bounce">
+                    ⚡
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Synthesizing Your 7-Day AI Study Roadmap...
+                  </h3>
+                  <p className="text-xs max-w-md mx-auto text-slate-500 leading-relaxed">
+                    Analyzing test diagnostics for <strong className="text-violet-700">{selectedSubject}</strong> to build daily remediation milestones.
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-8 space-y-3">
+                  <div className="w-12 h-12 mx-auto rounded-2xl flex items-center justify-center text-2xl bg-violet-50 border border-violet-200">
+                    🗺️
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Personalized 7-Day Study Roadmap
+                  </h3>
+                  <p className="text-xs max-w-md mx-auto text-slate-500 leading-relaxed">
+                    Generate a structured day-by-day blueprint specifically calibrated for your diagnosed weaknesses in {selectedSubject}.
+                  </p>
+                  <button
+                    id="dashboard-generate-roadmap-btn"
+                    onClick={handleGenerateRoadmap}
+                    disabled={generatingRoadmap}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 shadow-sm transition-all"
+                  >
+                    ✨ Generate 7-Day AI Roadmap
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* 4. Problem of the Day (Interactive POTD) & 4 Key Feature Hub Banners */}
+      {/* 5. PROBLEM OF THE DAY & ADVANCED LEARNING SUITE */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Problem of the Day (POTD) Widget */}
-        <div className="lg:col-span-1 glass-card p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between gap-4">
+        
+        {/* Left: Interactive Problem of the Day (POTD) */}
+        <div className="p-6 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between gap-4">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg">💡</span>
-                <span className="text-xs font-extrabold uppercase tracking-wider text-violet-800">Problem of the Day</span>
+                <span className="text-base">💡</span>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Problem of the Day</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                 +50 XP
               </span>
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-semibold">
                 <span>{currentChallenge.subject} • {currentChallenge.topic}</span>
                 <button
                   onClick={() => {
@@ -793,7 +777,7 @@ const Dashboard = () => {
                   }}
                   className="text-violet-600 hover:underline text-[11px] font-bold"
                 >
-                  Next Question ↻
+                  Next ↻
                 </button>
               </div>
 
@@ -827,10 +811,10 @@ const Dashboard = () => {
               </div>
 
               {answeredDaily && (
-                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs animate-fade-in-up">
+                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs animate-fade-in">
                   <div className="flex items-center justify-between mb-1">
                     <span className={`font-bold ${selectedOption === currentChallenge.correctIdx ? "text-emerald-700" : "text-rose-700"}`}>
-                      {selectedOption === currentChallenge.correctIdx ? "🎉 Correct! +50 XP" : "❌ Incorrect, review explanation:"}
+                      {selectedOption === currentChallenge.correctIdx ? "🎉 Correct! +50 XP" : "❌ Review explanation:"}
                     </span>
                     <button
                       onClick={() => setShowExplanation(!showExplanation)}
@@ -850,326 +834,80 @@ const Dashboard = () => {
           </div>
 
           <div className="pt-2 text-center text-[10px] text-slate-400 font-medium">
-            Daily reset in 4 hours • Streak is active
+            Daily reset at midnight • Streak active
           </div>
         </div>
 
-        {/* Right 2 Columns: 4 Advanced Intelligence Hub Banners */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Placement AI Predictor Banner */}
-          <div className="glass-card p-5 rounded-2xl border border-violet-200 flex flex-col justify-between gap-3 bg-gradient-to-r from-violet-50/90 to-purple-50/90 shadow-xs hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center text-xl shrink-0">
+        {/* Right 2 Columns: 3 Advanced Feature Hub Cards */}
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          
+          {/* Placement AI Predictor */}
+          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 transition-all">
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-xl">
                 🎯
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-xs font-extrabold text-slate-900">Placement AI</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
-                    Predictor
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                  Forecast readiness score, time-to-ready & interview danger zones.
-                </p>
-              </div>
+              <h4 className="text-xs font-extrabold text-slate-900">Placement AI Predictor</h4>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                Forecast readiness score, time-to-ready & high-risk interview zones.
+              </p>
             </div>
             <Link
               to="/placement-readiness"
               id="dashboard-placement-cta"
-              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold btn-gradient text-white flex items-center justify-center gap-1 shadow-xs"
+              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs"
             >
-              <span>Placement Predictor →</span>
+              Open Predictor →
             </Link>
           </div>
 
-          {/* Career & Job Readiness Engine Banner */}
-          <div className="glass-card p-5 rounded-2xl border border-sky-200 flex flex-col justify-between gap-3 bg-gradient-to-r from-sky-50/90 to-purple-50/90 shadow-xs hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center text-xl shrink-0">
+          {/* Career & ATS Engine */}
+          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 transition-all">
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-xl">
                 💼
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-xs font-extrabold text-slate-900">Career Engine</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
-                    ATS & Mock
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                  ATS resume scanner, roadmaps, project blueprints & mock prep.
-                </p>
-              </div>
+              <h4 className="text-xs font-extrabold text-slate-900">Career Readiness</h4>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                ATS resume checker, real-world project blueprints & interview prep.
+              </p>
             </div>
             <Link
               to="/career-readiness"
               id="dashboard-career-cta"
-              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-1 shadow-xs"
+              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors border border-slate-200 shadow-xs"
             >
-              <span>Career Readiness →</span>
+              Career Hub →
             </Link>
           </div>
 
-          {/* Offline & Low-Bandwidth Hub Banner */}
-          <div className="glass-card p-5 rounded-2xl border border-amber-200 flex flex-col justify-between gap-3 bg-gradient-to-r from-amber-50/90 to-emerald-50/90 shadow-xs hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-xl shrink-0">
+          {/* Offline Learning Hub */}
+          <div className="p-5 rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 transition-all">
+            <div className="space-y-2">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-xl">
                 🛡️
               </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <h3 className="text-xs font-extrabold text-slate-900">Offline Hub</h3>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                    Low-Bandwidth
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 mt-1 leading-snug">
-                  Download question packs, take offline tests & auto-sync progress.
-                </p>
-              </div>
+              <h4 className="text-xs font-extrabold text-slate-900">Offline Learning</h4>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                Download practice question packs & sync progress offline.
+              </p>
             </div>
             <Link
               to="/offline-learning"
               id="dashboard-offline-cta"
-              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white transition-colors flex items-center justify-center gap-1 shadow-xs"
+              className="w-full text-center px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors shadow-xs"
             >
-              <span>Offline Learning Hub →</span>
+              Offline Hub →
             </Link>
           </div>
         </div>
       </div>
 
-      {/* 5. Diagnostic Analytics & Radar Section */}
-      <div id="dashboard-analytics" className="space-y-6">
-        {!skillGap ? (
-          /* No test yet — empty state */
-          <div className="glass-card p-12 text-center border border-slate-200 shadow-sm bg-white rounded-3xl">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-violet-100 flex items-center justify-center text-3xl mb-4">
-              🎯
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No {selectedSubject} diagnostic tests taken yet</h3>
-            <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
-              Take your first calibrated {selectedSubject} assessment to unlock personalized skill gap radar, topic-by-topic scores, and AI roadmaps.
-            </p>
-            <Link
-              to={`/test/${selectedSubject}`}
-              id="dashboard-first-test-btn"
-              className="btn-gradient inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white shadow-sm"
-            >
-              Start {selectedSubject} Diagnostic Test →
-            </Link>
-          </div>
-        ) : (
-          <>
-            {/* Stats row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Overall Mastery", value: `${overallScore}%`, icon: "🎯", color: scoreColor },
-                { label: "Tests Logged", value: results.filter(r => r.subject === selectedSubject).length, icon: "📝", color: "#0284c7" },
-                { label: "Weak Topics", value: skillGap.weakTopics?.length ?? 0, icon: "⚠️", color: "#dc2626" },
-                { label: "Mastered Topics", value: skillGap.strongTopics?.length ?? 0, icon: "✅", color: "#059669" },
-              ].map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className="stat-card animate-fade-in-up border border-slate-200 shadow-sm bg-white p-5 rounded-2xl"
-                  style={{ animationDelay: `${i * 80}ms` }}
-                  id={`dashboard-stat-${stat.label.toLowerCase().replace(" ", "-")}`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-2xl">{stat.icon}</span>
-                    <div className="w-2.5 h-2.5 rounded-full mt-1" style={{ background: stat.color, boxShadow: `0 0 6px ${stat.color}60` }} />
-                  </div>
-                  <p className="text-2xl sm:text-3xl font-extrabold" style={{ color: stat.color, fontFamily: "'Space Grotesk', sans-serif" }}>
-                    {stat.value}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-600 mt-1">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Charts row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Skill gap bar chart */}
-              <div className="glass-card p-6 border border-slate-200 shadow-sm bg-white rounded-3xl" id="dashboard-skill-gap-chart">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-bold text-slate-900 text-sm sm:text-base" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Topic-Wise Diagnostic Accuracy
-                  </h3>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">Benchmark: 60%</span>
-                </div>
-                <p className="text-xs text-slate-500 mb-4">Topic scores across your {selectedSubject} attempts</p>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={skillGap.topicScores}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                    <XAxis dataKey="topic" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="percent" fill="url(#barGradient)" radius={[6, 6, 0, 0]} />
-                    <defs>
-                      <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#7c3aed" />
-                        <stop offset="100%" stopColor="#0284c7" />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Progress line chart */}
-              <div className="glass-card p-6 border border-slate-200 shadow-sm bg-white rounded-3xl" id="dashboard-progress-chart">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-bold text-slate-900 text-sm sm:text-base" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Longitudinal Mastery Velocity
-                  </h3>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">{progressData.length} Attempts</span>
-                </div>
-                <p className="text-xs text-slate-500 mb-4">Score progression over time</p>
-                {progressData.length > 1 ? (
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={progressData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: "#64748b" }} axisLine={false} tickLine={false} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <defs>
-                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#7c3aed" />
-                          <stop offset="100%" stopColor="#0284c7" />
-                        </linearGradient>
-                      </defs>
-                      <Line type="monotone" dataKey="score" stroke="url(#lineGradient)" strokeWidth={3} dot={{ fill: "#7c3aed", strokeWidth: 2, r: 5 }} activeDot={{ r: 7, fill: "#7c3aed" }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-[220px] flex flex-col items-center justify-center text-center p-4">
-                    <div className="text-4xl mb-2">📈</div>
-                    <p className="text-xs text-slate-500 font-medium">Take at least 2 tests in {selectedSubject} to render your longitudinal velocity graph.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Readiness Breakdown & Topic Recommendations */}
-            <div className="glass-card p-6 border border-slate-200 shadow-sm bg-white rounded-3xl" id="dashboard-readiness">
-              <h3 className="font-bold text-slate-900 mb-4 text-sm sm:text-base" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Diagnostic Vulnerability Summary
-              </h3>
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                {/* Score circle */}
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-24 h-24 rounded-full flex flex-col items-center justify-center font-black"
-                    style={{
-                      background: `conic-gradient(${scoreColor} ${overallScore * 3.6}deg, #e2e8f0 0deg)`,
-                      boxShadow: `0 0 20px ${scoreColor}30`,
-                      fontFamily: "'Space Grotesk', sans-serif",
-                      color: scoreColor,
-                    }}
-                  >
-                    <div className="w-20 h-20 rounded-full bg-white flex flex-col items-center justify-center">
-                      <span className="text-xl leading-none">{overallScore}%</span>
-                      <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Mastery</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                  <div className="rounded-2xl p-4 bg-rose-50/70 border border-rose-200">
-                    <p className="text-xs font-bold mb-1.5 text-rose-700 flex items-center gap-1.5">
-                      <span>⚠️ Critical Vulnerabilities (&lt;60%)</span>
-                    </p>
-                    <p className="text-xs text-slate-800 font-semibold leading-relaxed">
-                      {skillGap.weakTopics?.length > 0
-                        ? skillGap.weakTopics.join(", ")
-                        : "No critical weaknesses detected! Excellent command."}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl p-4 bg-emerald-50/70 border border-emerald-200">
-                    <p className="text-xs font-bold mb-1.5 text-emerald-700 flex items-center gap-1.5">
-                      <span>✅ Mastered Competencies (≥60%)</span>
-                    </p>
-                    <p className="text-xs text-slate-800 font-semibold leading-relaxed">
-                      {skillGap.strongTopics?.length > 0
-                        ? skillGap.strongTopics.join(", ")
-                        : "Complete more questions to establish topic mastery."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 6. AI 7-Day Roadmap Section */}
-            <div className="glass-card p-6 md:p-8 border border-slate-200 shadow-sm bg-white rounded-3xl" id="dashboard-roadmap">
-              <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🗺️</span>
-                  <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
-                    7-Day AI Learning Roadmap ({selectedSubject})
-                  </span>
-                </div>
-                <Link
-                  to={`/roadmap/${selectedSubject}`}
-                  className="px-3 py-1.5 rounded-xl text-xs font-black text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors flex items-center gap-1.5 shadow-xs"
-                >
-                  <span>Full 7-Day Roadmap View</span>
-                  <span>→</span>
-                </Link>
-              </div>
-              {roadmap ? (
-                <RoadmapVisualizer
-                  roadmap={roadmap}
-                  onRoadmapUpdated={(updated) => setRoadmap(updated)}
-                  onRegenerate={skillGap.weakTopics?.length > 0 ? handleGenerateRoadmap : null}
-                  generating={generatingRoadmap}
-                />
-              ) : generatingRoadmap ? (
-                <div className="text-center py-12 space-y-4">
-                  <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-violet-100 border border-violet-200 animate-bounce shadow-md">
-                    ⚡
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Synthesizing Your 7-Day AI Study Roadmap...
-                  </h3>
-                  <p className="text-xs sm:text-sm max-w-md mx-auto text-slate-600 leading-relaxed">
-                    Analyzing test diagnostics for <strong className="text-violet-700">{selectedSubject}</strong>, breaking down weak topics into daily milestones and actionable exercises.
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-xs font-bold text-violet-600 pt-2">
-                    <div className="w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
-                    Generating day-by-day study roadmap...
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-10 space-y-4">
-                  <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl bg-violet-100 border border-violet-200 shadow-xs">
-                    🗺️
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                    Personalized 7-Day Study Roadmap
-                  </h3>
-                  <p className="text-xs sm:text-sm max-w-md mx-auto text-slate-600 leading-relaxed">
-                    {skillGap?.weakTopics?.length > 0
-                      ? `Our AI tutor will design a structured day-by-day blueprint specifically to overcome your diagnosed weak topics in ${selectedSubject} (${skillGap.weakTopics.join(", ")}).`
-                      : `No weak topics found in ${selectedSubject}! You can still generate a 7-day mastery roadmap.`}
-                  </p>
-                  <button
-                    id="dashboard-generate-roadmap-btn"
-                    onClick={handleGenerateRoadmap}
-                    disabled={generatingRoadmap}
-                    className="btn-gradient inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 text-white shadow-sm"
-                  >
-                    ✨ Generate 7-Day Visual Roadmap
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      {/* 6. GAMIFICATION BADGES & RANK FOOTER */}
+      <GamificationWidget xp={studentXP} streak={streakDays} />
 
     </div>
   );
 };
 
 export default Dashboard;
-
