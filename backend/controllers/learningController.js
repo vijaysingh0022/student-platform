@@ -3,6 +3,12 @@ import TopicProgress from "../models/TopicProgress.js";
 import TopicQuestion from "../models/TopicQuestion.js";
 import User from "../models/User.js";
 import crypto from "crypto";
+import {
+  CURRICULUM_SUBJECTS,
+  CURRICULUM_UNITS,
+  CURRICULUM_CHAPTERS,
+  CURRICULUM_TOPICS,
+} from "../seed/curriculumData.js";
 
 // ─── MASTERY CLASSIFICATION THRESHOLDS ───────────────────────────────────────
 const MASTERY_THRESHOLDS = {
@@ -22,18 +28,24 @@ const calculateMasteryStatus = (percentage) => {
 export const getSubjects = async (req, res) => {
   try {
     const userId = req.user?._id;
-    const subjects = await Subject.find({ isActive: true }).sort({ order: 1 }).lean();
+    let subjects = await Subject.find({ isActive: true }).sort({ order: 1 }).lean().catch(() => []);
+    if (!subjects || subjects.length === 0) {
+      subjects = CURRICULUM_SUBJECTS;
+    }
 
     // Fetch all topics and units count
-    const [allTopics, allUnits, userProgressList] = await Promise.all([
-      Topic.find({ isActive: true }).select("topicId subjectId").lean(),
-      Unit.find({}).select("unitId subjectId").lean(),
-      userId ? TopicProgress.find({ user: userId }).lean() : Promise.resolve([]),
+    let [allTopics, allUnits, userProgressList] = await Promise.all([
+      Topic.find({ isActive: true }).select("topicId subjectId").lean().catch(() => []),
+      Unit.find({}).select("unitId subjectId").lean().catch(() => []),
+      userId ? TopicProgress.find({ user: userId }).lean().catch(() => []) : Promise.resolve([]),
     ]);
+
+    if (!allTopics || allTopics.length === 0) allTopics = CURRICULUM_TOPICS;
+    if (!allUnits || allUnits.length === 0) allUnits = CURRICULUM_UNITS;
 
     // Map progress by topicId
     const progressMap = new Map();
-    userProgressList.forEach((p) => progressMap.set(p.topicId, p));
+    (userProgressList || []).forEach((p) => progressMap.set(p.topicId, p));
 
     const enrichedSubjects = subjects.map((sub) => {
       const subTopics = allTopics.filter((t) => t.subjectId === sub.subjectId);
@@ -91,20 +103,34 @@ export const getSubjectHierarchy = async (req, res) => {
     const { subjectId } = req.params;
     const userId = req.user?._id;
 
-    const subject = await Subject.findOne({ subjectId }).lean();
+    let subject = await Subject.findOne({ subjectId }).lean().catch(() => null);
+    if (!subject) {
+      subject = CURRICULUM_SUBJECTS.find(s => s.subjectId === subjectId);
+    }
     if (!subject) {
       return res.status(404).json({ message: "Subject not found." });
     }
 
-    const [units, chapters, topics, userProgress] = await Promise.all([
-      Unit.find({ subjectId }).sort({ order: 1, unitNumber: 1 }).lean(),
-      Chapter.find({ subjectId }).sort({ order: 1, chapterNumber: 1 }).lean(),
-      Topic.find({ subjectId, isActive: true }).sort({ order: 1, topicNumber: 1 }).lean(),
-      userId ? TopicProgress.find({ user: userId, subjectId }).lean() : Promise.resolve([]),
+    let [units, chapters, topics, userProgress] = await Promise.all([
+      Unit.find({ subjectId }).sort({ order: 1, unitNumber: 1 }).lean().catch(() => []),
+      Chapter.find({ subjectId }).sort({ order: 1, chapterNumber: 1 }).lean().catch(() => []),
+      Topic.find({ subjectId, isActive: true }).sort({ order: 1, topicNumber: 1 }).lean().catch(() => []),
+      userId ? TopicProgress.find({ user: userId, subjectId }).lean().catch(() => []) : Promise.resolve([]),
     ]);
 
+    // Fallback to in-memory curriculum if empty or partial
+    if (!units || units.length === 0) {
+      units = CURRICULUM_UNITS.filter(u => u.subjectId === subjectId);
+    }
+    if (!chapters || chapters.length === 0) {
+      chapters = CURRICULUM_CHAPTERS.filter(c => c.subjectId === subjectId);
+    }
+    if (!topics || topics.length === 0) {
+      topics = CURRICULUM_TOPICS.filter(t => t.subjectId === subjectId);
+    }
+
     const progressMap = new Map();
-    userProgress.forEach((p) => progressMap.set(p.topicId, p));
+    (userProgress || []).forEach((p) => progressMap.set(p.topicId, p));
 
     // Build hierarchical tree: Unit -> Chapters -> Topics
     const structuredUnits = units.map((u) => {
@@ -165,7 +191,7 @@ export const getSubjectHierarchy = async (req, res) => {
     });
 
     const totalTopics = topics.length;
-    const completedTopics = userProgress.filter((p) => p.isCompleted).length;
+    const completedTopics = (userProgress || []).filter((p) => p.isCompleted).length;
     const progressPercent = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
 
     res.json({
@@ -192,19 +218,26 @@ export const getTopicContent = async (req, res) => {
     const { topicId } = req.params;
     const userId = req.user?._id;
 
-    const topic = await Topic.findOne({ topicId, isActive: true }).lean();
+    let topic = await Topic.findOne({ topicId, isActive: true }).lean().catch(() => null);
+    if (!topic) {
+      topic = CURRICULUM_TOPICS.find(t => t.topicId === topicId);
+    }
     if (!topic) {
       return res.status(404).json({ message: "Topic not found." });
     }
 
-    const [subject, unit, chapter, progress, nextTopic, prevTopic] = await Promise.all([
-      Subject.findOne({ subjectId: topic.subjectId }).lean(),
-      Unit.findOne({ unitId: topic.unitId }).lean(),
-      Chapter.findOne({ chapterId: topic.chapterId }).lean(),
-      userId ? TopicProgress.findOne({ user: userId, topicId }).lean() : Promise.resolve(null),
-      Topic.findOne({ subjectId: topic.subjectId, order: { $gt: topic.order } }).sort({ order: 1 }).select("topicId title").lean(),
-      Topic.findOne({ subjectId: topic.subjectId, order: { $lt: topic.order } }).sort({ order: -1 }).select("topicId title").lean(),
+    let [subject, unit, chapter, progress, nextTopic, prevTopic] = await Promise.all([
+      Subject.findOne({ subjectId: topic.subjectId }).lean().catch(() => null),
+      Unit.findOne({ unitId: topic.unitId }).lean().catch(() => null),
+      Chapter.findOne({ chapterId: topic.chapterId }).lean().catch(() => null),
+      userId ? TopicProgress.findOne({ user: userId, topicId }).lean().catch(() => null) : Promise.resolve(null),
+      Topic.findOne({ subjectId: topic.subjectId, order: { $gt: topic.order } }).sort({ order: 1 }).select("topicId title").lean().catch(() => null),
+      Topic.findOne({ subjectId: topic.subjectId, order: { $lt: topic.order } }).sort({ order: -1 }).select("topicId title").lean().catch(() => null),
     ]);
+
+    if (!subject) subject = CURRICULUM_SUBJECTS.find(s => s.subjectId === topic.subjectId);
+    if (!unit) unit = CURRICULUM_UNITS.find(u => u.unitId === topic.unitId);
+    if (!chapter) chapter = CURRICULUM_CHAPTERS.find(c => c.chapterId === topic.chapterId);
 
     // Auto-mark topic as read on open if not already marked
     if (userId && (!progress || !progress.isRead)) {
