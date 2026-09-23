@@ -61,6 +61,137 @@ const ROLE_CATEGORIES = [
   },
 ];
 
+// Client-side project recommendations for all 21 roles — always available instantly
+const ROLE_PROJECTS = {
+  "Full Stack Software Engineer": [
+    { title: "Distributed Job Scheduler API", level: "Advanced", skills: ["Node.js", "Redis", "MongoDB", "Bull Queue"], desc: "High-throughput task queue handling background retries, rate limiting and real-time job status tracking via WebSockets.", tags: ["Backend", "System Design"] },
+    { title: "Real-time Collaborative Canvas", level: "Intermediate", skills: ["React", "WebSockets", "Canvas API", "CRDTs"], desc: "Multi-user drawing board with operational transformation for conflict-free concurrent edits and session recording.", tags: ["Frontend", "Real-time"] },
+    { title: "Student Analytics & AI Platform", level: "Advanced", skills: ["React", "Express", "OpenAI", "MongoDB", "Charts.js"], desc: "AI-powered skill gap analyzer with automated roadmaps, ATS resume scoring, and weekly progress email digests.", tags: ["Full Stack", "AI"] },
+    { title: "SaaS Invoice & Billing System", level: "Intermediate", skills: ["Next.js", "Stripe", "PostgreSQL", "Prisma"], desc: "Multi-tenant billing platform with subscription plans, PDF invoice generation, usage metering and webhook handlers.", tags: ["Full Stack", "Payments"] },
+  ],
+  "Frontend / UI Engineer": [
+    { title: "Component Design System", level: "Intermediate", skills: ["React", "TypeScript", "Storybook", "Radix UI"], desc: "Fully documented, accessible UI component library with theming tokens, dark mode, and live interactive playground.", tags: ["Frontend", "DX"] },
+    { title: "Real-time Dashboard Builder", level: "Advanced", skills: ["React", "D3.js", "WebSockets", "Zustand"], desc: "Drag-and-drop analytics dashboard with live data streaming, widget library, resizable panels and export to PDF.", tags: ["Frontend", "Data Viz"] },
+    { title: "AI-Powered Form Generator", level: "Intermediate", skills: ["Next.js", "OpenAI", "React Hook Form", "Zod"], desc: "Converts natural language prompts to dynamic, validated forms with conditional logic and multi-step wizard flow.", tags: ["Frontend", "AI"] },
+    { title: "Portfolio with 3D Animations", level: "Intermediate", skills: ["React", "Three.js", "GSAP", "Framer Motion"], desc: "Award-worthy developer portfolio with WebGL particle effects, scroll-triggered animations and case study pages.", tags: ["Frontend", "Creative"] },
+  ],
+  "Backend Systems Engineer": [
+    { title: "High-Throughput Rate Limiter", level: "Intermediate", skills: ["Node.js", "Redis", "Lua Scripts", "Express"], desc: "Token bucket & sliding window rate limiter middleware with per-user quotas, burst allowance and admin override.", tags: ["Backend", "Performance"] },
+    { title: "Distributed Key-Value Store", level: "Advanced", skills: ["Go", "Raft Consensus", "gRPC", "LevelDB"], desc: "Fault-tolerant distributed storage with Raft-based leader election, log replication and automatic shard rebalancing.", tags: ["Distributed Systems"] },
+    { title: "Async Event Processing Engine", level: "Advanced", skills: ["Node.js", "Kafka", "Redis", "PostgreSQL"], desc: "Event-driven microservice processing 100k messages/sec with DLQ, retries, exactly-once semantics and monitoring.", tags: ["Backend", "Kafka"] },
+    { title: "API Gateway with Auth & Caching", level: "Intermediate", skills: ["Node.js", "JWT", "Redis", "nginx"], desc: "Centralized gateway handling authentication, request routing, response caching, and rate limiting across services.", tags: ["Backend", "Security"] },
+  ],
+  "Data Engineer & Analytics": [
+    { title: "Automated Financial Data ETL", level: "Intermediate", skills: ["Python", "PostgreSQL", "Airflow", "dbt"], desc: "Pipeline ingesting stock tickers, normalizing schema with dbt transformations, and generating daily analytics rollups.", tags: ["ETL", "Data"] },
+    { title: "Real-time Streaming Analytics", level: "Advanced", skills: ["Python", "Apache Spark", "Kafka", "Cassandra"], desc: "Stream processing pipeline analyzing 1M events/hour with windowed aggregations and anomaly detection alerts.", tags: ["Streaming", "Big Data"] },
+    { title: "Data Quality Monitoring System", level: "Intermediate", skills: ["Python", "Great Expectations", "Airflow", "Slack API"], desc: "Automated data quality framework with schema drift detection, null checks, and Slack alert integration.", tags: ["Data Quality", "ETL"] },
+    { title: "Analytics Lakehouse with Delta", level: "Advanced", skills: ["PySpark", "Delta Lake", "AWS S3", "Glue"], desc: "Modern data lakehouse on AWS with ACID transactions, time travel queries, and self-serve BI dashboards.", tags: ["Cloud", "Big Data"] },
+  ],
+  "AI & Machine Learning Engineer": [
+    { title: "RAG Knowledge Base Assistant", level: "Advanced", skills: ["Python", "Pinecone", "OpenAI", "FastAPI"], desc: "Semantic search engine over 10k+ PDF documents with citation tracking, multi-hop reasoning and hallucination detection.", tags: ["LLM", "RAG"] },
+    { title: "Real-time Object Detection API", level: "Advanced", skills: ["Python", "YOLOv8", "FastAPI", "OpenCV"], desc: "Production object detection service processing 30fps video streams with GPU acceleration and REST/WebSocket APIs.", tags: ["Computer Vision"] },
+    { title: "LLM Fine-Tuning Pipeline", level: "Advanced", skills: ["Python", "LoRA", "HuggingFace", "PEFT", "WandB"], desc: "End-to-end fine-tuning workflow with LoRA adapters, dataset curation, evaluation harness and model versioning.", tags: ["LLM", "Fine-Tuning"] },
+    { title: "ML Feature Store & Serving", level: "Advanced", skills: ["Python", "Feast", "Redis", "FastAPI", "Docker"], desc: "Centralized feature registry with online/offline serving, point-in-time joins, and model endpoint management.", tags: ["MLOps", "Infrastructure"] },
+  ],
+  "Data Scientist": [
+    { title: "Customer Churn Predictor", level: "Intermediate", skills: ["Python", "Scikit-learn", "XGBoost", "SHAP", "Streamlit"], desc: "Binary classification model predicting subscription cancellations with SHAP explainability and live prediction dashboard.", tags: ["ML", "Business"] },
+    { title: "Stock Price Forecaster", level: "Advanced", skills: ["Python", "LSTM", "TensorFlow", "yFinance", "Prophet"], desc: "Ensemble time-series model with LSTM + Prophet, walk-forward validation and confidence interval visualization.", tags: ["Finance", "Time Series"] },
+    { title: "NLP Sentiment Dashboard", level: "Intermediate", skills: ["Python", "HuggingFace", "Streamlit", "LDA"], desc: "Real-time Twitter/Reddit sentiment analyzer with BERT embeddings, topic modeling and geographic heatmap.", tags: ["NLP", "Dashboard"] },
+    { title: "Recommendation Engine", level: "Advanced", skills: ["Python", "Collaborative Filtering", "FastAPI", "Redis"], desc: "Hybrid recommendation system (content + collaborative filtering) with A/B testing framework and click-through metrics.", tags: ["ML", "RecSys"] },
+  ],
+  "DevOps & Cloud Engineer": [
+    { title: "Full CI/CD Platform on AWS", level: "Advanced", skills: ["GitHub Actions", "Docker", "AWS ECS", "Terraform", "ECR"], desc: "Zero-downtime blue-green deployment pipeline with automated rollbacks, smoke tests, and Slack deployment notifications.", tags: ["CI/CD", "AWS"] },
+    { title: "K8s Auto-Scaling Cluster", level: "Advanced", skills: ["Kubernetes", "Helm", "Prometheus", "Grafana", "HPA"], desc: "Microservice cluster with horizontal pod autoscaling, resource quotas, network policies and Grafana SLO dashboards.", tags: ["Kubernetes", "SRE"] },
+    { title: "IaC Multi-Environment Setup", level: "Intermediate", skills: ["Terraform", "AWS", "Ansible", "Vault"], desc: "Modular Terraform modules for dev/staging/prod with remote state, secrets in Vault, and drift detection.", tags: ["IaC", "Security"] },
+    { title: "GitOps with ArgoCD", level: "Intermediate", skills: ["ArgoCD", "Kubernetes", "Helm", "GitHub Actions"], desc: "Declarative GitOps workflow with ArgoCD sync policies, Helm chart management, and automated PR preview environments.", tags: ["GitOps", "K8s"] },
+  ],
+  "Cloud Solutions Architect": [
+    { title: "Serverless E-Commerce Backend", level: "Advanced", skills: ["AWS Lambda", "DynamoDB", "API Gateway", "SQS", "Cognito"], desc: "Fully serverless checkout flow handling 10k requests/sec with zero cold starts, event-driven inventory and payment retries.", tags: ["Serverless", "AWS"] },
+    { title: "Multi-Region Disaster Recovery", level: "Advanced", skills: ["AWS Route53", "RDS Multi-AZ", "S3 Replication", "CloudWatch"], desc: "Active-passive DR setup with automated failover under 60 seconds, RPO < 5min and monthly DR drills automation.", tags: ["HA", "AWS"] },
+    { title: "Cost Optimization Dashboard", level: "Intermediate", skills: ["AWS Cost Explorer API", "Python", "Grafana", "Lambda"], desc: "Real-time cloud cost tracker with automated rightsizing recommendations, budget alerts and spend anomaly detection.", tags: ["FinOps", "Cloud"] },
+    { title: "Cloud Landing Zone (AWS Control Tower)", level: "Advanced", skills: ["AWS Control Tower", "Organizations", "SCP", "Terraform"], desc: "Multi-account AWS foundation with security baselines, governance guardrails, and automated account vending.", tags: ["Governance", "AWS"] },
+  ],
+  "Site Reliability Engineer (SRE)": [
+    { title: "SRE Observability Stack", level: "Advanced", skills: ["Prometheus", "Grafana", "Jaeger", "OpenTelemetry", "Docker"], desc: "Full monitoring stack with RED metrics dashboards, distributed tracing across 10 services and on-call alerting.", tags: ["Observability", "SRE"] },
+    { title: "Chaos Engineering Suite", level: "Advanced", skills: ["Chaos Monkey", "Python", "K8s", "Litmus"], desc: "Automated fault injection tests validating system resilience — pod kill, network partition, CPU stress experiments.", tags: ["Chaos Engineering"] },
+    { title: "Incident Response Runbook Bot", level: "Intermediate", skills: ["Python", "Slack API", "PagerDuty", "Confluence API"], desc: "Slack bot auto-surfacing runbooks, ownership info, and alert context during incidents with post-mortem templates.", tags: ["Incident Mgmt"] },
+    { title: "SLO/Error Budget Tracker", level: "Intermediate", skills: ["Prometheus", "Grafana", "Python", "Google Sheets API"], desc: "Automated SLO compliance dashboard showing burn rate, error budget remaining and automated freeze triggers.", tags: ["SRE", "Reliability"] },
+  ],
+  "Mobile App Developer (Android/iOS)": [
+    { title: "AI Study Buddy App", level: "Advanced", skills: ["React Native", "OpenAI", "SQLite", "Expo", "Redux"], desc: "Mobile flashcard app with AI explanation, spaced repetition algorithm, offline sync and streak gamification.", tags: ["Mobile", "AI"] },
+    { title: "Expense Tracker with Budgets", level: "Intermediate", skills: ["Kotlin", "Room DB", "Jetpack Compose", "WorkManager"], desc: "Personal finance app with category budgets, recurring transaction detection, and monthly report PDF export.", tags: ["Android", "Finance"] },
+    { title: "Location-Based Community App", level: "Advanced", skills: ["Swift", "MapKit", "Firebase", "Push Notifications"], desc: "Real-time neighborhood map with user posts, geo-fenced alerts, chat and event planning for local communities.", tags: ["iOS", "Real-time"] },
+    { title: "Health & Fitness Tracker", level: "Intermediate", skills: ["Flutter", "Dart", "HealthKit/Google Fit", "Hive DB"], desc: "Cross-platform fitness app syncing with device health APIs, custom workout plans and progress visualization.", tags: ["Cross-Platform", "Health"] },
+  ],
+  "Cybersecurity Engineer": [
+    { title: "Web Vulnerability Scanner", level: "Advanced", skills: ["Python", "OWASP ZAP", "BeautifulSoup", "SQLMap"], desc: "Automated scanner detecting SQL injection, XSS, CSRF and SSRF vulnerabilities with HTML report generation.", tags: ["AppSec", "Pentesting"] },
+    { title: "Network Traffic Analyzer", level: "Intermediate", skills: ["Python", "Scapy", "Wireshark", "ELK Stack"], desc: "Live packet inspector with ML-based anomaly detection, threat flagging and SIEM integration via syslog.", tags: ["Network Security"] },
+    { title: "Zero-Trust Auth System", level: "Advanced", skills: ["Node.js", "JWT", "RBAC", "TOTP MFA", "Vault"], desc: "Multi-factor auth platform with hardware key support, session binding, anomalous login detection and audit trail.", tags: ["Auth", "Identity"] },
+    { title: "CTF Challenge Platform", level: "Intermediate", skills: ["Python", "Docker", "Flask", "PostgreSQL"], desc: "Capture-The-Flag hosting platform with isolated challenge containers, hint system and team leaderboard.", tags: ["Security", "CTF"] },
+  ],
+  "Embedded Systems / IoT Engineer": [
+    { title: "Smart Home Sensor Hub", level: "Advanced", skills: ["ESP32", "FreeRTOS", "MQTT", "AWS IoT Core"], desc: "Multi-sensor node (temp, humidity, motion, air quality) streaming to cloud dashboard with threshold alerts.", tags: ["IoT", "RTOS"] },
+    { title: "Real-Time Motor Controller", level: "Intermediate", skills: ["STM32", "C", "PWM", "PID Control", "HAL"], desc: "PID-controlled brushless DC motor with encoder feedback, speed ramp profiles and UART diagnostics interface.", tags: ["Embedded", "Control"] },
+    { title: "Asset Tracking with GPS/BLE", level: "Advanced", skills: ["nRF52840", "C++", "BLE Mesh", "GPS", "Power Mgmt"], desc: "Sub-1mA deep-sleep tracker with GPS wake-on-motion, BLE mesh relay and cloud geofencing alerts.", tags: ["IoT", "Low Power"] },
+    { title: "RTOS-Based Industrial Logger", level: "Advanced", skills: ["FreeRTOS", "C", "SPI Flash", "Modbus RTU"], desc: "Multi-task data logger reading industrial sensors over Modbus, storing to SPI flash with USB mass storage export.", tags: ["RTOS", "Industrial"] },
+  ],
+  "QA / Test Automation Engineer": [
+    { title: "E2E Test Framework for E-Commerce", level: "Intermediate", skills: ["Playwright", "TypeScript", "GitHub Actions", "Allure"], desc: "Complete test suite covering cart, checkout, payment flows with POM pattern, CI pipeline and HTML reports.", tags: ["E2E", "Automation"] },
+    { title: "API Performance Benchmark Tool", level: "Intermediate", skills: ["k6", "JavaScript", "Grafana", "InfluxDB"], desc: "Load testing script running 10k VUs with real-time Grafana dashboards, P95/P99 SLA alerts and trend reports.", tags: ["Performance", "Testing"] },
+    { title: "Visual Regression Testing System", level: "Intermediate", skills: ["Playwright", "Percy", "Storybook", "CI/CD"], desc: "Automated pixel-diff detection integrated in PR pipeline, catching unintended UI regressions before merge.", tags: ["Visual Testing"] },
+    { title: "AI-Powered Test Generator", level: "Advanced", skills: ["Python", "OpenAI", "Playwright", "AST Parsing"], desc: "Tool that reads source code and auto-generates Playwright test cases with realistic test data using GPT-4.", tags: ["AI Testing"] },
+  ],
+  "Blockchain / Web3 Developer": [
+    { title: "Decentralized Exchange (DEX)", level: "Advanced", skills: ["Solidity", "Uniswap v3", "React", "Hardhat", "Ethers.js"], desc: "AMM-based DEX with concentrated liquidity, fee tiers, slippage protection and live price oracle integration.", tags: ["DeFi", "Solidity"] },
+    { title: "NFT Ticketing Platform", level: "Intermediate", skills: ["Solidity", "IPFS", "Next.js", "Wagmi", "OpenSea API"], desc: "Event ticketing as soulbound NFTs with transfer restrictions, QR code verification and revenue sharing.", tags: ["NFT", "Web3"] },
+    { title: "DAO Governance Protocol", level: "Advanced", skills: ["Solidity", "OpenZeppelin Governor", "Snapshot", "The Graph"], desc: "On-chain governance with proposal lifecycle, quadratic voting, timelock executor and indexed event subgraph.", tags: ["DAO", "Governance"] },
+    { title: "Cross-Chain Bridge", level: "Advanced", skills: ["Solidity", "Chainlink CCIP", "LayerZero", "Hardhat"], desc: "Secure token bridge across 3 EVM chains with message verification, replay protection and liquidity management.", tags: ["Cross-Chain", "DeFi"] },
+  ],
+  "Game Developer": [
+    { title: "3D Stealth Action Game", level: "Advanced", skills: ["Unity", "C#", "NavMesh", "Cinemachine", "Behavior Trees"], desc: "Enemy AI with vision cones, patrol routes, alert state machine and dynamic difficulty scaling based on player performance.", tags: ["Unity", "AI"] },
+    { title: "Procedural Roguelike RPG", level: "Advanced", skills: ["Unity", "C#", "Wave Function Collapse", "Scriptable Objects"], desc: "Infinitely generated dungeons with WFC room placement, loot tables, permadeath and run progression systems.", tags: ["Procedural", "RPG"] },
+    { title: "Online Battle Arena Prototype", level: "Intermediate", skills: ["Unity", "Photon PUN 2", "Mirror", "Unity Services"], desc: "Real-time 4-player arena brawler with lag compensation, server authority, matchmaking and leaderboard.", tags: ["Multiplayer", "Networking"] },
+    { title: "Mobile Puzzle Game with Level Editor", level: "Intermediate", skills: ["Unity", "C#", "DOTween", "Unity Cloud Save"], desc: "Sokoban-style puzzle game with 50+ levels, in-game level editor, share codes and cloud save sync.", tags: ["Mobile", "Casual"] },
+  ],
+  "Product Manager (Technical)": [
+    { title: "Product Case Study Portfolio", level: "Intermediate", skills: ["Figma", "SQL", "Google Analytics", "Notion"], desc: "5 in-depth teardown case studies with problem identification, redesign proposals, North Star metrics and PRDs.", tags: ["PM", "Strategy"] },
+    { title: "Growth Experiment Dashboard", level: "Intermediate", skills: ["SQL", "Python", "Mixpanel", "Retool"], desc: "Self-serve A/B test tracker computing statistical significance, measuring feature lift and tracking OKR impact.", tags: ["Growth", "Analytics"] },
+    { title: "Competitive Intelligence Tool", level: "Intermediate", skills: ["Python", "Web Scraping", "Notion API", "Slack"], desc: "Automated weekly monitor tracking competitor feature releases, pricing changes, app store reviews and G2 ratings.", tags: ["Strategy", "Research"] },
+    { title: "Product Metrics API & Dashboard", level: "Intermediate", skills: ["Node.js", "PostgreSQL", "Chart.js", "Retool"], desc: "Internal analytics platform giving PMs self-serve access to DAU, retention cohorts, funnel and revenue metrics.", tags: ["Analytics", "PM Tools"] },
+  ],
+  "Network Engineer": [
+    { title: "Enterprise Campus Network Design", level: "Advanced", skills: ["Cisco IOS", "OSPF", "GNS3", "STP", "QoS"], desc: "3-tier hierarchical campus network (core/distribution/access) with redundant links, VLANs and QoS policies.", tags: ["Enterprise", "Networking"] },
+    { title: "BGP Traffic Engineering Lab", level: "Advanced", skills: ["Cisco", "BGP", "Python-ncclient", "Netconf"], desc: "Multi-AS BGP topology with MED, local-pref, communities and programmatic config via Python NETCONF.", tags: ["BGP", "Automation"] },
+    { title: "Network Automation Suite", level: "Intermediate", skills: ["Python", "Netmiko", "Nornir", "Ansible", "Nautobot"], desc: "Automated backup, compliance auditing, bulk provisioning and change management across 50+ network devices.", tags: ["NetDevOps", "Python"] },
+    { title: "SD-WAN & Zero-Trust Overlay", level: "Advanced", skills: ["Cisco SDWAN", "Zscaler", "Python", "REST APIs"], desc: "SD-WAN fabric with application-aware routing, Zero Trust network access and centralized policy management.", tags: ["SDWAN", "Security"] },
+  ],
+  "Database Administrator (DBA)": [
+    { title: "High-Availability PostgreSQL Cluster", level: "Advanced", skills: ["PostgreSQL", "Patroni", "pgBouncer", "HAProxy", "etcd"], desc: "Automated failover cluster with streaming replication, connection pooling, and real-time lag monitoring dashboards.", tags: ["PostgreSQL", "HA"] },
+    { title: "Database Migration & ETL Pipeline", level: "Intermediate", skills: ["Python", "SQLAlchemy", "Alembic", "PostgreSQL", "dbt"], desc: "Zero-downtime schema migration with shadow tables, dual-write strategy, data validation and rollback safety net.", tags: ["Migration", "ETL"] },
+    { title: "Query Performance Optimizer", level: "Intermediate", skills: ["PostgreSQL", "pg_stat_statements", "Python", "Grafana"], desc: "Automated slow query detector, index advisor, and EXPLAIN plan analyzer with weekly optimization reports.", tags: ["Performance", "DBA"] },
+    { title: "Multi-Model Database Benchmark", level: "Intermediate", skills: ["PostgreSQL", "MongoDB", "Redis", "Cassandra", "Python"], desc: "Scientific benchmark comparing RDBMS vs NoSQL for OLTP, time-series, graph and wide-column workloads.", tags: ["Research", "DB"] },
+  ],
+  "Software Architect / Tech Lead": [
+    { title: "Social Media Platform Architecture", level: "Advanced", skills: ["System Design", "Kafka", "Redis", "Cassandra", "CDN"], desc: "End-to-end HLD for Instagram-scale — feed fanout, notification service, media CDN, and global data replication.", tags: ["System Design", "Scale"] },
+    { title: "Multi-Tenant SaaS Platform", level: "Advanced", skills: ["Node.js", "PostgreSQL", "Stripe", "Kubernetes", "Feature Flags"], desc: "Row-level tenant isolation, subscription billing, granular RBAC, feature flags and zero-downtime deployments.", tags: ["SaaS", "Architecture"] },
+    { title: "API Gateway & Service Mesh", level: "Advanced", skills: ["Kong", "Istio", "Envoy", "gRPC", "Prometheus"], desc: "Centralized gateway with request routing, rate limiting, mTLS service mesh, circuit breakers and tracing.", tags: ["Infrastructure", "Mesh"] },
+    { title: "Technical RFC & ADR Portfolio", level: "Intermediate", skills: ["Architecture", "Markdown", "Mermaid", "GitHub"], desc: "Collection of 5+ published Architecture Decision Records documenting major design choices with trade-off analysis.", tags: ["Documentation", "Leadership"] },
+  ],
+  "Scaler / Competitive Programmer": [
+    { title: "LeetCode Solutions Repository", level: "Intermediate", skills: ["C++", "Python", "Java", "Markdown"], desc: "400+ well-documented solutions with Big-O analysis, multiple approaches, pattern tags and video explanations.", tags: ["DSA", "Competitive"] },
+    { title: "Online Judge System", level: "Advanced", skills: ["Node.js", "Docker", "Redis", "PostgreSQL", "Code Sandbox"], desc: "Sandboxed multi-language code execution with time/memory limits, checker engine, test cases and rating system.", tags: ["Platform", "Infra"] },
+    { title: "DSA Algorithm Visualizer", level: "Intermediate", skills: ["React", "D3.js", "GSAP", "TypeScript"], desc: "Interactive step-by-step visualizations for 30+ algorithms — sorting, graph BFS/DFS, DP tables, tree traversals.", tags: ["Visualization", "Education"] },
+    { title: "Competitive Programming Contest Bot", level: "Intermediate", skills: ["Python", "Codeforces API", "Telegram Bot API", "SQLite"], desc: "Telegram bot tracking friends' ratings, sending contest reminders, and auto-fetching editorial links.", tags: ["CP", "Automation"] },
+  ],
+  "Freshers / FAANG SDE Aspirant": [
+    { title: "Full-Stack Web Project", level: "Intermediate", skills: ["React", "Node.js", "MongoDB", "JWT", "Vercel"], desc: "Production-quality app with authentication, CRUD operations, REST API, deployment and comprehensive README.", tags: ["Full Stack", "Portfolio"] },
+    { title: "DSA Cheatsheet Portfolio Site", level: "Intermediate", skills: ["React", "Markdown", "GitHub Pages", "Search"], desc: "Personal website with 200+ solved problems, topic complexity tables, pattern guides and searchable notes.", tags: ["DSA", "Portfolio"] },
+    { title: "Open Source Contribution", level: "Intermediate", skills: ["Git", "GitHub", "Code Review", "Documentation"], desc: "3+ merged PRs in popular open source repos demonstrating code quality, commit discipline and collaboration.", tags: ["Open Source"] },
+    { title: "CS Interview Prep Tracker", level: "Intermediate", skills: ["React", "LocalStorage", "Charts", "CSV Export"], desc: "Self-built tracker logging daily problems, weak topics, company progress, interview dates and readiness score.", tags: ["Tools", "Portfolio"] },
+  ],
+};
+
+
 const CareerReadiness = () => {
   const { user } = useAuth();
   const { careerVersion, onResumeAnalyzed } = useAppState();
@@ -496,44 +627,77 @@ const CareerReadiness = () => {
             </div>
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-200 self-start">Curated Portfolio</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {(data?.recommendedProjects || []).map((proj, idx) => (
-              <div key={idx} className="rounded-xl border border-slate-200 bg-slate-50 hover:border-violet-300 hover:shadow-sm transition-all flex flex-col overflow-hidden">
+          {/* Project count badge */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-violet-100 text-violet-800 border border-violet-200">
+              {(ROLE_PROJECTS[targetRole] || data?.recommendedProjects || []).length} Projects
+            </span>
+            <span className="text-xs text-slate-500">Curated for <strong>{targetRole}</strong></span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {(ROLE_PROJECTS[targetRole] || data?.recommendedProjects || []).map((proj, idx) => (
+              <div key={idx} className="rounded-xl border border-slate-200 bg-slate-50 hover:border-violet-300 hover:shadow-md transition-all flex flex-col overflow-hidden group">
                 <div className="p-5 flex-1 space-y-3">
+                  {/* Header row */}
                   <div className="flex items-center justify-between">
-                    <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${proj.level === "Advanced" ? "bg-rose-50 text-rose-800 border-rose-200" : proj.level === "Intermediate" ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"}`}>{proj.level}</span>
-                    <span className="text-xs font-bold text-slate-400">Project #{idx + 1}</span>
+                    <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${proj.level === "Advanced" ? "bg-rose-50 text-rose-800 border-rose-200" : proj.level === "Intermediate" ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-emerald-50 text-emerald-800 border-emerald-200"}`}>
+                      {proj.level}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 group-hover:text-violet-500 transition-colors">
+                      Project #{idx + 1}
+                    </span>
                   </div>
-                  <h3 className="text-sm font-extrabold text-slate-900">{proj.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">{proj.desc}</p>
+                  {/* Title */}
+                  <h3 className="text-sm font-extrabold text-slate-900 leading-snug">{proj.title}</h3>
+                  {/* Description */}
+                  <p className="text-xs text-slate-600 leading-relaxed">{proj.desc}</p>
+                  {/* Tags */}
+                  {proj.tags && (
+                    <div className="flex flex-wrap gap-1">
+                      {proj.tags.map(tag => (
+                        <span key={tag} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Tech Skills */}
                   <div className="flex flex-wrap gap-1.5">
                     {proj.skills.map(skill => (
                       <span key={skill} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200 text-slate-700">{skill}</span>
                     ))}
                   </div>
                 </div>
-                <div className="p-4 border-t border-slate-200 grid grid-cols-2 gap-2">
+                {/* Action buttons */}
+                <div className="p-4 border-t border-slate-200 grid grid-cols-3 gap-2">
                   <Link
                     to={`/tutor?q=${encodeURIComponent(`Give me a detailed technical architecture and step-by-step build guide for: "${proj.title}" using ${proj.skills.join(", ")}.`)}`}
-                    className="py-2 rounded-xl text-[11px] font-extrabold bg-violet-600 text-white text-center hover:bg-violet-700"
+                    className="py-2 rounded-xl text-[11px] font-extrabold bg-violet-600 text-white text-center hover:bg-violet-700 transition-colors"
                   >
-                    🏗️ Architecture
+                    🏗️ Build Guide
                   </Link>
                   <Link
                     to={`/tutor?q=${encodeURIComponent(`What interview questions should I prepare for a project like "${proj.title}" using ${proj.skills.join(", ")}? Include system design and coding questions.`)}`}
-                    className="py-2 rounded-xl text-[11px] font-extrabold bg-slate-100 text-slate-800 text-center hover:bg-slate-200 border border-slate-200"
+                    className="py-2 rounded-xl text-[11px] font-extrabold bg-slate-100 text-slate-800 text-center hover:bg-slate-200 border border-slate-200 transition-colors"
                   >
-                    🎤 Interview Prep
+                    🎤 Interview
+                  </Link>
+                  <Link
+                    to={`/tutor?q=${encodeURIComponent(`Give me a GitHub README template and project structure for "${proj.title}". Include folder layout, setup instructions, and deployment steps.`)}`}
+                    className="py-2 rounded-xl text-[11px] font-extrabold bg-emerald-50 text-emerald-800 text-center hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                  >
+                    📝 README
                   </Link>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <p className="text-xs font-medium text-slate-700">Need a custom project idea matching your exact skills?</p>
+          <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-violet-50 to-sky-50 border border-violet-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-extrabold text-slate-800">🤖 Want a custom project idea?</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">AI generates unique project ideas tailored to your exact current skills and experience level.</p>
+            </div>
             <Link
-              to={`/tutor?q=${encodeURIComponent(`Suggest 3 unique, impressive project ideas for a ${targetRole} candidate that stand out in a portfolio. Include tech stack, complexity, and real-world impact.`)}`}
-              className="px-4 py-2 rounded-xl text-xs font-extrabold bg-sky-600 text-white hover:bg-sky-700 shadow-sm"
+              to={`/tutor?q=${encodeURIComponent(`Suggest 3 unique, impressive project ideas for a ${targetRole} candidate that stand out in a portfolio. Include tech stack, complexity, real-world impact, and estimated build time.`)}`}
+              className="px-4 py-2 rounded-xl text-xs font-extrabold bg-violet-600 text-white hover:bg-violet-700 shadow-sm whitespace-nowrap shrink-0"
             >
               ✨ Generate Custom Ideas
             </Link>
