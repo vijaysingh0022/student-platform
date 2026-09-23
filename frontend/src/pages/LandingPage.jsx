@@ -1,808 +1,1337 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { LearnXLogo, LearnXIcon } from "../components/LearnXLogo.jsx";
+import * as THREE from "three";
 
 const LandingPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("skillgap");
-  const [demoQuestionIndex, setDemoQuestionIndex] = useState(0);
 
+  // 3D Canvas Reference
+  const canvasContainerRef = useRef(null);
+
+  // Interactive IDE State
+  const [activeCodeTab, setActiveCodeTab] = useState("cpp");
+  const [isRunningCode, setIsRunningCode] = useState(false);
+  const [codeOutput, setCodeOutput] = useState(null);
+  const [aiMentorQuery, setAiMentorQuery] = useState("");
+  const [aiMentorResponse, setAiMentorResponse] = useState(null);
+  const [isAiAnswering, setIsAiAnswering] = useState(false);
+
+  // Interactive Diagnostic Quiz State
+  const [selectedQuizOption, setSelectedQuizOption] = useState(null);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Demo Tutor Q&A index
+  const [activeTutorIndex, setActiveTutorIndex] = useState(0);
+
+  // 3D Background Three.js Effect
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+
+    let width = container.clientWidth || window.innerWidth;
+    let height = container.clientHeight || 750;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    camera.position.z = 240;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    container.innerHTML = "";
+    container.appendChild(renderer.domElement);
+
+    // Particle nodes network
+    const particleCount = 110;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 340;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 220;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 160;
+
+      velocities.push({
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: (Math.random() - 0.5) * 0.28,
+        vz: (Math.random() - 0.5) * 0.2
+      });
+    }
+
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+    const pMaterial = new THREE.PointsMaterial({
+      color: 0x8b5cf6,
+      size: 3.5,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending
+    });
+    const pointCloud = new THREE.Points(geometry, pMaterial);
+    scene.add(pointCloud);
+
+    // Proximity dynamic lines
+    const maxConnections = 450;
+    const linePositions = new Float32Array(maxConnections * 6);
+    const lineColors = new Float32Array(maxConnections * 6);
+    const lineGeometry = new THREE.BufferGeometry();
+    lineGeometry.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
+    lineGeometry.setAttribute("color", new THREE.BufferAttribute(lineColors, 3));
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+
+    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+    scene.add(lines);
+
+    // Floating 3D algorithmic geometric core
+    const coreGroup = new THREE.Group();
+    const icoGeo = new THREE.IcosahedronGeometry(34, 1);
+    const icoMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.45
+    });
+    const icoMesh = new THREE.Mesh(icoGeo, icoMat);
+    coreGroup.add(icoMesh);
+
+    const innerGeo = new THREE.SphereGeometry(17, 16, 16);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0xa855f7,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.75
+    });
+    const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+    coreGroup.add(innerMesh);
+
+    const torusGeo = new THREE.TorusGeometry(50, 1.2, 12, 64);
+    const torusMat = new THREE.MeshBasicMaterial({
+      color: 0x6366f1,
+      transparent: true,
+      opacity: 0.65
+    });
+    const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+    torusMesh.rotation.x = Math.PI / 3;
+    coreGroup.add(torusMesh);
+
+    coreGroup.position.set(75, 15, 0);
+    scene.add(coreGroup);
+
+    // Parallax mouse movement
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    const handleMouseMove = (e) => {
+      mouseX = (e.clientX - window.innerWidth / 2) * 0.08;
+      mouseY = (e.clientY - window.innerHeight / 2) * 0.08;
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+
+    // Animation Loop
+    let animFrameId;
+    const animate = () => {
+      animFrameId = requestAnimationFrame(animate);
+
+      targetX += (mouseX - targetX) * 0.05;
+      targetY += (mouseY - targetY) * 0.05;
+
+      camera.position.x += (targetX - camera.position.x) * 0.04;
+      camera.position.y += (-targetY - camera.position.y) * 0.04;
+      camera.lookAt(scene.position);
+
+      coreGroup.rotation.x += 0.005;
+      coreGroup.rotation.y += 0.008;
+      innerMesh.rotation.y -= 0.015;
+      torusMesh.rotation.z += 0.006;
+
+      const posArr = geometry.attributes.position.array;
+      let lineIdx = 0;
+      let colorIdx = 0;
+
+      for (let i = 0; i < particleCount; i++) {
+        posArr[i * 3] += velocities[i].vx;
+        posArr[i * 3 + 1] += velocities[i].vy;
+        posArr[i * 3 + 2] += velocities[i].vz;
+
+        if (posArr[i * 3] < -170 || posArr[i * 3] > 170) velocities[i].vx *= -1;
+        if (posArr[i * 3 + 1] < -110 || posArr[i * 3 + 1] > 110) velocities[i].vy *= -1;
+        if (posArr[i * 3 + 2] < -80 || posArr[i * 3 + 2] > 80) velocities[i].vz *= -1;
+
+        for (let j = i + 1; j < particleCount; j++) {
+          const dx = posArr[i * 3] - posArr[j * 3];
+          const dy = posArr[i * 3 + 1] - posArr[j * 3 + 1];
+          const dz = posArr[i * 3 + 2] - posArr[j * 3 + 2];
+          const distSq = dx * dx + dy * dy + dz * dz;
+
+          if (distSq < 2200 && lineIdx < maxConnections * 6) {
+            linePositions[lineIdx++] = posArr[i * 3];
+            linePositions[lineIdx++] = posArr[i * 3 + 1];
+            linePositions[lineIdx++] = posArr[i * 3 + 2];
+
+            linePositions[lineIdx++] = posArr[j * 3];
+            linePositions[lineIdx++] = posArr[j * 3 + 1];
+            linePositions[lineIdx++] = posArr[j * 3 + 2];
+
+            const alpha = Math.max(0, 1.0 - Math.sqrt(distSq) / 47);
+            lineColors[colorIdx++] = 0.54 * alpha;
+            lineColors[colorIdx++] = 0.36 * alpha;
+            lineColors[colorIdx++] = 0.96 * alpha;
+
+            lineColors[colorIdx++] = 0.02 * alpha;
+            lineColors[colorIdx++] = 0.71 * alpha;
+            lineColors[colorIdx++] = 0.83 * alpha;
+          }
+        }
+      }
+
+      for (let k = lineIdx; k < maxConnections * 6; k++) {
+        linePositions[k] = 0;
+      }
+      for (let k = colorIdx; k < maxConnections * 6; k++) {
+        lineColors[k] = 0;
+      }
+
+      geometry.attributes.position.needsUpdate = true;
+      lineGeometry.attributes.position.needsUpdate = true;
+      lineGeometry.attributes.color.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    const handleResize = () => {
+      if (!container) return;
+      width = container.clientWidth || window.innerWidth;
+      height = container.clientHeight || 750;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
+      if (renderer.domElement && renderer.domElement.parentNode) {
+        renderer.domElement.parentNode.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, []);
+
+  // Code Snippets for Interactive IDE
+  const codeSnippets = {
+    cpp: {
+      file: "median_two_sorted_arrays.cpp",
+      lang: "C++20",
+      code: `// Amazon L5 / Google L4 Optimal Median Search
+#include <vector>
+#include <climits>
+#include <iostream>
+using namespace std;
+
+double findMedianSortedArrays(vector<int>& A, vector<int>& B) {
+    if (A.size() > B.size()) return findMedianSortedArrays(B, A);
+    int m = A.size(), n = B.size();
+    int low = 0, high = m;
+    
+    while (low <= high) {
+        int px = (low + high) / 2;
+        int py = (m + n + 1) / 2 - px;
+        
+        int maxLeftX = (px == 0) ? INT_MIN : A[px - 1];
+        int minRightX = (px == m) ? INT_MAX : A[px];
+        int maxLeftY = (py == 0) ? INT_MIN : B[py - 1];
+        int minRightY = (py == n) ? INT_MAX : B[py];
+        
+        if (maxLeftX <= minRightY && maxLeftY <= minRightX) {
+            if ((m + n) % 2 == 0)
+                return (max(maxLeftX, maxLeftY) + min(minRightX, minRightY)) / 2.0;
+            return max(maxLeftX, maxLeftY);
+        } else if (maxLeftX > minRightY) high = px - 1;
+        else low = px + 1;
+    }
+    return 0.0;
+}`
+    },
+    py: {
+      file: "lru_cache_o1.py",
+      lang: "Python 3.12",
+      code: `# Meta E4 / Uber Systems - O(1) LRU Cache Architecture
+class Node:
+    def __init__(self, key: int, val: int):
+        self.key, self.val = key, val
+        self.prev = self.next = None
+
+class LRUCache:
+    def __init__(self, capacity: int):
+        self.cap = capacity
+        self.cache = {} # key -> node
+        self.head, self.tail = Node(0, 0), Node(0, 0)
+        self.head.next, self.tail.prev = self.tail, self.head
+
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            node = self.cache[key]
+            self._remove(node)
+            self._insert(node)
+            return node.val
+        return -1
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            self._remove(self.cache[key])
+        node = Node(key, value)
+        self.cache[key] = node
+        self._insert(node)
+        if len(self.cache) > self.cap:
+            lru = self.head.next
+            self._remove(lru)
+            del self.cache[lru.key]`
+    },
+    rs: {
+      file: "concurrency_mutex.rs",
+      lang: "Rust (Kernel)",
+      code: `// Lock-free Ring Buffer & Atomic Synchronization
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+pub struct LockFreeRingBuffer<T> {
+    buffer: Vec<Option<T>>,
+    capacity: usize,
+    head: AtomicUsize,
+    tail: AtomicUsize,
+}
+
+impl<T> LockFreeRingBuffer<T> {
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            buffer: (0..capacity).map(|_| None).collect(),
+            capacity,
+            head: AtomicUsize::new(0),
+            tail: AtomicUsize::new(0),
+        }
+    }
+    
+    pub fn try_push(&self, item: T) -> Result<(), &'static str> {
+        let current_tail = self.tail.load(Ordering::Acquire);
+        let next_tail = (current_tail + 1) % self.capacity;
+        if next_tail == self.head.load(Ordering::Acquire) {
+            return Err("Ring Buffer Full");
+        }
+        self.tail.store(next_tail, Ordering::Release);
+        Ok(())
+    }
+}`
+    }
+  };
+
+  const handleRunCode = () => {
+    setIsRunningCode(true);
+    setCodeOutput(null);
+    setTimeout(() => {
+      setIsRunningCode(false);
+      setCodeOutput({
+        status: "SUCCESS (200 OK)",
+        runtime: "0.04 ms",
+        memory: "12.4 MB (Top 98.2%)",
+        diagnostics: "All 18 Hidden Test Cases Passed. Zero Memory Leaks.",
+        complexity: "Time: O(log(min(N,M))) | Space: O(1)"
+      });
+    }, 600);
+  };
+
+  const handleAskAiMentor = (e) => {
+    e.preventDefault();
+    if (!aiMentorQuery.trim()) return;
+    setIsAiAnswering(true);
+    setAiMentorResponse(null);
+
+    setTimeout(() => {
+      setIsAiAnswering(false);
+      setAiMentorResponse({
+        query: aiMentorQuery,
+        insight: `For '${aiMentorQuery}', in interview settings: Always state the brute-force baseline O(M+N) merge first to show progression, then transition to binary search on the shorter array partition. This proves logarithmic bounds O(log(min(M,N))) with zero auxiliary allocation!`
+      });
+      setAiMentorQuery("");
+    }, 700);
+  };
+
+  // Demo Tutor Questions
   const demoTutorQuestions = [
     {
-      q: "Explain BCNF with a quick practical example.",
-      a: "A relation is in BCNF (Boyce-Codd Normal Form) if for every functional dependency X → Y, X is a superkey. In simpler terms: every determinant must be a candidate key. Unlike 3NF, BCNF eliminates anomalies arising from overlapping candidate keys!"
+      q: "Explain BCNF with a real-world database anomaly example.",
+      tag: "DBMS • Normalization",
+      a: "A relation is in Boyce-Codd Normal Form (BCNF) if for every non-trivial functional dependency X → Y, X is a Superkey. In simpler terms: every determinant must be a candidate key! Unlike 3NF, BCNF completely prevents update/delete anomalies when a relation has multiple overlapping candidate keys."
     },
     {
       q: "Why use B+ Trees over Hash Tables for database indexing?",
-      a: "Hash tables provide O(1) lookups for point queries (e.g., WHERE id = 42), but cannot handle range queries (e.g., WHERE age BETWEEN 20 AND 30). B+ Trees maintain sorted leaf nodes in a doubly-linked list, allowing O(log N) point lookups AND extremely fast range scans with minimal disk I/O."
+      tag: "DBMS • Storage Engines",
+      a: "Hash indexes provide O(1) point lookups (e.g. WHERE id = 42), but fail completely for range queries (WHERE age BETWEEN 20 AND 30). B+ Trees keep leaf nodes linked in a sorted sequential doubly-linked list, allowing O(log N) point search AND blazing fast range scans with optimal disk I/O page caching."
     },
     {
-      q: "What is the difference between Preemptive and Non-Preemptive scheduling?",
-      a: "In preemptive scheduling, the OS can interrupt a running process (e.g., Round Robin, SRTF) to allocate CPU to a higher-priority task. In non-preemptive scheduling (e.g., FCFS), once CPU is allocated to a process, it holds it until termination or I/O wait."
+      q: "Preemptive vs Non-Preemptive Scheduling: What happens in Linux CFS?",
+      tag: "OS • Kernel Architecture",
+      a: "In preemptive scheduling, the OS kernel can interrupt a running task via timer interrupts to allocate CPU to higher-priority processes (e.g., Round Robin, CFS). Linux Completely Fair Scheduler (CFS) uses red-black trees indexed by 'vruntime' to guarantee fairness in O(log N) preemption."
+    },
+    {
+      q: "How does Raft Consensus handle Network Partitions?",
+      tag: "System Design • Distributed Systems",
+      a: "Raft guarantees safety through majority quorum ((N/2) + 1). If a cluster of 5 nodes is split into 2 and 3: the minority partition (2 nodes) cannot elect a leader or commit entries, preventing split-brain. When the network heals, the majority log overwrites the stale minority."
     }
   ];
 
-  const pillars = [
-    {
-      icon: "📖",
-      title: "Personalized Learning",
-      tagline: "Adaptive & Custom",
-      desc: "Diagnostics pinpoint your conceptual weaknesses and build 7-day personalized remediation plans.",
-      color: "from-blue-500 to-sky-600",
-      bgLight: "bg-blue-50/80 border-blue-200"
-    },
-    {
-      icon: "🤖",
-      title: "AI Guidance",
-      tagline: "24/7 CS Mentorship",
-      desc: "Instant theory explanations, viva preparation, and step-by-step code analysis.",
-      color: "from-violet-600 to-indigo-600",
-      bgLight: "bg-violet-50/80 border-violet-200"
-    },
-    {
-      icon: "📝",
-      title: "Practice & Tests",
-      tagline: "Calibrated MCQs",
-      desc: "Industry-standard diagnostic assessments across DBMS, Operating Systems, and DSA.",
-      color: "from-indigo-600 to-purple-600",
-      bgLight: "bg-indigo-50/80 border-indigo-200"
-    },
-    {
-      icon: "📊",
-      title: "Track Progress",
-      tagline: "Live Skill Matrix",
-      desc: "Real-time accuracy radars, historical growth charts, and test mastery dashboards.",
-      color: "from-purple-600 to-pink-600",
-      bgLight: "bg-purple-50/80 border-purple-200"
-    },
-    {
-      icon: "💼",
-      title: "Career Preparation",
-      tagline: "Placement Ready",
-      desc: "ATS resume scanner, interview simulations, and AI readiness forecasting.",
-      color: "from-rose-500 to-red-600",
-      bgLight: "bg-rose-50/80 border-rose-200"
-    },
-  ];
-
-  const features = [
-    {
-      icon: "🎯",
-      title: "Diagnostic Skill Gap Analysis",
-      desc: "Identify your conceptual vulnerabilities before exams. Topic-level diagnostic evaluation pinpoints exactly where your understanding drops below 60%."
-    },
-    {
-      icon: "🧠",
-      title: "Generative AI Study Roadmaps",
-      desc: "No generic timetables. Our AI synthesizes a personalized 7-day remediation plan tailored specifically around your diagnosed weak topics."
-    },
-    {
-      icon: "🤖",
-      title: "24/7 Contextual CS AI Tutor",
-      desc: "Stuck on concurrency control, dynamic programming, or page replacement algorithms? Ask doubts anytime and receive clear, structured explanations."
-    },
-    {
-      icon: "📊",
-      title: "Mastery Analytics & Tracking",
-      desc: "Visualize your growth trajectory across DBMS, Operating Systems, and DSA with real-time accuracy charts and topic-wise progress breakdown."
-    },
-    {
-      icon: "📝",
-      title: "Curated Technical MCQs",
-      desc: "Calibrated question banks designed to match university viva examinations and top-tier tech placement screening standards."
-    },
-    {
-      icon: "⚡",
-      title: "Placement-Ready Competency",
-      desc: "Bridge the gap between theoretical textbook memorization and the deep conceptual mastery demanded by tech interviews."
-    }
-  ];
-
-  const steps = [
-    {
-      step: "01",
-      title: "Take a Diagnostic Assessment",
-      desc: "Attempt high-yield MCQs across Core CS subjects like DBMS, OS, and DSA with instant scoring."
-    },
-    {
-      step: "02",
-      title: "Uncover Critical Skill Gaps",
-      desc: "Our analytics engine categorizes performance into Strong vs Weak topics (<60% mastery)."
-    },
-    {
-      step: "03",
-      title: "Generate AI 7-Day Roadmap",
-      desc: "Receive an actionable, day-by-day learning itinerary focusing strictly on fixing your weak areas."
-    },
-    {
-      step: "04",
-      title: "Solve Doubts with AI Tutor",
-      desc: "Chat with the specialized AI Tutor to clarify complex theories and verify conceptual clarity."
-    }
-  ];
-
-  const subjects = [
-    {
-      name: "Data Structures & Algorithms",
-      code: "DSA",
-      icon: "⚡",
-      topics: ["Trees & BST", "Graph Traversals (BFS/DFS)", "Dynamic Programming", "Heaps & Hash Tables"],
-      status: "12 Placement MCQs Live"
-    },
-    {
-      name: "Database Management Systems",
-      code: "DBMS",
-      icon: "🗄️",
-      topics: ["Normalization (1NF-BCNF)", "B+ Tree Indexing", "ACID Transactions & 2PL", "SQL Query Optimization"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "Operating Systems",
-      code: "OS",
-      icon: "💻",
-      topics: ["Process Sync & Semaphores", "Banker's Deadlock Algorithm", "Virtual Memory & Paging", "CPU Scheduling"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "Computer Networks",
-      code: "CN",
-      icon: "🌐",
-      topics: ["OSI & TCP/IP Stack", "TCP 3-Way Handshake", "Subnetting & CIDR", "DNS, HTTPS & TLS Handshake"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "OOPs & System Design Concepts",
-      code: "OOPS",
-      icon: "🧩",
-      topics: ["4 Pillars & Polymorphism", "vtable / vptr Mechanics", "SOLID Principles", "Design Patterns (Singleton/Factory)"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "System Design & Scalability",
-      code: "SYSTEM_DESIGN",
-      icon: "🏗️",
-      topics: ["Load Balancing & Sharding", "Redis Distributed Caching", "CAP Theorem & Consistency", "Rate Limiters & Queues"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "Quantitative Aptitude & Reasoning",
-      code: "APTITUDE",
-      icon: "🧠",
-      topics: ["Time, Speed & Distance", "Time & Work / Pipes", "Profit & Loss / Percentages", "Combinatorics & Probability"],
-      status: "10 Placement MCQs Live"
-    },
-    {
-      name: "Web Dev & Cloud Fundamentals",
-      code: "WEB_DEV",
-      icon: "🚀",
-      topics: ["JS Event Loop & Closures", "REST API Status & Idempotency", "JWT Authentication Flow", "Docker vs VMs & Git Workflow"],
-      status: "10 Placement MCQs Live"
-    }
-  ];
-
-  const testimonials = [
-    {
-      name: "Aditya Verma",
-      role: "B.Tech CSE, Final Year",
-      college: "Tier-1 Technical Campus",
-      text: "The Skill Gap Analyzer highlighted that while my SQL syntax was fine, my Normalization and BCNF concepts were under 40%. The 7-day AI roadmap fixed it right before my technical interview!",
-      avatar: "👨‍💻"
-    },
-    {
-      name: "Pooja Sharma",
-      role: "Software Engineering Student",
-      college: "State Engineering College",
-      text: "Having an AI tutor specialized in CSE subjects is a game changer. I asked dozens of edge-case questions about Deadlocks and B+ tree node splitting without feeling hesitant.",
-      avatar: "👩‍🎓"
-    },
-    {
-      name: "Rohan Nair",
-      role: "Campus Placement Placed @ FinTech",
-      college: "CS Department",
-      text: "The personalized study plan is so much better than generic YouTube playlists. It cut my exam revision time in half because I only spent time on topics I was actually weak in.",
-      avatar: "🧑‍💻"
-    }
-  ];
+  // Diagnostic Sample Question
+  const sampleDiagnostic = {
+    subject: "Operating Systems",
+    question: "Which condition is NOT strictly necessary for a Deadlock to occur in a multi-threaded OS?",
+    options: [
+      { id: "A", text: "Mutual Exclusion" },
+      { id: "B", text: "Hold and Wait" },
+      { id: "C", text: "Preemption Allowed by Kernel", isCorrect: true },
+      { id: "D", text: "Circular Wait" }
+    ],
+    explanation: "Coffman's 4 Necessary Conditions for Deadlock are: 1) Mutual Exclusion, 2) Hold and Wait, 3) NO Preemption, and 4) Circular Wait. If preemption is allowed, the OS can forcibly reclaim resources, which breaks the deadlock condition!"
+  };
 
   return (
-    <div className="min-h-screen text-slate-800 overflow-hidden" id="landing-page">
-      {/* Hero Section */}
-      <section className="relative pt-10 pb-16 md:pt-16 md:pb-24 px-4 sm:px-6 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-10">
-          {/* Main Logo & Motto in Hero */}
-          <div className="flex flex-col items-center justify-center mb-6">
-            <div className="p-3 rounded-2xl bg-white shadow-xl border border-slate-200 mb-3 hover:scale-105 transition-transform">
-              <LearnXIcon size={56} />
+    <div className="bg-[#090D16] text-[#DFE2EF] min-h-screen relative overflow-x-hidden selection:bg-purple-600 selection:text-white font-sans">
+      {/* 3D Ambient Glowing Light Orbs */}
+      <div className="fixed top-[-10rem] left-1/2 -translate-x-1/2 w-[750px] h-[500px] bg-purple-600/15 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="fixed top-[35%] -left-[15rem] w-[550px] h-[550px] bg-cyan-500/10 rounded-full blur-[130px] pointer-events-none -z-10" />
+      <div className="fixed top-[70%] -right-[15rem] w-[650px] h-[650px] bg-purple-700/10 rounded-full blur-[160px] pointer-events-none -z-10" />
+
+      {/* ─── 1. 3D GLASSMORPHIC STICKY TOP NAVIGATION ─── */}
+      <header className="sticky top-0 z-50 bg-[#090D16]/80 backdrop-blur-xl border-b border-purple-900/30 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Brand Identity */}
+          <div className="flex items-center gap-6">
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 p-0.5 shadow-lg shadow-purple-500/20 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full bg-[#090D16] rounded-[10px] flex items-center justify-center">
+                  <LearnXIcon className="w-5 h-5 text-cyan-400" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xl tracking-tight text-white font-mono">
+                  Learn<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">X</span>
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-semibold tracking-wide">
+                  v4.2 3D AI
+                </span>
+              </div>
+            </Link>
+
+            {/* Desktop Navigation Links */}
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+              <a href="#tracks" className="hover:text-cyan-400 transition-colors">Curriculum</a>
+              <a href="#terminal-playground" className="hover:text-purple-400 transition-colors">Interactive IDE</a>
+              <a href="#ai-tutor-preview" className="hover:text-cyan-400 transition-colors">AI Copilot</a>
+              <a href="#diagnostic-preview" className="hover:text-purple-400 transition-colors">Skill Diagnostic</a>
+              <a href="#leaderboard-stats" className="hover:text-cyan-400 transition-colors">Telemetry</a>
+            </nav>
+          </div>
+
+          {/* Action Cluster */}
+          <div className="flex items-center gap-3">
+            {/* Gamification Streak Pill */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#141A2B] border border-purple-800/40 text-xs font-mono">
+              <span className="text-amber-400 animate-pulse">🔥</span>
+              <span className="text-slate-200 font-semibold">18-Day Streak</span>
+              <span className="w-1 h-1 rounded-full bg-slate-600" />
+              <span className="text-purple-400 font-bold">4,850 XP</span>
             </div>
-            <h1
-              className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              LEARN<span className="bg-gradient-to-r from-violet-600 via-purple-600 to-sky-500 bg-clip-text text-transparent">X</span>
-            </h1>
-            <p className="text-sm sm:text-base font-extrabold text-violet-800 tracking-wider uppercase mt-1">
-              Learn. Practice. Grow. Succeed.
-            </p>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500 italic mt-0.5">
-              More Than Learning, A Brighter You
-            </p>
-          </div>
 
-          {/* Badge */}
-          <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6 border bg-violet-50 border-violet-200 text-violet-800 shadow-xs"
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>LEARN TODAY • GROW TOMORROW • SUCCEED ALWAYS</span>
-          </div>
-
-          {/* Headline */}
-          <h2
-            className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.15] mb-5 text-slate-900"
-            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-          >
-            Stop Guessing. <br />
-            <span className="gradient-text">Close Your Skill Gaps</span> with AI.
-          </h2>
-
-          {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-700 leading-relaxed mb-8 max-w-2xl mx-auto font-normal">
-            Diagnostic CSE assessments, exact concept blindspot discovery, personalized 7-day roadmaps, 24/7 AI tutoring, and comprehensive career intelligence.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             {user ? (
               <Link
                 to="/dashboard"
-                id="hero-cta-dashboard"
-                className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-base font-semibold text-white btn-gradient flex items-center justify-center gap-2 shadow-glow-purple"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-semibold text-xs tracking-wide shadow-lg shadow-purple-600/30 transition-all active:scale-95"
               >
-                <span>⚡ Go to Your Dashboard</span>
-                <span>→</span>
+                Go to Dashboard →
               </Link>
             ) : (
-              <>
-                <Link
-                  to="/register"
-                  id="hero-cta-register"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-base font-semibold text-white btn-gradient flex items-center justify-center gap-2 shadow-glow-purple"
-                >
-                  <span>🚀 Get Started Free</span>
-                  <span>→</span>
-                </Link>
+              <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  id="hero-cta-login"
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-base font-semibold transition-all duration-200 glass-card flex items-center justify-center gap-2 hover:bg-slate-100 text-slate-800 border border-slate-200"
+                  className="text-xs font-semibold text-slate-300 hover:text-white px-3 py-2 rounded-lg hover:bg-slate-800/50 transition-colors"
                 >
-                  <span>Sign In</span>
+                  Sign In
                 </Link>
-              </>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:brightness-110 text-white font-semibold text-xs tracking-wide shadow-lg shadow-purple-600/25 transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>Get Started</span>
+                  <span>→</span>
+                </Link>
+              </div>
             )}
-            <a
-              href="#interactive-demo"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+          </div>
+        </div>
+      </header>
+
+      {/* ─── 2. HERO SECTION WITH 3D WEBGL PARTICLE SCENE ─── */}
+      <section className="relative min-h-[720px] lg:min-h-[820px] flex items-center justify-center pt-8 pb-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-purple-950/40">
+        {/* 3D WebGL / Three.js Scene Container */}
+        <div
+          ref={canvasContainerRef}
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-80"
+          style={{ display: "block" }}
+        />
+
+        {/* Cyberpunk Subtle Grid Overlay */}
+        <div className="absolute inset-0 grid-bg-cyber opacity-30 pointer-events-none" />
+
+        <div className="relative z-10 max-w-5xl mx-auto text-center flex flex-col items-center">
+          {/* Futuristic Telemetry Badge */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#141A2B]/90 backdrop-blur-md border border-cyan-500/40 text-cyan-300 mb-6 shadow-lg shadow-cyan-500/10 animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span className="text-xs font-mono font-semibold tracking-wider uppercase">
+              ⚡ NEURAL PLACEMENT ENGINE v4.2 • 98.4% OFFER CONVERSION
+            </span>
+          </div>
+
+          {/* Master 3D Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-4xl mx-auto leading-tight mb-6">
+            Master Computer Science with{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-cyan-400 to-indigo-300">
+              Autonomous 3D AI Mentorship
+            </span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Accelerate your engineering career with real-time algorithm visualizers, production-grade OS kernel sandboxes, deep DBMS internals, and personalized FAANG mock interview simulations.
+          </p>
+
+          {/* Dual Call-to-Actions */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-14 w-full sm:w-auto">
+            <Link
+              to={user ? "/learn" : "/register"}
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white text-sm font-semibold tracking-wide flex items-center justify-center gap-2.5 glow-violet hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-purple-600/30"
             >
-              See Live Demo Preview ↓
+              <span>🚀 Start Placement Track Free</span>
+              <span className="text-cyan-300 font-mono text-xs">→</span>
+            </Link>
+
+            <a
+              href="#terminal-playground"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl glass-panel-3d hover:border-cyan-400 text-cyan-300 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#141A2B]/80 active:scale-95 transition-all"
+            >
+              <span>⚡ Explore Live Interactive IDE</span>
             </a>
           </div>
 
-          {/* 5 Core Pillars Section (from the Official LearnX Poster) */}
-          <div className="mt-12 pt-8 border-t border-slate-200">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-4">
-              The 5 Pillars of LearnX Intelligence
+          {/* Telemetry Proof Ticker */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl pt-8 border-t border-purple-900/30">
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 font-mono text-xs">
+              <span className="text-cyan-400 text-base">✓</span>
+              <span><strong className="text-white text-sm">45,000+</strong> Offers Cracked</span>
+            </div>
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 font-mono text-xs">
+              <span className="text-amber-400 text-base">★</span>
+              <span><strong className="text-white text-sm">4.9/5</strong> Rating from FAANG Devs</span>
+            </div>
+            <div className="flex items-center justify-center gap-2.5 text-slate-300 font-mono text-xs">
+              <span className="text-purple-400 text-base">⚡</span>
+              <span><strong className="text-white text-sm">Zero Setup</strong> Cloud Kernels</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 3. 3D HOLOGRAPHIC DIAGNOSTIC & METRIC CARDS ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: AI Tutor Real-Time */}
+          <div className="glass-panel-elevated p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-300 border border-purple-500/20 hover:border-purple-500/50">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-300 font-semibold">
+                  Neural Diagnostic
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-bold">
+                99.2% ACCURACY
+              </span>
+            </div>
+            <h2 className="text-lg font-bold text-white mb-2">AI Tutor 2.0 (Real-Time Debugger)</h2>
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+              Autonomous execution stack analyzing memory leaks, asymptotic efficiency, and logic boundaries instantly.
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {pillars.map((p, i) => (
-                <div
-                  key={p.title}
-                  className={`p-3.5 rounded-2xl border ${p.bgLight} flex flex-col items-center text-center shadow-xs hover:shadow-md transition-all group`}
+            <div className="p-3 rounded-xl bg-[#070A10] border border-slate-800 font-mono text-xs text-cyan-300 flex items-center justify-between">
+              <span className="text-[11px]">&gt;_ Explaining AVL Tree Rotations...</span>
+              <span className="text-purple-400">🤖</span>
+            </div>
+          </div>
+
+          {/* Card 2: FAANG Placement Readiness */}
+          <div className="glass-panel-elevated p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-300 border border-purple-500/20 hover:border-cyan-500/50">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-purple-300 font-semibold">
+                  Target Readiness
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 font-bold">
+                TOP 1.2% NATIONWIDE
+              </span>
+            </div>
+            <h2 className="text-lg font-bold text-white mb-1">FAANG Placement Engine</h2>
+            <div className="flex items-baseline gap-3 mb-3">
+              <span className="text-4xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-cyan-400">
+                94.8%
+              </span>
+              <span className="text-xs font-mono text-slate-400">Readiness Score</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+              <span>Recent offers:</span>
+              <span className="text-white font-semibold">Google L4</span> •
+              <span className="text-white font-semibold">Meta E4</span> •
+              <span className="text-white font-semibold">Stripe L3</span>
+            </div>
+          </div>
+
+          {/* Card 3: OS Concurrency Visualizer */}
+          <div className="glass-panel-elevated p-6 rounded-2xl relative overflow-hidden group hover:-translate-y-1.5 transition-all duration-300 border border-purple-500/20 hover:border-emerald-500/50">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-300 font-semibold">
+                  Kernel Telemetry
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">
+                POSIX Threads
+              </span>
+            </div>
+            <h2 className="text-lg font-bold text-white mb-2">Concurrency & OS Visualizer</h2>
+            <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+              Interactive race condition detector, deadlock graphing, and dirty-page cache inspection in live WASM sandbox.
+            </p>
+            <div className="flex items-center justify-between text-xs font-mono bg-[#070A10] p-2.5 rounded-xl border border-slate-800">
+              <span className="text-emerald-400 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Mutex Guard Active
+              </span>
+              <span className="text-slate-300">Thread #4 Acquired</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 4. INTERACTIVE CODE PLAYGROUND & AI SANDBOX ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="terminal-playground">
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 text-cyan-400 font-mono text-xs uppercase tracking-wider mb-2">
+              <span>💻 Cloud Execution Matrix</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">Next-Gen Interactive IDE & AI Diagnostic</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs text-slate-400">Kernel Engine:</span>
+            <span className="px-3 py-1 rounded-lg bg-[#141A2B] border border-cyan-500/30 font-mono text-xs text-cyan-300 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              Ubuntu 24.04 (v6.8-LTS Cloud)
+            </span>
+          </div>
+        </div>
+
+        {/* Main IDE Frame */}
+        <div className="glass-panel-3d rounded-2xl border border-purple-900/40 shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+          {/* Code Editor Pane (8 Cols) */}
+          <div className="lg:col-span-8 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col bg-[#070A10]">
+            {/* Editor Tabs Header */}
+            <div className="flex items-center justify-between bg-[#0B0F1A] border-b border-slate-800 px-4 py-2">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {Object.keys(codeSnippets).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setActiveCodeTab(key);
+                      setCodeOutput(null);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono flex items-center gap-2 transition-all ${
+                      activeCodeTab === key
+                        ? "bg-[#141A2B] text-cyan-300 border border-cyan-500/40 shadow-sm"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <span>📄 {codeSnippets[key].file}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs font-mono text-slate-400">
+                {codeSnippets[activeCodeTab].lang}
+              </div>
+            </div>
+
+            {/* Code Body */}
+            <div className="p-4 font-mono text-xs sm:text-sm overflow-x-auto max-h-[380px] overflow-y-auto leading-relaxed text-slate-200">
+              <pre>
+                <code>{codeSnippets[activeCodeTab].code}</code>
+              </pre>
+            </div>
+
+            {/* Live Execution Console Bar */}
+            <div className="p-3.5 bg-[#0B0F1A] border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleRunCode}
+                  disabled={isRunningCode}
+                  className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 hover:brightness-110 text-white font-mono font-semibold text-xs flex items-center gap-1.5 glow-cyan active:scale-95 transition-all disabled:opacity-50"
                 >
-                  <div className="text-2xl mb-1.5 transform group-hover:scale-110 transition-transform">
-                    {p.icon}
-                  </div>
-                  <h4 className="text-xs font-bold text-slate-900 leading-tight">
-                    {p.title}
-                  </h4>
-                  <p className="text-[10px] text-slate-600 mt-1 line-clamp-2 leading-tight">
-                    {p.desc}
-                  </p>
+                  {isRunningCode ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Executing in Sandbox...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>▶</span>
+                      <span>Run Code (Ctrl+Enter)</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCodeOutput({
+                      status: "CALL STACK VISUALIZED",
+                      runtime: "Active Stack Frames: 3",
+                      memory: "Heap Partition: 0x7ffd20a -> 0x7ffd23f",
+                      diagnostics: "Recursion depth safe. Binary divide-and-conquer active.",
+                      complexity: "In-Place Execution"
+                    });
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#141A2B] hover:bg-slate-800 text-slate-300 font-mono text-xs border border-slate-700 flex items-center gap-1.5 active:scale-95 transition-all"
+                >
+                  <span>📊 Visualize Call Stack</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs font-mono text-slate-400">
+                <span>Time: <span className="text-cyan-400">0.04ms</span></span>
+                <span>Memory: <span className="text-purple-400">12.4 MB</span></span>
+              </div>
+            </div>
+
+            {/* Output Display */}
+            {codeOutput && (
+              <div className="p-4 bg-[#05070C] border-t border-purple-900/30 text-xs font-mono">
+                <div className="flex items-center justify-between text-emerald-400 font-bold mb-1">
+                  <span>● {codeOutput.status}</span>
+                  <span className="text-slate-400 font-normal">{codeOutput.complexity}</span>
                 </div>
+                <div className="text-slate-300">{codeOutput.diagnostics}</div>
+                <div className="text-slate-400 mt-1">Runtime: {codeOutput.runtime} | Memory: {codeOutput.memory}</div>
+              </div>
+            )}
+          </div>
+
+          {/* Live AI Diagnostic & Copilot Side Panel (4 Cols) */}
+          <div className="lg:col-span-4 p-5 flex flex-col justify-between bg-[#0B0F1A]/80">
+            <div>
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-400 font-bold">🧠</span>
+                  <span className="font-semibold text-sm text-white">AI Neural Copilot</span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold">
+                  ONLINE
+                </span>
+              </div>
+
+              {/* Diagnostic Insight Box */}
+              <div className="p-3.5 rounded-xl bg-[#070A10] border border-purple-500/30 mb-4">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-300 mb-1">
+                  <span>⚡</span>
+                  <span>Optimal Complexity Achieved</span>
+                </div>
+                <p className="font-mono text-xs text-slate-300 leading-relaxed mb-3">
+                  Partition reached <strong className="text-cyan-300">O(log(min(n,m)))</strong>. Aligned for <span className="text-white font-semibold">Amazon L5</span> & <span className="text-white font-semibold">Google L4</span> benchmark tests.
+                </p>
+                <div className="w-full bg-slate-800 rounded-full h-1.5 mb-1 overflow-hidden">
+                  <div className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full rounded-full" style={{ width: "96%" }} />
+                </div>
+                <div className="flex justify-between text-[11px] font-mono text-slate-400">
+                  <span>Algorithmic Optimality</span>
+                  <span className="text-cyan-400 font-bold">96%</span>
+                </div>
+              </div>
+
+              {/* Stack Telemetry Warnings */}
+              <div className="space-y-2 mb-4">
+                <div className="p-2.5 rounded-lg bg-[#141A2B] border border-slate-800 flex items-start gap-2">
+                  <span className="text-cyan-400 text-xs mt-0.5">✓</span>
+                  <div className="font-mono text-xs">
+                    <div className="text-white font-medium">Zero Cache Misses</div>
+                    <div className="text-slate-400 text-[11px]">Continuous memory alignment in stack frame.</div>
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#141A2B] border border-slate-800 flex items-start gap-2">
+                  <span className="text-purple-400 text-xs mt-0.5">💡</span>
+                  <div className="font-mono text-xs">
+                    <div className="text-white font-medium">Pass-By-Reference Verified</div>
+                    <div className="text-slate-400 text-[11px]">Memory copy overhead reduced by 100%.</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Mentor Answer Preview if any */}
+              {aiMentorResponse && (
+                <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/40 text-xs font-mono text-slate-200 mb-3 animate-fade-in">
+                  <div className="text-purple-300 font-semibold mb-1">Mentor Feedback:</div>
+                  <div className="leading-relaxed">{aiMentorResponse.insight}</div>
+                </div>
+              )}
+            </div>
+
+            {/* Ask AI Mentor Query Box */}
+            <form onSubmit={handleAskAiMentor} className="pt-3 border-t border-slate-800">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={aiMentorQuery}
+                  onChange={(e) => setAiMentorQuery(e.target.value)}
+                  placeholder="Ask AI Mentor for hint..."
+                  className="w-full pl-3 pr-16 py-2 text-xs font-mono rounded-lg bg-[#070A10] border border-slate-700 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 transition-all"
+                />
+                <button
+                  type="submit"
+                  disabled={isAiAnswering}
+                  className="absolute right-1 top-1 px-3 py-1 rounded bg-gradient-to-r from-purple-600 to-cyan-600 hover:brightness-110 text-[11px] font-mono font-semibold text-white transition-all disabled:opacity-50"
+                >
+                  {isAiAnswering ? "..." : "Ask"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 5. CORE CURRICULUM TRACKS MATRIX ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="tracks">
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <span className="font-mono text-xs text-cyan-400 tracking-widest uppercase font-bold">
+            FOUNDATIONAL SYLLABUS MATRIX
+          </span>
+          <h2 className="text-3xl font-bold text-white mt-2 mb-4">Master Four Core Engineering Pillars</h2>
+          <p className="text-sm text-slate-300">
+            Surgically crafted curriculum mapped directly against actual FAANG, quant hedge fund, and unicorn engineering assessments.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Track 1: DSA */}
+          <div className="glass-panel-3d p-6 rounded-2xl border border-purple-900/40 hover:border-purple-500/60 transition-all group flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#141A2B] flex items-center justify-center border border-purple-500/30 group-hover:border-purple-400 transition-colors text-2xl">
+                  🌲
+                </div>
+                <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 font-bold">
+                  HARDCORE / PLACEMENT READY
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">
+                1. Data Structures & Algorithms
+              </h3>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Dynamic Programming on Trees, Segment Trees, Disjoint Set Union (DSU), Max-Flow Graph Kernels, and NP-Complete reduction heuristics.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  250+ Problems
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Graph Theory
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Monotonic Queues
+                </span>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span>Hiring:</span>
+                <span className="text-white">Google</span> • <span className="text-white">Amazon</span> • <span className="text-white">Uber</span>
+              </div>
+              <Link to="/learn" className="font-mono text-xs text-purple-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-bold">
+                Explore Track →
+              </Link>
+            </div>
+          </div>
+
+          {/* Track 2: DBMS */}
+          <div className="glass-panel-3d p-6 rounded-2xl border border-purple-900/40 hover:border-cyan-500/60 transition-all group flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#141A2B] flex items-center justify-center border border-cyan-500/30 group-hover:border-cyan-400 transition-colors text-2xl">
+                  🗄️
+                </div>
+                <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 font-bold">
+                  HARDCORE / PLACEMENT READY
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">
+                2. Database Management Systems
+              </h3>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Deep dive into B+ Tree page layouts, WAL write-ahead logs, 2-Phase Locking, Distributed Multi-Version Concurrency (MVCC), and Sharded PostgreSQL.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  ACID Internals
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  LSM Trees
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Query Planner Cost
+                </span>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span>Hiring:</span>
+                <span className="text-white">Snowflake</span> • <span className="text-white">Stripe</span> • <span className="text-white">Oracle</span>
+              </div>
+              <Link to="/learn" className="font-mono text-xs text-cyan-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-bold">
+                Explore Track →
+              </Link>
+            </div>
+          </div>
+
+          {/* Track 3: Operating Systems */}
+          <div className="glass-panel-3d p-6 rounded-2xl border border-purple-900/40 hover:border-indigo-500/60 transition-all group flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#141A2B] flex items-center justify-center border border-indigo-500/30 group-hover:border-indigo-400 transition-colors text-2xl">
+                  ⚡
+                </div>
+                <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 font-bold">
+                  HARDCORE / PLACEMENT READY
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">
+                3. Operating Systems & Low-Level
+              </h3>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Build simple UNIX schedulers, manage virtual memory page tables (TLB), trace POSIX signals, and write lock-free ring buffers in C and Rust.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Kernel Drivers
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  epoll / kqueue
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Memory Virtualization
+                </span>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span>Hiring:</span>
+                <span className="text-white">Apple</span> • <span className="text-white">Nvidia</span> • <span className="text-white">Microsoft</span>
+              </div>
+              <Link to="/learn" className="font-mono text-xs text-indigo-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-bold">
+                Explore Track →
+              </Link>
+            </div>
+          </div>
+
+          {/* Track 4: System Design */}
+          <div className="glass-panel-3d p-6 rounded-2xl border border-purple-900/40 hover:border-emerald-500/60 transition-all group flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#141A2B] flex items-center justify-center border border-emerald-500/30 group-hover:border-emerald-400 transition-colors text-2xl">
+                  🌐
+                </div>
+                <span className="font-mono text-[10px] px-2.5 py-1 rounded-full bg-red-950/60 border border-red-500/40 text-red-400 font-bold">
+                  HARDCORE / PLACEMENT READY
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                4. System Design & Distributed Networks
+              </h3>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Architect hyper-scale services: Raft consensus protocols, consistent hashing rings, idempotency keys, and multi-region Kafka ingestion pipelines.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-6">
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Raft Consensus
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Rate Limiters
+                </span>
+                <span className="px-2.5 py-1 rounded bg-[#141A2B] font-mono text-[11px] text-slate-300 border border-slate-800">
+                  Distributed Tracing
+                </span>
+              </div>
+            </div>
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span>Hiring:</span>
+                <span className="text-white">Meta</span> • <span className="text-white">Netflix</span> • <span className="text-white">Palantir</span>
+              </div>
+              <Link to="/learn" className="font-mono text-xs text-emerald-400 flex items-center gap-1 group-hover:translate-x-1 transition-transform font-bold">
+                Explore Track →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 6. INTERACTIVE AI TUTOR & DIAGNOSTIC DEMOS ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="ai-tutor-preview">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: AI Contextual Doubt Solver Preview */}
+          <div className="glass-panel-3d p-6 sm:p-8 rounded-2xl border border-purple-900/40">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-cyan-400 font-mono text-xs uppercase font-bold tracking-wider">
+                🤖 24/7 Contextual CS AI Tutor
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Instant Viva & Concept Explanations</h3>
+            <p className="text-xs text-slate-300 mb-6 leading-relaxed">
+              Ask deep conceptual questions across DBMS normalization, OS concurrency, or distributed algorithms and get crystal-clear breakdowns.
+            </p>
+
+            {/* Questions Picker */}
+            <div className="space-y-2.5 mb-6">
+              {demoTutorQuestions.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveTutorIndex(idx)}
+                  className={`w-full text-left p-3 rounded-xl border text-xs font-mono transition-all ${
+                    activeTutorIndex === idx
+                      ? "bg-[#141A2B] border-cyan-500/50 text-cyan-300 shadow-md"
+                      : "bg-[#0B0F1A] border-slate-800 text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <div className="text-[10px] text-purple-400 font-bold mb-1">{item.tag}</div>
+                  <div className="font-semibold text-white">{item.q}</div>
+                </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Interactive Feature Showcase / Demo Card */}
-        <div id="interactive-demo" className="mt-6 max-w-5xl mx-auto">
-          <div className="text-center mb-6">
-            <span className="text-xs uppercase tracking-widest text-sky-700 font-bold">Interactive Platform Preview</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              Experience The LearnX Workflow
-            </h2>
+            {/* Answer Display */}
+            <div className="p-4 rounded-xl bg-[#070A10] border border-purple-500/30 text-xs text-slate-200 leading-relaxed font-mono">
+              <div className="flex items-center gap-2 text-cyan-400 font-bold mb-2">
+                <span>AI Tutor Response</span>
+                <span className="text-[10px] px-2 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-normal">
+                  Zero Hallucination Mode
+                </span>
+              </div>
+              <p>{demoTutorQuestions[activeTutorIndex].a}</p>
+            </div>
           </div>
 
-          <div className="glass-card p-4 sm:p-8 rounded-2xl border border-slate-200 relative overflow-hidden shadow-lg bg-white">
-            {/* Interactive Tab Switcher */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 p-1.5 rounded-xl bg-slate-100 border border-slate-200 mb-8 max-w-md mx-auto relative z-10">
-              <button
-                onClick={() => setActiveTab("skillgap")}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                  activeTab === "skillgap"
-                    ? "bg-violet-600 text-white shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                1. Skill Gap Engine
-              </button>
-              <button
-                onClick={() => setActiveTab("roadmap")}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                  activeTab === "roadmap"
-                    ? "bg-violet-600 text-white shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                2. AI 7-Day Roadmap
-              </button>
-              <button
-                onClick={() => setActiveTab("tutor")}
-                className={`flex-1 py-2.5 px-3 rounded-lg text-xs sm:text-sm font-bold transition-all ${
-                  activeTab === "tutor"
-                    ? "bg-violet-600 text-white shadow-md"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                3. AI Tutor Bot
-              </button>
+          {/* Right: Live Interactive Diagnostic Assessment Quiz */}
+          <div className="glass-panel-3d p-6 sm:p-8 rounded-2xl border border-purple-900/40" id="diagnostic-preview">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-purple-400 font-mono text-xs uppercase font-bold tracking-wider">
+                🎯 Live Skill Assessment Demo
+              </span>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300">
+                Level: Mid-Senior
+              </span>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Topic Diagnostic Check</h3>
+            <p className="text-xs text-slate-300 mb-6">
+              Test your foundational knowledge. Our diagnostic engine pinpoints sub-topic vulnerabilities automatically.
+            </p>
+
+            <div className="p-4 rounded-xl bg-[#0B0F1A] border border-slate-800 mb-4">
+              <div className="text-xs font-semibold text-slate-300 mb-4">
+                {sampleDiagnostic.question}
+              </div>
+
+              <div className="space-y-2.5">
+                {sampleDiagnostic.options.map((opt) => {
+                  const isSelected = selectedQuizOption === opt.id;
+                  let btnStyle = "bg-[#070A10] border-slate-800 text-slate-300 hover:border-slate-700";
+
+                  if (quizSubmitted) {
+                    if (opt.isCorrect) {
+                      btnStyle = "bg-emerald-950/60 border-emerald-500 text-emerald-300 font-semibold";
+                    } else if (isSelected && !opt.isCorrect) {
+                      btnStyle = "bg-red-950/60 border-red-500 text-red-300";
+                    }
+                  } else if (isSelected) {
+                    btnStyle = "bg-[#141A2B] border-purple-500 text-purple-300";
+                  }
+
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => {
+                        if (!quizSubmitted) setSelectedQuizOption(opt.id);
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border text-xs font-mono transition-all flex items-center justify-between ${btnStyle}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-[10px]">
+                          {opt.id}
+                        </span>
+                        <span>{opt.text}</span>
+                      </div>
+                      {quizSubmitted && opt.isCorrect && (
+                        <span className="text-emerald-400 font-bold">✓ Correct</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Tab 1: Skill Gap Engine Preview */}
-            {activeTab === "skillgap" && (
-              <div className="space-y-6 animate-fade-in-up">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <span>📊 Diagnostic Evaluation:</span>
-                      <span className="text-sky-700">DBMS Mastery</span>
-                    </h3>
-                    <p className="text-xs text-slate-600">Evaluated 10 questions across 2 sub-topics</p>
+            <div className="flex items-center justify-between">
+              {!quizSubmitted ? (
+                <button
+                  onClick={() => {
+                    if (selectedQuizOption) setQuizSubmitted(true);
+                  }}
+                  disabled={!selectedQuizOption}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 hover:brightness-110 text-white font-mono text-xs font-semibold disabled:opacity-50 transition-all active:scale-95"
+                >
+                  Submit Diagnostic Answer
+                </button>
+              ) : (
+                <div className="w-full">
+                  <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-xs font-mono text-slate-200 mb-3">
+                    <span className="text-purple-300 font-bold">Diagnostic Insight: </span>
+                    {sampleDiagnostic.explanation}
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 self-start sm:self-auto">
-                    ⚠️ 1 Weak Area Detected (&lt;60%)
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Topic 1 - Weak */}
-                  <div className="p-4 rounded-xl bg-rose-50/50 border border-rose-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-slate-900">Normalization (1NF - BCNF)</span>
-                      <span className="text-sm font-extrabold text-rose-700">40% Accuracy</span>
-                    </div>
-                    <div className="w-full bg-rose-200 rounded-full h-3 overflow-hidden">
-                      <div className="bg-rose-600 h-3 rounded-full transition-all duration-500" style={{ width: "40%" }} />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-600 font-medium">
-                      <span>2/5 Questions Correct</span>
-                      <span className="text-rose-700 font-bold">Needs Remediation</span>
-                    </div>
-                  </div>
-
-                  {/* Topic 2 - Strong */}
-                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-slate-900">Indexing & B+ Trees</span>
-                      <span className="text-sm font-extrabold text-emerald-700">80% Accuracy</span>
-                    </div>
-                    <div className="w-full bg-emerald-200 rounded-full h-3 overflow-hidden">
-                      <div className="bg-emerald-600 h-3 rounded-full transition-all duration-500" style={{ width: "80%" }} />
-                    </div>
-                    <div className="mt-3 flex items-center justify-between text-xs text-slate-600 font-medium">
-                      <span>4/5 Questions Correct</span>
-                      <span className="text-emerald-700 font-bold">Concept Solid</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-violet-50 border border-violet-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="text-sm text-slate-800">
-                    <span className="font-bold text-violet-800">AI Recommendation:</span> Focus on Functional Dependencies and 3NF vs BCNF anomalies before proceeding to transaction management.
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("roadmap")}
-                    className="whitespace-nowrap px-4 py-2 rounded-lg text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors"
-                  >
-                    Generate AI Plan →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 2: AI Roadmap Preview */}
-            {activeTab === "roadmap" && (
-              <div className="space-y-6 animate-fade-in-up">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <span>🗺️ Personalized 7-Day Plan:</span>
-                      <span className="text-violet-700">Normalization Mastery</span>
-                    </h3>
-                    <p className="text-xs text-slate-600">Engineered by GPT-4o-mini based on diagnosed weak topics</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-violet-100 text-violet-800 border border-violet-200 self-start sm:self-auto">
-                    Target: 7 Days • 1.5 hrs/day
-                  </span>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 border border-violet-200 flex items-center justify-center font-bold text-violet-800 text-xs shrink-0 mt-0.5">
-                      D1
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-slate-900">Functional Dependencies & Closure Sets</h4>
-                        <span className="text-xs font-semibold text-slate-600">Day 1 • 60 mins</span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">
-                        Review Armstrong axioms, compute attribute closures X+, and determine all candidate keys for given schemas.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 border border-violet-200 flex items-center justify-center font-bold text-violet-800 text-xs shrink-0 mt-0.5">
-                      D2
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-slate-900">1NF, 2NF & Partial Dependencies</h4>
-                        <span className="text-xs font-semibold text-slate-600">Day 2 • 75 mins</span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">
-                        Identify prime vs non-prime attributes and decompose tables to eliminate partial dependencies.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-sky-50 border border-sky-200 flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-sky-100 border border-sky-200 flex items-center justify-center font-bold text-sky-800 text-xs shrink-0 mt-0.5">
-                      D3
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-sky-900">3NF vs BCNF Deep Dive & Lossless Joins</h4>
-                        <span className="text-xs font-bold text-sky-700">Key Milestone</span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">
-                        Practice checking dependency preservation and lossless join property during BCNF decomposition.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 text-xs text-slate-600 font-medium">
-                  <span>+ 4 More Days of Hands-on Decomposition & Re-assessment Practice</span>
-                  <button
-                    onClick={() => setActiveTab("tutor")}
-                    className="text-sky-700 hover:underline font-bold"
-                  >
-                    Test with AI Tutor →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 3: AI Tutor Bot Preview */}
-            {activeTab === "tutor" && (
-              <div className="space-y-6 animate-fade-in-up">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-200">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <span>🤖 24/7 AI Tutor:</span>
-                      <span className="text-emerald-700">Interactive Doubt Clearing</span>
-                    </h3>
-                    <p className="text-xs text-slate-600">Prompt-engineered for Computer Science theory and viva clarity</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
-                    Online & Ready
-                  </span>
-                </div>
-
-                {/* Sample Question Chips */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-slate-600 font-semibold py-1">Try asking:</span>
-                  {demoTutorQuestions.map((item, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setDemoQuestionIndex(idx)}
-                      className={`text-xs px-3 py-1 rounded-lg border transition-all ${
-                        demoQuestionIndex === idx
-                          ? "bg-sky-100 border-sky-300 text-sky-900 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      {item.q.slice(0, 32)}...
-                    </button>
-                  ))}
-                </div>
-
-                {/* Chat Bubble Dialogue */}
-                <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  {/* User query */}
-                  <div className="flex items-start gap-2.5 justify-end">
-                    <div className="bg-violet-600 text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl rounded-tr-none max-w-lg font-medium shadow-sm">
-                      {demoTutorQuestions[demoQuestionIndex].q}
-                    </div>
-                    <div className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                      U
-                    </div>
-                  </div>
-
-                  {/* AI response */}
-                  <div className="flex items-start gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-r from-violet-600 to-sky-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                      🤖
-                    </div>
-                    <div className="bg-white text-slate-800 text-xs sm:text-sm px-4 py-3 rounded-2xl rounded-tl-none max-w-xl border border-slate-200 leading-relaxed shadow-sm">
-                      {demoTutorQuestions[demoQuestionIndex].a}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center pt-2">
                   <Link
-                    to={user ? "/tutor" : "/register"}
-                    className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-sky-700 hover:text-sky-800"
+                    to="/assessment"
+                    className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 font-mono text-xs font-bold"
                   >
-                    <span>Launch Full AI Tutor Console</span>
-                    <span>→</span>
+                    Take Full Diagnostic Test (15 Topics) →
                   </Link>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works (4-Step Pipeline) */}
-      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-200 relative">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest text-violet-700 font-bold">Structured Academic Growth</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            How LearnX Powers Your Progress
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base mt-3">
-            A high-efficiency 4-step loop designed to replace unfocused studying with surgical, high-impact learning.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
-          {steps.map((item, idx) => (
-            <div
-              key={idx}
-              className="glass-card p-6 rounded-2xl border border-slate-200 hover:border-violet-300 transition-all duration-300 relative group bg-white shadow-sm hover:shadow-md"
-            >
-              <div className="text-3xl font-extrabold text-violet-600 mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {item.step}
-              </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Core Feature Pillars */}
-      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-200 bg-slate-50/70">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest text-sky-700 font-bold">Flagship Features</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Engineered for Modern CSE Excellence
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base mt-3">
-            From university viva preparation to technical interview screening, everything you need is under one unified system.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="glass-card p-6 rounded-2xl border border-slate-200 hover:border-sky-300 transition-all duration-300 flex flex-col justify-between bg-white shadow-sm hover:shadow-md"
-            >
-              <div>
-                <div className="w-12 h-12 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-2xl mb-4">
-                  {feature.icon}
+      {/* ─── 7. GAMIFIED DEVELOPER STATS & CONSISTENCY MATRIX ─── */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" id="leaderboard-stats">
+        <div className="glass-panel-3d p-6 md:p-8 rounded-3xl border border-purple-900/40 shadow-xl">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 pb-6 border-b border-slate-800">
+            {/* Profile Badge */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-cyan-400 p-0.5 shadow-lg shadow-purple-600/30">
+                  <div className="w-full h-full bg-[#090D16] rounded-[14px] flex items-center justify-center font-bold text-xl text-cyan-400 font-mono">
+                    AM
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{feature.title}</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{feature.desc}</p>
+                <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-cyan-500 text-black text-[10px] font-bold font-mono">
+                  #42
+                </span>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-sky-700 font-semibold">
-                Included in Core Platform
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-bold text-white">Alex Mercer</h4>
+                  <span className="font-mono text-xs text-cyan-400">@alex_dev</span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono">
+                  Targeting: Staff Systems Engineer • Global Placement Percentile: 98.8%
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Subject Curriculum Modules */}
-      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-200">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest text-violet-700 font-bold">Curriculum Coverage</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Comprehensive Technical Domains
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base mt-3">
-            Topic-segmented question banks and knowledge rubrics curated for computer science students.
-          </p>
-        </div>
+            {/* Unlocked Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-[#141A2B] border border-purple-500/40 text-purple-300 font-mono text-xs flex items-center gap-1.5">
+                ✨ DP Sorcerer
+              </span>
+              <span className="px-3 py-1 rounded-full bg-[#141A2B] border border-cyan-500/40 text-cyan-300 font-mono text-xs flex items-center gap-1.5">
+                ⚡ Kernel Hacker
+              </span>
+              <span className="px-3 py-1 rounded-full bg-[#141A2B] border border-emerald-500/40 text-emerald-300 font-mono text-xs flex items-center gap-1.5">
+                🌐 System Architect
+              </span>
+            </div>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {subjects.map((sub, idx) => (
-            <div
-              key={idx}
-              className="glass-card p-6 rounded-2xl border border-slate-200 flex flex-col justify-between bg-white shadow-sm"
-            >
+          {/* Metric Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 pt-6">
+            {/* Problem Breakdown */}
+            <div className="md:col-span-4 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-3xl">{sub.icon}</span>
-                  <span className="text-xs px-3 py-1 rounded-full bg-violet-100 text-violet-800 font-mono font-bold">
-                    {sub.code}
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="text-sm font-semibold text-white font-mono">Total Solved</span>
+                  <span className="font-mono font-bold text-lg text-cyan-400">
+                    412 <span className="text-xs text-slate-500 font-normal">/ 500</span>
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{sub.name}</h3>
-                <div className="space-y-1.5 mb-6">
-                  {sub.topics.map((t, tidx) => (
-                    <div key={tidx} className="flex items-center gap-2 text-xs text-slate-700 font-medium">
-                      <span className="text-emerald-600 font-bold">✓</span>
-                      <span>{t}</span>
-                    </div>
-                  ))}
+                {/* Progress Stack */}
+                <div className="w-full bg-[#070A10] h-3 rounded-full flex overflow-hidden mb-4 border border-slate-800">
+                  <div className="bg-emerald-500 h-full" style={{ width: "25%" }} title="Easy: 88" />
+                  <div className="bg-amber-500 h-full" style={{ width: "50%" }} title="Medium: 214" />
+                  <div className="bg-rose-500 h-full" style={{ width: "25%" }} title="Hard: 110" />
+                </div>
+                {/* Difficulty Stats Details */}
+                <div className="space-y-2 font-mono text-xs">
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      Easy
+                    </span>
+                    <span className="text-white font-semibold">88 / 100</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      Medium
+                    </span>
+                    <span className="text-white font-semibold">214 / 250</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-400">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      Hard (FAANG Target)
+                    </span>
+                    <span className="text-white font-semibold">110 / 150</span>
+                  </div>
                 </div>
               </div>
+              <div className="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center text-xs font-mono text-slate-400">
+                <span>Global Rating: <strong className="text-cyan-400 font-bold">2,410</strong></span>
+                <span>Top 0.8% Worldwide</span>
+              </div>
+            </div>
+
+            {/* Heatmap Matrix */}
+            <div className="md:col-span-8 flex flex-col justify-between">
               <div>
-                <Link
-                  to={user ? `/test/${sub.code}` : "/register"}
-                  className="w-full py-2.5 px-4 rounded-xl text-xs font-bold glass-card hover:bg-violet-600 hover:text-white transition-all flex items-center justify-center gap-1.5 text-slate-800"
-                >
-                  <span>Practice {sub.code} Diagnostics</span>
-                  <span>→</span>
-                </Link>
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-semibold text-white font-mono">Daily Solve Consistency Matrix</span>
+                  <span className="font-mono text-xs text-cyan-400">365 Days Active</span>
+                </div>
+                {/* Glowing Heatmap Matrix Grid */}
+                <div className="grid grid-flow-col grid-rows-7 gap-1.5 overflow-x-auto p-3 rounded-xl bg-[#070A10] border border-slate-800">
+                  {Array.from({ length: 196 }).map((_, i) => {
+                    const intensity = (i * 17) % 5;
+                    let colorClass = "bg-slate-800/40";
+                    if (intensity === 1) colorClass = "bg-purple-900/60";
+                    if (intensity === 2) colorClass = "bg-purple-600/70";
+                    if (intensity === 3) colorClass = "bg-cyan-500/80";
+                    if (intensity === 4) colorClass = "bg-cyan-400";
+                    return (
+                      <div
+                        key={i}
+                        className={`w-2.5 h-2.5 rounded-sm ${colorClass} transition-all hover:scale-125`}
+                        title={`Day ${i + 1}: ${intensity * 3} Solves`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs font-mono text-slate-400 mt-3">
+                <span>Less</span>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-sm bg-slate-800/40" />
+                  <span className="w-2 h-2 rounded-sm bg-purple-900/60" />
+                  <span className="w-2 h-2 rounded-sm bg-purple-600/70" />
+                  <span className="w-2 h-2 rounded-sm bg-cyan-400" />
+                </div>
+                <span>More (12 Solves / Day)</span>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </section>
 
-      {/* Student Testimonials */}
-      <section className="py-20 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-200 bg-slate-50/70">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest text-emerald-700 font-bold">Student Experiences</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mt-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Built for Students, Loved by Students
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base mt-3">
-            See how computer science undergraduates leverage LearnX to boost performance.
+      {/* ─── 8. ENTERPRISE & ALUMNI ENDORSEMENTS ─── */}
+      <section className="py-12 border-y border-purple-900/20 bg-[#06080F]/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="font-mono text-xs text-slate-400 uppercase tracking-widest mb-8">
+            Engineers at top tech powerhouses prepare and evaluate with LearnX
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((item, idx) => (
-            <div
-              key={idx}
-              className="glass-card p-6 rounded-2xl border border-slate-200 flex flex-col justify-between bg-white shadow-sm"
-            >
-              <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic mb-6">
-                "{item.text}"
-              </p>
-              <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-violet-100 border border-violet-200 flex items-center justify-center text-xl">
-                  {item.avatar}
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-slate-900">{item.name}</div>
-                  <div className="text-xs text-slate-500 font-medium">{item.role}</div>
-                </div>
-              </div>
-            </div>
-          ))}
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14 opacity-75 font-mono text-sm sm:text-base font-bold text-slate-300">
+            <span className="hover:text-white transition-colors">GOOGLE</span>
+            <span className="hover:text-white transition-colors">META</span>
+            <span className="hover:text-white transition-colors">AMAZON</span>
+            <span className="hover:text-white transition-colors">APPLE</span>
+            <span className="hover:text-white transition-colors">MICROSOFT</span>
+            <span className="hover:text-white transition-colors">NETFLIX</span>
+            <span className="hover:text-white transition-colors">PALANTIR</span>
+            <span className="hover:text-white transition-colors">SNOWFLAKE</span>
+          </div>
         </div>
       </section>
 
-      {/* Conversion Banner */}
-      <section className="py-20 px-4 sm:px-6 max-w-5xl mx-auto">
-        <div
-          className="rounded-3xl p-8 sm:p-14 text-center relative overflow-hidden border border-violet-200 bg-gradient-to-r from-violet-100 via-purple-50 to-sky-100 shadow-md"
-        >
-          <div className="relative z-10 max-w-2xl mx-auto">
-            <h2
-              className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4"
-              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-            >
-              Ready to Accelerate Your Academic & Placement Journey?
+      {/* ─── 9. CALL TO ACTION BANNER ─── */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        <div className="glass-panel-elevated p-10 sm:p-14 rounded-3xl border border-purple-500/30 glow-violet relative overflow-hidden">
+          <div className="relative z-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Ready to Accelerate Your Placement Journey?
             </h2>
-            <p className="text-sm sm:text-base text-slate-700 mb-8 font-medium">
-              Join LearnX today and run your first diagnostic test in less than 2 minutes. Free and built for university students.
+            <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto mb-8">
+              Join thousands of students and engineers mastering core computer science and landing dream engineering roles.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 to={user ? "/dashboard" : "/register"}
-                className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-semibold text-white btn-gradient flex items-center justify-center gap-2 shadow-glow-purple"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 text-white font-semibold text-sm shadow-xl shadow-purple-600/30 hover:scale-105 active:scale-95 transition-all"
               >
-                <span>{user ? "Open Dashboard" : "Create Free Student Account"}</span>
-                <span>→</span>
+                {user ? "Open Your Dashboard →" : "Get Started Free Today →"}
               </Link>
               <Link
-                to={user ? "/test/DBMS" : "/login"}
-                className="w-full sm:w-auto px-6 py-4 rounded-xl text-sm font-semibold glass-card hover:bg-slate-200 text-slate-800 transition-colors"
+                to="/learn"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#090D16] border border-slate-700 text-slate-300 hover:text-white hover:border-cyan-400 font-semibold text-sm transition-all"
               >
-                {user ? "Take DBMS Test" : "Sign In to Existing Account"}
+                Browse All 4 Tracks
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Modern Footer */}
-      <footer className="border-t border-slate-200 pt-12 pb-8 px-4 sm:px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="md:col-span-2">
-            <div className="mb-3">
-              <LearnXLogo size="md" showTagline={true} />
+      {/* ─── 10. FUTURISTIC TERMINAL FOOTER ─── */}
+      <footer className="bg-[#05070C] border-t border-purple-950/40 font-mono text-xs py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col gap-1 items-center md:items-start text-center md:text-left">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-base text-white">LearnX</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-cyan-300">Neural Node Online</span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-sm leading-relaxed mb-4">
-              An AI-Powered Student Growth & Career Intelligence Platform designed to identify conceptual skill gaps, build personalized roadmaps, and assist with 24/7 AI tutoring.
+            <p className="text-slate-500">
+              © 2026 LearnX AI Platform. All nodes operational (99.98% uptime).
             </p>
-            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-              <span>More Than Learning, A Brighter You</span>
-              <span>•</span>
-              <span>Learn Today • Grow Tomorrow • Succeed Always</span>
-            </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-bold text-slate-900 mb-3">Platform Navigation</h4>
-            <ul className="space-y-2 text-xs sm:text-sm text-slate-600 font-medium">
-              <li><Link to="/" className="hover:text-slate-900 transition-colors">Home Landing</Link></li>
-              <li><Link to="/dashboard" className="hover:text-slate-900 transition-colors">Student Dashboard</Link></li>
-              <li><Link to="/career-readiness" className="hover:text-slate-900 transition-colors">Career Engine</Link></li>
-              <li><Link to="/placement-readiness" className="hover:text-slate-900 transition-colors">Placement AI</Link></li>
-              <li><Link to="/admin-login" className="text-violet-600 font-bold hover:text-violet-800 transition-colors flex items-center gap-1"><span>🔐</span> Faculty & Admin Portal</Link></li>
-              <li><Link to="/offline-learning" className="hover:text-slate-900 transition-colors">Offline Hub</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-sm font-bold text-slate-900 mb-3">Core Tech Stack</h4>
-            <ul className="space-y-1.5 text-xs text-slate-600 font-medium">
-              <li className="flex items-center gap-2"><span>⚛️</span> React 18 & Vite</li>
-              <li className="flex items-center gap-2"><span>🎨</span> Tailwind CSS & Recharts</li>
-              <li className="flex items-center gap-2"><span>🟢</span> Node.js & Express</li>
-              <li className="flex items-center gap-2"><span>🍃</span> MongoDB & Mongoose</li>
-              <li className="flex items-center gap-2"><span>🤖</span> OpenAI GPT-4o-mini API</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3 font-medium">
-          <div>
-            © {new Date().getFullYear()} LearnX Platform. All rights reserved.
-          </div>
-          <div className="flex items-center gap-3">
-            <span>Personalized Learning</span>
-            <span>•</span>
-            <span>AI Guidance</span>
-            <span>•</span>
-            <span>Practice & Tests</span>
-            <span>•</span>
-            <span>Track Progress</span>
-            <span>•</span>
-            <span>Career Preparation</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-slate-400">
+            <a href="#tracks" className="hover:text-cyan-400 transition-colors">Curriculum Matrix</a>
+            <Link to="/assessment" className="hover:text-purple-400 transition-colors">Diagnostic Engine</Link>
+            <Link to="/tutor" className="hover:text-cyan-400 transition-colors">AI Mentor</Link>
+            <Link to="/learn" className="hover:text-purple-400 transition-colors">Tracks</Link>
+            <a href="#leaderboard-stats" className="hover:text-cyan-400 transition-colors">System Telemetry</a>
           </div>
         </div>
       </footer>
