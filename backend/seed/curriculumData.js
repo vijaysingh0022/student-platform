@@ -17,8 +17,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "dsa",
     "name": "Data Structures & Algorithms",
     "code": "CS201",
-    "description": "Master computational problem-solving, asymptotic complexity, foundational data structures, tree algorithms, and dynamic programming.",
-    "icon": "⚡",
+    "description": "Master asymptotic analysis, recurrence relations, linked lists, trees, heaps, dynamic programming, and graph algorithms.",
+    "icon": "\u26a1",
     "badge": "Core CSE",
     "color": "from-blue-600 to-indigo-600",
     "accentColor": "#3b82f6",
@@ -28,8 +28,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "dbms",
     "name": "Database Management Systems",
     "code": "CS202",
-    "description": "Relational modeling, SQL mastery, normalization up to BCNF, ACID concurrency control, transactions, and indexing structures.",
-    "icon": "🗄️",
+    "description": "Relational algebra, complex SQL joins, normalization up to BCNF, ACID transactions, and B+ tree indexing.",
+    "icon": "\ud83d\uddc4\ufe0f",
     "badge": "Core CSE",
     "color": "from-emerald-600 to-teal-600",
     "accentColor": "#10b981",
@@ -39,8 +39,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "os",
     "name": "Operating Systems",
     "code": "CS203",
-    "description": "Process lifecycle, thread concurrency, CPU scheduling algorithms, deadlock prevention, virtual memory paging, and file systems.",
-    "icon": "💻",
+    "description": "Process control block, CPU scheduling algorithms, mutexes, semaphores, deadlock avoidance, and virtual memory paging.",
+    "icon": "\ud83d\udcbb",
     "badge": "Core CSE",
     "color": "from-violet-600 to-purple-600",
     "accentColor": "#8b5cf6",
@@ -50,8 +50,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "cn",
     "name": "Computer Networks",
     "code": "CS204",
-    "description": "Layered architectures, TCP 3-way handshakes, reliable data transfer, IP subnetting CIDR, routing protocols, and HTTP/DNS.",
-    "icon": "🌐",
+    "description": "OSI & TCP/IP layered architecture, IPv4/IPv6 CIDR subnetting, sliding window protocols, TCP handshakes, and routing protocols.",
+    "icon": "\ud83c\udf10",
     "badge": "Core CSE",
     "color": "from-sky-600 to-blue-600",
     "accentColor": "#0284c7",
@@ -61,8 +61,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "oops",
     "name": "Object-Oriented Programming",
     "code": "CS205",
-    "description": "Encapsulation, Polymorphism, Inheritance, Abstraction, SOLID design principles, and enterprise design patterns.",
-    "icon": "🧩",
+    "description": "Encapsulation, abstraction, inheritance, dynamic polymorphism, virtual tables, SOLID principles, and design patterns.",
+    "icon": "\ud83e\udde9",
     "badge": "Software Eng",
     "color": "from-amber-600 to-orange-600",
     "accentColor": "#f59e0b",
@@ -72,8 +72,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "system-design",
     "name": "System Design & Architecture",
     "code": "CS301",
-    "description": "High-level distributed systems design, load balancing, caching tiers, CAP theorem, database sharding, and message queues.",
-    "icon": "🏗️",
+    "description": "High-scale distributed systems, load balancing, Redis caching, database sharding, replication, and the CAP theorem.",
+    "icon": "\ud83c\udfd7\ufe0f",
     "badge": "Advanced Tech",
     "color": "from-rose-600 to-pink-600",
     "accentColor": "#e11d48",
@@ -83,8 +83,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "web-dev",
     "name": "Full Stack Web Development",
     "code": "CS302",
-    "description": "Modern JavaScript (ES6+), DOM lifecycle, asynchronous promises, React hooks, REST APIs, and authentication flows.",
-    "icon": "⚛️",
+    "description": "JavaScript event loop, promises, React component lifecycle, Virtual DOM reconciliation, custom hooks, and REST APIs.",
+    "icon": "\u269b\ufe0f",
     "badge": "Practical Eng",
     "color": "from-cyan-600 to-blue-600",
     "accentColor": "#06b6d4",
@@ -94,8 +94,8 @@ export const CURRICULUM_SUBJECTS = [
     "subjectId": "aptitude",
     "name": "Aptitude & Logical Reasoning",
     "code": "CS101",
-    "description": "Quantitative mathematics, probability, permutations, logical reasoning, and data interpretation for technical campus placements.",
-    "icon": "🎯",
+    "description": "Quantitative speed math, percentages, profit & loss, time and work, relative speed, permutations, and probability.",
+    "icon": "\ud83c\udfaf",
     "badge": "Placement Prep",
     "color": "from-green-600 to-emerald-600",
     "accentColor": "#059669",
@@ -108,63 +108,63 @@ export const CURRICULUM_UNITS = [
     "unitId": "dsa-u1",
     "subjectId": "dsa",
     "unitNumber": 1,
-    "title": "Unit 1 — Algorithmic Foundations & Complexity",
-    "description": "Big-O, Omega, Theta notations, recurrence relations, and space-time trade-offs.",
+    "title": "Unit 1 \u2014 Algorithmic Foundations & Complexity",
+    "description": "Big-O, Omega, Theta notations, recurrence relations, Master Theorem, and space-time trade-offs.",
     "order": 1
   },
   {
     "unitId": "dsa-u2",
     "subjectId": "dsa",
     "unitNumber": 2,
-    "title": "Unit 2 — Searching & Sorting Mastery",
-    "description": "Divide-and-conquer algorithms, comparison sorts, binary search variants, and partitioning mechanics.",
+    "title": "Unit 2 \u2014 Searching & Sorting Mastery",
+    "description": "Binary search variants, divide-and-conquer sorting, quick sort partitioning, and two pointers.",
     "order": 2
   },
   {
     "unitId": "dsa-u3",
     "subjectId": "dsa",
     "unitNumber": 3,
-    "title": "Unit 3 — Linear Data Structures & Dynamic Arrays",
-    "description": "Singly, doubly, and circular linked lists, stacks, monotonic queues, and amortized array resizing.",
+    "title": "Unit 3 \u2014 Linear Data Structures",
+    "description": "Singly/doubly linked lists, cycle detection, stacks, monotonic stacks, and queue architectures.",
     "order": 3
   },
   {
     "unitId": "dsa-u4",
     "subjectId": "dsa",
     "unitNumber": 4,
-    "title": "Unit 4 — Non-Linear Data Structures & Trees",
-    "description": "Binary search trees, AVL self-balancing rotations, heaps, priority queues, and graph traversals.",
+    "title": "Unit 4 \u2014 Trees & Hierarchical Structures",
+    "description": "Binary trees, traversals, binary search trees (BST), heaps, and priority queues.",
     "order": 4
   },
   {
     "unitId": "dsa-u5",
     "subjectId": "dsa",
     "unitNumber": 5,
-    "title": "Unit 5 — Balanced Trees & Self-Balancing Structures",
-    "description": "AVL Tree rotations, Red-Black Trees, B-Trees, and height-balancing invariants.",
+    "title": "Unit 5 \u2014 Balanced Trees & Advanced Structures",
+    "description": "AVL Tree rotations, Red-Black Trees, and Trie prefix trees for string processing.",
     "order": 5
   },
   {
     "unitId": "dsa-u6",
     "subjectId": "dsa",
     "unitNumber": 6,
-    "title": "Unit 6 — Graph Theory & Advanced Algorithms",
-    "description": "Breadth-First Search (BFS), Depth-First Search (DFS), Shortest Path (Dijkstra), and Minimum Spanning Trees.",
+    "title": "Unit 6 \u2014 Graph Theory & Algorithms",
+    "description": "BFS, DFS, cycle detection, topological sorting, Dijkstra shortest paths, and MST.",
     "order": 6
   },
   {
     "unitId": "dbms-u1",
     "subjectId": "dbms",
     "unitNumber": 1,
-    "title": "Unit 1 — Relational Model & SQL Querying",
-    "description": "Schema architecture, entity relationship modeling, relational algebra, and complex SQL joins.",
+    "title": "Unit 1 \u2014 Relational Model & SQL Mastery",
+    "description": "Relational algebra, SQL joins, aggregations, subqueries, and B+ tree indexing.",
     "order": 1
   },
   {
     "unitId": "dbms-u2",
     "subjectId": "dbms",
     "unitNumber": 2,
-    "title": "Unit 2 — Database Normalization & Schema Design",
+    "title": "Unit 2 \u2014 Database Normalization & Schema Design",
     "description": "Functional dependencies, 1NF, 2NF, 3NF, BCNF lossless decomposition, and dependency preservation.",
     "order": 2
   },
@@ -172,96 +172,96 @@ export const CURRICULUM_UNITS = [
     "unitId": "dbms-u3",
     "subjectId": "dbms",
     "unitNumber": 3,
-    "title": "Unit 3 — Transactions & Concurrency Control",
-    "description": "ACID properties, serializability, 2-phase locking (2PL), deadlock prevention, and isolation levels.",
+    "title": "Unit 3 \u2014 Transactions & Concurrency Control",
+    "description": "ACID properties, serializability, 2-phase locking (2PL), deadlock prevention, and recovery.",
     "order": 3
   },
   {
     "unitId": "os-u1",
     "subjectId": "os",
     "unitNumber": 1,
-    "title": "Unit 1 — Process Management & CPU Scheduling",
-    "description": "Process Control Block (PCB), context switching, preemptive scheduling (FCFS, SJF, Round Robin), and multithreading.",
+    "title": "Unit 1 \u2014 Process Management & CPU Scheduling",
+    "description": "PCB, context switching, threads, FCFS, SJF, Round Robin, and MLFQ scheduling.",
     "order": 1
   },
   {
     "unitId": "os-u2",
     "subjectId": "os",
     "unitNumber": 2,
-    "title": "Unit 2 — Process Synchronization & Deadlocks",
-    "description": "Critical section problem, mutexes, semaphores, Banker's algorithm, and resource allocation graphs.",
+    "title": "Unit 2 \u2014 Process Synchronization & Deadlocks",
+    "description": "Critical section, mutexes, semaphores, Producer-Consumer, Banker's algorithm, and deadlock prevention.",
     "order": 2
   },
   {
     "unitId": "os-u3",
     "subjectId": "os",
     "unitNumber": 3,
-    "title": "Unit 3 — Memory Management & Virtual Memory",
-    "description": "Paging, translation lookaside buffers (TLB), segmentation, page fault handling, and page replacement algorithms.",
+    "title": "Unit 3 \u2014 Memory Management & Virtual Memory",
+    "description": "Paging, TLB address translation, segmentation, virtual memory, and page replacement algorithms.",
     "order": 3
   },
   {
     "unitId": "cn-u1",
     "subjectId": "cn",
     "unitNumber": 1,
-    "title": "Unit 1 — Layered Network Architecture",
-    "description": "OSI 7-layer reference model, TCP/IP protocol suite, packet encapsulation, and transmission media.",
+    "title": "Unit 1 \u2014 Layered Network Architecture",
+    "description": "OSI 7-layer model vs TCP/IP suite, data link framing, CRC error detection, and ARQ flow control.",
     "order": 1
   },
   {
     "unitId": "cn-u2",
     "subjectId": "cn",
     "unitNumber": 2,
-    "title": "Unit 2 — Network Layer & IP Addressing",
-    "description": "IPv4/IPv6 addressing, CIDR subnetting, ARP, ICMP, Dijkstra link-state, and Distance Vector routing.",
+    "title": "Unit 2 \u2014 Network Layer & IP Addressing",
+    "description": "IPv4/IPv6, CIDR subnetting, usable host math, routing protocols (Dijkstra/Bellman-Ford), and ARP/ICMP.",
     "order": 2
   },
   {
     "unitId": "cn-u3",
     "subjectId": "cn",
     "unitNumber": 3,
-    "title": "Unit 3 — Transport Layer & Reliable Delivery",
-    "description": "TCP 3-way handshake, 4-way termination, sliding window flow control, congestion control, and UDP.",
+    "title": "Unit 3 \u2014 Transport & Application Layer",
+    "description": "TCP 3-way handshake, 4-way teardown, sliding window, congestion control, and DNS/HTTP protocols.",
     "order": 3
   },
   {
     "unitId": "oops-u1",
     "subjectId": "oops",
     "unitNumber": 1,
-    "title": "Unit 1 — The 4 Core OOP Pillars",
-    "description": "Encapsulation, Data Abstraction, Inheritance hierarchies, and Static/Dynamic Polymorphism.",
+    "title": "Unit 1 \u2014 The 4 Core OOP Pillars",
+    "description": "Encapsulation, Data Abstraction, Inheritance hierarchies, and Dynamic Polymorphism with vtables.",
     "order": 1
   },
   {
     "unitId": "oops-u2",
     "subjectId": "oops",
     "unitNumber": 2,
-    "title": "Unit 2 — SOLID Design Principles",
-    "description": "Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion.",
+    "title": "Unit 2 \u2014 SOLID Principles & Design Patterns",
+    "description": "Single Responsibility, Open-Closed, Liskov, Interface Segregation, Dependency Inversion, and Design Patterns.",
     "order": 2
   },
   {
     "unitId": "sd-u1",
     "subjectId": "system-design",
     "unitNumber": 1,
-    "title": "Unit 1 — Scalability & High Availability",
-    "description": "Horizontal vs vertical scaling, load balancers, reverse proxies, and consistent hashing.",
+    "title": "Unit 1 \u2014 Scalability & Distributed Architecture",
+    "description": "Horizontal vs vertical scaling, load balancing, Redis caching, database sharding, and the CAP theorem.",
     "order": 1
   },
   {
     "unitId": "web-u1",
     "subjectId": "web-dev",
     "unitNumber": 1,
-    "title": "Unit 1 — Modern JavaScript & React Foundations",
-    "description": "Event loop, asynchronous promises, React component lifecycle, virtual DOM, and custom hooks.",
+    "title": "Unit 1 \u2014 Modern JavaScript & React Foundations",
+    "description": "Event loop, promises, async/await, React component lifecycle, Virtual DOM, and hooks.",
     "order": 1
   },
   {
     "unitId": "apt-u1",
     "subjectId": "aptitude",
     "unitNumber": 1,
-    "title": "Unit 1 — Quantitative & Placement Aptitude",
-    "description": "Speed math, percentages, profit & loss, time and work, permutations, and probability shortcuts.",
+    "title": "Unit 1 \u2014 Quantitative & Placement Aptitude",
+    "description": "Percentages, profit and loss, time and work, relative speed, permutations, and probability.",
     "order": 1
   }
 ];
@@ -272,8 +272,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dsa-u1",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Asymptotic Analysis & Recurrence Relations",
-    "description": "Mathematical models for program performance.",
+    "title": "Asymptotic Analysis & Recurrences",
+    "description": "Mathematical frameworks for evaluating computational efficiency.",
     "order": 1
   },
   {
@@ -281,8 +281,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dsa-u2",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Searching Algorithms",
-    "description": "Sequential and logarithmic lookup techniques.",
+    "title": "Searching Algorithms & Two Pointers",
+    "description": "Logarithmic lookup techniques and monotonic search spaces.",
     "order": 1
   },
   {
@@ -290,7 +290,7 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dsa-u2",
     "subjectId": "dsa",
     "chapterNumber": 2,
-    "title": "Comparison & Non-Comparison Sorting",
+    "title": "Comparison & Divide-and-Conquer Sorting",
     "description": "Divide-and-conquer sorting, in-place partitions, and stability analysis.",
     "order": 2
   },
@@ -299,26 +299,44 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dsa-u3",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Linked Lists & Memory Management",
+    "title": "Linked Lists & Pointer Manipulation",
     "description": "Node structures, pointer manipulation, and cycle detection.",
     "order": 1
+  },
+  {
+    "chapterId": "dsa-u3-c2",
+    "unitId": "dsa-u3",
+    "subjectId": "dsa",
+    "chapterNumber": 2,
+    "title": "Stacks & Queues",
+    "description": "LIFO and FIFO operations, monotonic stacks, and circular buffers.",
+    "order": 2
   },
   {
     "chapterId": "dsa-u4-c1",
     "unitId": "dsa-u4",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Binary Trees & Self-Balancing Structures",
-    "description": "Tree traversals, binary search tree operations, and AVL rotations.",
+    "title": "Binary Trees & BST",
+    "description": "Tree traversals, binary search tree operations, and BST invariants.",
     "order": 1
+  },
+  {
+    "chapterId": "dsa-u4-c2",
+    "unitId": "dsa-u4",
+    "subjectId": "dsa",
+    "chapterNumber": 2,
+    "title": "Heaps & Priority Queues",
+    "description": "Min/Max heaps, heapify operations, and priority queues.",
+    "order": 2
   },
   {
     "chapterId": "dsa-u5-c1",
     "unitId": "dsa-u5",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Self-Balancing Trees & AVL Rotations",
-    "description": "Single and double rotations (LL, RR, LR, RL) for height balance.",
+    "title": "Self-Balancing Trees & Tries",
+    "description": "AVL tree rotations, Red-Black trees, and Trie prefix trees.",
     "order": 1
   },
   {
@@ -326,8 +344,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dsa-u6",
     "subjectId": "dsa",
     "chapterNumber": 1,
-    "title": "Graph Traversal & Shortest Paths",
-    "description": "Breadth-First Search, Depth-First Search, and Dijkstra shortest path algorithm.",
+    "title": "Graph Traversals & Shortest Paths",
+    "description": "BFS, DFS, topological sorting, Dijkstra, and Minimum Spanning Trees.",
     "order": 1
   },
   {
@@ -335,8 +353,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "dbms-u1",
     "subjectId": "dbms",
     "chapterNumber": 1,
-    "title": "Relational Querying & Joins",
-    "description": "Inner, Outer, Cross Joins, Subqueries, and Aggregate functions.",
+    "title": "Relational Querying, Joins & Indexing",
+    "description": "SQL queries, complex joins, subqueries, and B+ tree indexes.",
     "order": 1
   },
   {
@@ -345,7 +363,7 @@ export const CURRICULUM_CHAPTERS = [
     "subjectId": "dbms",
     "chapterNumber": 1,
     "title": "Normalization Forms (1NF to BCNF)",
-    "description": "Eliminating update anomalies and redundancy.",
+    "description": "Functional dependencies and eliminating schema anomalies.",
     "order": 1
   },
   {
@@ -354,7 +372,7 @@ export const CURRICULUM_CHAPTERS = [
     "subjectId": "dbms",
     "chapterNumber": 1,
     "title": "Transaction ACID & Locking Protocols",
-    "description": "Concurrency anomalies and serializability guarantees.",
+    "description": "Serializability, two-phase locking (2PL), and deadlock recovery.",
     "order": 1
   },
   {
@@ -362,8 +380,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "os-u1",
     "subjectId": "os",
     "chapterNumber": 1,
-    "title": "CPU Scheduling Mechanisms",
-    "description": "Gantt charts, turnaround time, waiting time, and starvation avoidance.",
+    "title": "CPU Scheduling & Thread Management",
+    "description": "Process Control Block (PCB), multithreading, and scheduling algorithms.",
     "order": 1
   },
   {
@@ -371,8 +389,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "os-u2",
     "subjectId": "os",
     "chapterNumber": 1,
-    "title": "Concurrency Synchronization & Deadlocks",
-    "description": "Mutexes, counting semaphores, and Banker's algorithm safe sequences.",
+    "title": "Synchronization & Deadlock Prevention",
+    "description": "Semaphores, mutexes, classical sync problems, and Banker's algorithm.",
     "order": 1
   },
   {
@@ -381,7 +399,7 @@ export const CURRICULUM_CHAPTERS = [
     "subjectId": "os",
     "chapterNumber": 1,
     "title": "Virtual Memory & Paging Replacement",
-    "description": "Page fault handling, FIFO, LRU, Optimal page replacement, and Belady's anomaly.",
+    "description": "Page translation, TLB, demand paging, and page replacement policies.",
     "order": 1
   },
   {
@@ -389,8 +407,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "cn-u1",
     "subjectId": "cn",
     "chapterNumber": 1,
-    "title": "OSI vs TCP/IP Models",
-    "description": "Protocol data units, encapsulation, and layer responsibilities.",
+    "title": "OSI vs TCP/IP & Data Link Layer",
+    "description": "Layer architectures, framing, CRC error checking, and sliding windows.",
     "order": 1
   },
   {
@@ -398,8 +416,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "cn-u2",
     "subjectId": "cn",
     "chapterNumber": 1,
-    "title": "IP Subnetting & CIDR",
-    "description": "Subnet masks, broadcast addresses, usable hosts, and classless addressing.",
+    "title": "IP Subnetting, CIDR & Routing",
+    "description": "Subnet masks, prefix math, CIDR, and routing protocols.",
     "order": 1
   },
   {
@@ -407,8 +425,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "cn-u3",
     "subjectId": "cn",
     "chapterNumber": 1,
-    "title": "TCP Mechanics & Connection Handshakes",
-    "description": "SYN-ACK handshake, sequence numbers, window sizing, and teardown states.",
+    "title": "TCP Mechanics & Application Protocols",
+    "description": "TCP 3-way handshake, congestion control, DNS, and HTTP.",
     "order": 1
   },
   {
@@ -417,7 +435,7 @@ export const CURRICULUM_CHAPTERS = [
     "subjectId": "oops",
     "chapterNumber": 1,
     "title": "Core Pillars & Runtime Polymorphism",
-    "description": "Virtual tables, function overriding, dynamic dispatch, and interface design.",
+    "description": "Encapsulation, inheritance, virtual tables, and dynamic dispatch.",
     "order": 1
   },
   {
@@ -425,8 +443,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "oops-u2",
     "subjectId": "oops",
     "chapterNumber": 1,
-    "title": "SOLID Principles in Practice",
-    "description": "Clean code design patterns and decoupled architectural patterns.",
+    "title": "SOLID Principles & Design Patterns",
+    "description": "SOLID clean code principles and fundamental design patterns.",
     "order": 1
   },
   {
@@ -434,8 +452,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "sd-u1",
     "subjectId": "system-design",
     "chapterNumber": 1,
-    "title": "Load Balancing & Caching Architectures",
-    "description": "L4 vs L7 load balancing, Redis caching strategies, and CDN edge caching.",
+    "title": "Scalability, Caching & Sharding",
+    "description": "Load balancing, distributed Redis caching, sharding, and CAP theorem.",
     "order": 1
   },
   {
@@ -443,8 +461,8 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "web-u1",
     "subjectId": "web-dev",
     "chapterNumber": 1,
-    "title": "Asynchronous JavaScript & React Hooks",
-    "description": "Promises, async/await, closures, useState, useEffect, and custom hook patterns.",
+    "title": "JavaScript Async & React Ecosystem",
+    "description": "Event loop, promises, React hooks, and RESTful architectures.",
     "order": 1
   },
   {
@@ -452,99 +470,257 @@ export const CURRICULUM_CHAPTERS = [
     "unitId": "apt-u1",
     "subjectId": "aptitude",
     "chapterNumber": 1,
-    "title": "Probability, Permutations & Speed Math",
-    "description": "Combinatorics, Bayes' theorem, relative speed, and work efficiency.",
+    "title": "Quantitative Math & Placement Logic",
+    "description": "Speed math, time-speed-distance, permutations, and probability.",
     "order": 1
   }
 ];
 
 export const CURRICULUM_TOPICS = [
   {
+    "topicId": "algorithm-complexity",
+    "chapterId": "dsa-u1-c1",
+    "unitId": "dsa-u1",
+    "subjectId": "dsa",
+    "topicNumber": 1,
+    "title": "Asymptotic Analysis: Big-O, Omega, and Theta Notations",
+    "estimatedMinutes": 25,
+    "difficulty": "Beginner",
+    "summary": "Mathematical framework for measuring program growth rate and memory utilization independently of hardware.",
+    "subtopics": [
+      "Big-O Formal Definition",
+      "Big-Omega Lower Bound",
+      "Big-Theta Tight Bound",
+      "Dominant Term Rule",
+      "Complexity Classes Hierarchy"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Asymptotic analysis evaluates how the execution time or memory footprint of an algorithm scales as input size N grows toward infinity. By categorizing algorithms into standardized complexity classes (such as O(1), O(log N), O(N), O(N log N), O(N^2), and O(2^N)), software engineers make predictable performance decisions before running code in production environments.",
+      "concepts": [
+        "Big-O Notation (O): Denotes the formal asymptotic upper bound. f(N) = O(g(N)) means f(N) <= c * g(N) for all N >= N0. It guarantees that the algorithm will never exceed this growth rate in the worst-case scenario.",
+        "Big-Omega Notation (\u03a9): Denotes the formal asymptotic lower bound. f(N) = \u03a9(g(N)) means f(N) >= c * g(N) for all N >= N0, representing the absolute minimum computational work required.",
+        "Big-Theta Notation (\u0398): Denotes an asymptotically tight bound where the upper and lower bounds coincide: c1 * g(N) <= f(N) <= c2 * g(N).",
+        "Dominant Term Principle: Lower-order polynomials and constant scalar multipliers are dropped because higher-order exponents completely dominate at scale (e.g. 7N^3 + 400N + 9000 is simply O(N^3)).",
+        "Hierarchy of Complexities: O(1) Constant < O(log N) Logarithmic < O(N) Linear < O(N log N) Linearithmic < O(N^2) Quadratic < O(2^N) Exponential < O(N!) Factorial."
+      ],
+      "importantPoints": [
+        "Big-O describes growth rate as N approaches infinity, not exact clock execution time in milliseconds.",
+        "An algorithm with O(1) time complexity does not mean it takes 1 instruction, but rather that its runtime remains strictly constant regardless of dataset size.",
+        "Space complexity must account for both auxiliary heap memory and recursive call-stack stack frames."
+      ],
+      "examples": [
+        "Example 1: Single loop `for (int i = 0; i < N; i++)` runs N times -> \u0398(N) linear time.",
+        "Example 2: Nested loop `for (int i = 0; i < N; i++) for (int j = 0; j < N; j++)` runs N*N times -> \u0398(N^2) quadratic time.",
+        "Example 3: Halving variable `while (N > 0) { N /= 2; }` -> \u0398(log N) logarithmic time."
+      ],
+      "algorithmSteps": [
+        "1. Identify the input size parameter N.",
+        "2. Count atomic elementary operations (assignments, comparisons, arithmetic).",
+        "3. Formulate total execution count as a polynomial function T(N).",
+        "4. Eliminate constant coefficients and lower-order terms.",
+        "5. State the dominant asymptotic bound (O, \u03a9, or \u0398)."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Complexity Demonstrations",
+          "code": "#include <iostream>\n#include <vector>\n\n// O(1) Constant Time\nint getHead(const std::vector<int>& v) {\n    return v.empty() ? -1 : v[0];\n}\n\n// O(N) Linear Time\nint findMax(const std::vector<int>& v) {\n    int mx = v[0];\n    for (int x : v) if (x > mx) mx = x;\n    return mx;\n}\n\n// O(N^2) Quadratic Time\nvoid printPairs(const std::vector<int>& v) {\n    for (size_t i = 0; i < v.size(); ++i)\n        for (size_t j = 0; j < v.size(); ++j)\n            std::cout << v[i] << \",\" << v[j] << \" \";\n}",
+          "explanation": "Illustrates fundamental complexity classes in standard modern C++."
+        },
+        {
+          "language": "python",
+          "title": "Python Complexity Classes",
+          "code": "def constant_op(arr: list[int]) -> int:\n    return arr[0] if arr else -1 # O(1)\n\ndef linear_search(arr: list[int], target: int) -> int:\n    for idx, val in enumerate(arr):\n        if val == target:\n            return idx\n    return -1 # O(N)\n\ndef binary_division(n: int) -> int:\n    steps = 0\n    while n > 1:\n        n //= 2\n        steps += 1\n    return steps # O(log N)",
+          "explanation": "Demonstrates O(1), O(N), and O(log N) execution patterns in Python."
+        }
+      ],
+      "timeComplexity": "O(1) to O(N!) theoretical spectrum classification",
+      "spaceComplexity": "O(1) auxiliary space",
+      "keyTakeaways": [
+        "Always aim to optimize nested O(N^2) loops into O(N log N) or O(N) with HashMaps, Two Pointers, or Divide-and-Conquer.",
+        "Space complexity analysis must include recursion stack depth.",
+        "Asymptotic analysis focuses on large inputs (N -> \u221e) where constant factors become negligible."
+      ],
+      "commonMistakes": [
+        "Assuming Big-O is always the worst-case scenario (Big-O can be applied to best, average, or worst cases).",
+        "Assuming nested loops are always O(N^2) without checking if the inner loop increments multiplicatively."
+      ]
+    }
+  },
+  {
+    "topicId": "recurrence-master-theorem",
+    "chapterId": "dsa-u1-c1",
+    "unitId": "dsa-u1",
+    "subjectId": "dsa",
+    "topicNumber": 2,
+    "title": "Recurrence Relations & The Master Theorem",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Techniques for solving divide-and-conquer recurrence equations using closed-form Master Theorem formulas.",
+    "subtopics": [
+      "Divide-and-Conquer Recurrences",
+      "Master Theorem Formula",
+      "Case 1: Leaf Heavy",
+      "Case 2: Balanced Work",
+      "Case 3: Root Heavy"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Divide-and-conquer algorithms divide a problem into smaller subproblems, solve each recursively, and combine the solutions. The execution cost is modeled by recurrence relations: T(N) = a*T(N/b) + f(N). The Master Theorem provides an instant closed-form asymptotic solution for such recurrences without expanding recursion trees.",
+      "concepts": [
+        "Standard Recurrence Formula: T(N) = a * T(N/b) + f(N), where 'a' is the number of recursive branches (a >= 1), 'b' is the subproblem reduction factor (b > 1), and 'f(N)' is the divide/combine cost.",
+        "Critical Exponent: Evaluated as log_b(a). It represents the asymptotic work done at the leaf level of the recursion tree.",
+        "Case 1 (Leaf Dominated): If f(N) = O(N^(log_b(a) - \u03b5)) for \u03b5 > 0, leaf work dominates. Result: T(N) = \u0398(N^(log_b(a))).",
+        "Case 2 (Evenly Distributed): If f(N) = \u0398(N^(log_b(a)) * log^k(N)) for k >= 0, work is evenly spread across all tree levels. Result: T(N) = \u0398(N^(log_b(a)) * log^(k+1)(N)).",
+        "Case 3 (Root Dominated): If f(N) = \u03a9(N^(log_b(a) + \u03b5)) for \u03b5 > 0 and regularity condition a*f(N/b) <= c*f(N) holds for c < 1, root work dominates. Result: T(N) = \u0398(f(N))."
+      ],
+      "importantPoints": [
+        "Merge Sort: T(N) = 2T(N/2) + O(N) -> a=2, b=2, log_2(2)=1. Matches Case 2 (k=0) -> T(N) = \u0398(N log N).",
+        "Binary Search: T(N) = T(N/2) + O(1) -> a=1, b=2, log_2(1)=0. Matches Case 2 (k=0) -> T(N) = \u0398(log N).",
+        "Karatsuba Multiplication: T(N) = 3T(N/2) + O(N) -> log_2(3) \u2248 1.585 > 1. Matches Case 1 -> T(N) = \u0398(N^1.585)."
+      ],
+      "examples": [
+        "Example 1: T(N) = 4T(N/2) + N. a=4, b=2, log_2(4)=2. f(N)=N^1. Since 1 < 2, Case 1 applies: T(N) = \u0398(N^2).",
+        "Example 2: T(N) = 2T(N/2) + N log N. a=2, b=2, log_2(2)=1. f(N)=N^1 * log^1(N). Case 2 with k=1 applies: T(N) = \u0398(N log^2 N)."
+      ],
+      "algorithmSteps": [
+        "1. Extract parameters a, b, and f(N) from T(N) = aT(N/b) + f(N).",
+        "2. Calculate the critical exponent log_b(a).",
+        "3. Compare the growth rate of f(N) with N^(log_b(a)).",
+        "4. Apply Case 1, 2, or 3 to write the direct \u0398 bound.",
+        "5. If Master Theorem conditions fail (e.g., non-polynomial difference), use recursion tree expansion."
+      ],
+      "codeSnippets": [
+        {
+          "language": "python",
+          "title": "Python Recurrence Simulation",
+          "code": "def simulate_merge_sort_work(n: int) -> int:\n    if n <= 1:\n        return 1\n    # 2 subproblems of size n/2 + n work to combine\n    return 2 * simulate_merge_sort_work(n // 2) + n\n\nprint('Total Operations for N=1024:', simulate_merge_sort_work(1024))",
+          "explanation": "Simulates operational steps for divide-and-conquer recurrence equations."
+        }
+      ],
+      "timeComplexity": "O(1) closed-form calculation using Master Theorem",
+      "spaceComplexity": "O(log N) recursion depth",
+      "keyTakeaways": [
+        "Master theorem provides immediate answers in technical interview rounds for recursive algorithmic analysis.",
+        "Minimizing recursive branching factor 'a' dramatically reduces overall time complexity."
+      ],
+      "commonMistakes": [
+        "Applying Master Theorem when subproblem reduction is additive (e.g., T(N) = T(N-1) + O(1)).",
+        "Forgetting the regularity check when applying Case 3."
+      ]
+    }
+  },
+  {
     "topicId": "binary-search",
     "chapterId": "dsa-u2-c1",
     "unitId": "dsa-u2",
     "subjectId": "dsa",
     "topicNumber": 1,
-    "title": "Binary Search & Search Space Reduction",
-    "estimatedMinutes": 20,
+    "title": "Binary Search & Monotonic Search Space Reduction",
+    "estimatedMinutes": 25,
     "difficulty": "Beginner",
-    "summary": "Logarithmic time lookup algorithm for monotonically sorted sequences and monotonic predicate functions.",
+    "summary": "Logarithmic time lookup algorithm for monotonically sorted sequences and monotonic boolean predicate functions.",
     "subtopics": [
       "Divide and Conquer Strategy",
       "Midpoint Overflow Prevention",
       "Lower & Upper Bound Variants",
-      "Time & Space Complexity"
+      "Search Space Reduction"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "Binary Search is one of the most fundamental divide-and-conquer algorithms in computer science. Operating strictly on sorted sequences, it divides the search space in half with every single comparison, achieving optimal O(log N) query time.",
+      "introduction": "Binary Search is the fundamental logarithmic search technique in computer science. Operating on sorted arrays or monotonic predicate spaces, it halves the search interval in each step, reducing 1,000,000 elements to merely 20 comparisons.",
       "concepts": [
-        "Monotonic Search Space: The sequence must be sorted or exhibit a monotonic boolean predicate (e.g. false, false, true, true).",
-        "Midpoint Calculation: Using `low + (high - low) / 2` avoids 32-bit integer arithmetic overflow encountered in `(low + high) / 2`.",
-        "Invariant Maintenance: Ensuring that the target element always remains strictly within the bounds `[low, high]`.",
-        "Boundary Variants: Finding exact index vs finding Lower Bound (first element >= key) and Upper Bound (first element > key)."
+        "Monotonic Search Space: Applicable whenever elements are sorted or evaluate to a monotonic boolean property (False, False, ..., True, True).",
+        "Safe Midpoint Calculation: Using `low + (high - low) / 2` avoids 32-bit signed integer overflow caused by `(low + high) / 2`.",
+        "Loop Invariant: Target always lies strictly within the active search boundary `[low, high]`.",
+        "Lower Bound & Upper Bound: Lower Bound finds the first element >= key; Upper Bound finds the first element > key."
       ],
       "importantPoints": [
-        "Binary search reduces 1,000,000 items to just ~20 comparisons (2^20 ≈ 1,048,576).",
-        "Array must be random-access O(1); applying binary search directly on a standard Singly Linked List yields O(N) due to sequential node traversal.",
-        "Infinite loop bugs typically occur when `low <= high` and `low = mid` without `+ 1`."
+        "Binary search reduces 1 billion elements to just 30 comparisons (2^30 \u2248 1,073,741,824).",
+        "Requires random-access O(1) indexing; on linked lists, binary search degrades to O(N) due to sequential traversal."
       ],
       "examples": [
-        "Find index of key = 23 in sorted array: [2, 5, 8, 12, 16, 23, 38, 56, 72, 91].",
-        "Finding the peak element in a mountain array using binary search.",
-        "Finding the square root of an integer N to integer precision in O(log N) time."
+        "Example 1: Find 23 in sorted array: [2, 5, 8, 12, 16, 23, 38, 56, 72, 91].\n\u2022 Step 1: low=0, high=9, mid=4 (val=16). 23 > 16 -> low=5.\n\u2022 Step 2: low=5, high=9, mid=7 (val=56). 23 < 56 -> high=6.\n\u2022 Step 3: low=5, high=6, mid=5 (val=23). Found at index 5!"
       ],
       "algorithmSteps": [
-        "1. Initialize two pointer indices: `low = 0`, `high = array.length - 1`.",
-        "2. While `low <= high`:",
-        "   a. Compute safe midpoint `mid = low + Math.floor((high - low) / 2)`.",
-        "   b. If `array[mid] === target`, return `mid`.",
-        "   c. If `array[mid] < target`, discard left half: set `low = mid + 1`.",
-        "   d. If `array[mid] > target`, discard right half: set `high = mid - 1`.",
-        "3. If loop terminates without match, return `-1` (element not present)."
+        "1. Initialize `low = 0`, `high = array.length - 1`.",
+        "2. While `low <= high`:\n   a. Compute safe midpoint: `mid = low + (high - low) / 2`.\n   b. If `array[mid] == target`, return `mid`.\n   c. If `array[mid] < target`, discard left half: `low = mid + 1`.\n   d. If `array[mid] > target`, discard right half: `high = mid - 1`.",
+        "3. If loop ends without match, return -1."
       ],
       "codeSnippets": [
         {
           "language": "cpp",
           "title": "C++ Iterative Binary Search",
-          "code": "#include <vector>\n#include <iostream>\n\nint binarySearch(const std::vector<int>& arr, int target) {\n    int low = 0, high = static_cast<int>(arr.size()) - 1;\n    while (low <= high) {\n        int mid = low + (high - low) / 2; // Prevents integer overflow\n        if (arr[mid] == target) return mid;\n        if (arr[mid] < target) low = mid + 1;\n        else high = mid - 1;\n    }\n    return -1; // Target not found\n}",
-          "explanation": "Standard C++ implementation using vector references and safe midpoint calculation."
-        },
-        {
-          "language": "java",
-          "title": "Java Binary Search Implementation",
-          "code": "public class BinarySearch {\n    public static int search(int[] arr, int target) {\n        int low = 0;\n        int high = arr.length - 1;\n        while (low <= high) {\n            int mid = low + (high - low) / 2;\n            if (arr[mid] == target) {\n                return mid;\n            } else if (arr[mid] < target) {\n                low = mid + 1;\n            } else {\n                high = mid - 1;\n            }\n        }\n        return -1;\n    }\n}",
-          "explanation": "Thread-safe static method implementation conforming to Java standard library semantics."
-        },
-        {
-          "language": "python",
-          "title": "Pythonic Binary Search",
-          "code": "def binary_search(arr: list[int], target: int) -> int:\n    low, high = 0, len(arr) - 1\n    while low <= high:\n        mid = (low + high) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            low = mid + 1\n        else:\n            high = mid - 1\n    return -1",
-          "explanation": "Clean Python type-hinted implementation using integer floor division."
-        },
-        {
-          "language": "javascript",
-          "title": "JavaScript ES6 Binary Search",
-          "code": "function binarySearch(arr, target) {\n  let low = 0;\n  let high = arr.length - 1;\n  while (low <= high) {\n    const mid = low + Math.floor((high - low) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) low = mid + 1;\n    else high = mid - 1;\n  }\n  return -1;\n}",
-          "explanation": "ES6 implementation compatible with Node.js and modern browser runtimes."
+          "code": "#include <vector>\n#include <iostream>\n\nint binarySearch(const std::vector<int>& arr, int target) {\n    int low = 0, high = static_cast<int>(arr.size()) - 1;\n    while (low <= high) {\n        int mid = low + (high - low) / 2;\n        if (arr[mid] == target) return mid;\n        if (arr[mid] < target) low = mid + 1;\n        else high = mid - 1;\n    }\n    return -1;\n}",
+          "explanation": "Standard C++ implementation with vector references and safe midpoint calculation."
         }
       ],
-      "timeComplexity": "O(log N) worst/average, O(1) best (element found at initial mid)",
-      "spaceComplexity": "O(1) auxiliary space (iterative), O(log N) stack space (recursive)",
+      "timeComplexity": "O(log N) Best, Average, and Worst Case",
+      "spaceComplexity": "O(1) Auxiliary Space for iterative implementation",
       "keyTakeaways": [
-        "Binary search cuts the problem size in half on every step: T(N) = T(N/2) + O(1).",
-        "Always guard against integer overflow in languages with fixed-size integers by computing `mid = low + (high - low) / 2`.",
-        "Can be generalized to search spaces of arbitrary predicate functions ('Binary Search on Answer')."
+        "Binary search on answer spaces is a vital technique in LeetCode/interview problems.",
+        "Be vigilant of loop boundary conditions: low <= high."
       ],
       "commonMistakes": [
-        "Using `(low + high) / 2` leading to 32-bit integer overflow when `low + high > 2,147,483,647`.",
-        "Setting `low = mid` or `high = mid` inside the loop causing infinite loops when `high - low === 1`.",
-        "Attempting binary search on unsorted arrays without prior sorting."
+        "Using (low + high) / 2 which can overflow for large arrays in C++ / Java.",
+        "Off-by-one errors when setting low = mid instead of low = mid + 1."
+      ]
+    }
+  },
+  {
+    "topicId": "two-pointers-sliding-window",
+    "chapterId": "dsa-u2-c1",
+    "unitId": "dsa-u2",
+    "subjectId": "dsa",
+    "topicNumber": 2,
+    "title": "Two Pointers & Sliding Window Search Techniques",
+    "estimatedMinutes": 25,
+    "difficulty": "Intermediate",
+    "summary": "Techniques for reducing O(N^2) nested subarray/pair searches into optimal O(N) linear scans.",
+    "subtopics": [
+      "Opposite Direction Pointers",
+      "Same Direction / Fast & Slow Pointers",
+      "Fixed-size Sliding Window",
+      "Dynamic Variable-size Sliding Window"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "Two Pointers and Sliding Window are fundamental algorithmic optimization paradigms. By tracking subarray boundaries or converging indices simultaneously, they avoid redundant recomputation, transforming O(N^2) brute-force searches into optimal O(N) single-pass solutions.",
+      "concepts": [
+        "Opposite Direction Pointers: Typically initialized at array extremes (left = 0, right = N - 1) and converged based on sorted criteria.",
+        "Fast and Slow Pointers: Moving pointers at different speeds (1 step vs 2 steps) to detect cycles or find list midpoints.",
+        "Fixed-size Sliding Window: Maintains a window of exact width K, sliding one element right in O(1).",
+        "Variable-size Sliding Window: Expands the right boundary until a condition is met, then contracts left boundary."
       ],
-      "relatedTopics": [
-        "Linear Search",
-        "Binary Search Trees",
-        "Ternary Search",
-        "Divide and Conquer"
+      "importantPoints": [
+        "Transforms quadratic nested loops O(N^2) into linear time O(N).",
+        "Requires continuous subarray monotonicity."
+      ],
+      "examples": [
+        "Example: Max sum subarray of size K in `[2, 1, 5, 1, 3, 2]`, K=3 -> Max sum = 9."
+      ],
+      "algorithmSteps": [
+        "1. Initialize `left = 0`, `right = 0`.",
+        "2. Expand `right` pointer to include new elements.",
+        "3. Contract `left` when condition is violated.",
+        "4. Return optimal answer."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Sliding Window (Max Subarray Sum K)",
+          "code": "#include <vector>\n#include <algorithm>\n\nint maxSubarraySumK(const std::vector<int>& arr, int k) {\n    if (arr.size() < k) return -1;\n    int windowSum = 0;\n    for (int i = 0; i < k; ++i) windowSum += arr[i];\n    int maxSum = windowSum;\n    for (size_t i = k; i < arr.size(); ++i) {\n        windowSum += arr[i] - arr[i - k];\n        maxSum = std::max(maxSum, windowSum);\n    }\n    return maxSum;\n}",
+          "explanation": "Maintains sliding window sum in O(1) per step."
+        }
+      ],
+      "timeComplexity": "O(N) Linear Time",
+      "spaceComplexity": "O(1) Auxiliary Space",
+      "keyTakeaways": [
+        "Recognize problems asking for 'longest subarray with condition X' as sliding window candidates."
+      ],
+      "commonMistakes": [
+        "Using sliding window when array contains negative numbers (requires prefix sums with HashMaps)."
       ]
     }
   },
@@ -553,617 +729,53 @@ export const CURRICULUM_TOPICS = [
     "chapterId": "dsa-u2-c2",
     "unitId": "dsa-u2",
     "subjectId": "dsa",
-    "topicNumber": 2,
-    "title": "Quick Sort & Partitioning Algorithms",
-    "estimatedMinutes": 25,
+    "topicNumber": 3,
+    "title": "Quick Sort & Partitioning Algorithms (Lomuto vs Hoare)",
+    "estimatedMinutes": 30,
     "difficulty": "Intermediate",
-    "summary": "In-place divide-and-conquer sorting algorithm based on Lomuto or Hoare partitioning around a chosen pivot.",
+    "summary": "High-performance in-place divide-and-conquer sorting based on pivot partitioning.",
     "subtopics": [
-      "Pivot Selection Strategies",
+      "Divide and Conquer Strategy",
       "Lomuto Partition Scheme",
       "Hoare Partition Scheme",
-      "Worst-case Quadratic Degradation",
-      "Tail Call Optimization"
+      "Worst-case Avoidance with Randomized Pivot"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "Quick Sort is a highly practical, in-place, divide-and-conquer comparison sort developed by Tony Hoare. In practice, it outperforms Merge Sort and Heap Sort due to superior CPU cache locality, though it requires randomized pivot selection to avoid worst-case O(N^2) complexity.",
+      "introduction": "Quick Sort is the standard in-place sorting algorithm used in language runtimes (like C++ std::sort introsort). It selects a pivot element, partitions the array such that all smaller elements move left and larger elements move right, and recursively sorts the partitions.",
       "concepts": [
-        "Divide and Conquer: Select a pivot element, partition the array so all elements smaller than pivot precede it, and recursively sort subarrays.",
-        "Lomuto Partitioning: Simpler to implement; uses one scanning pointer and one slow pointer, placing pivot at array end.",
-        "Hoare Partitioning: More efficient than Lomuto (performs roughly 3x fewer swaps); uses two pointers moving towards each other from both ends.",
-        "Worst-case O(N^2) Trigger: Occurs when pivot is consistently the minimum or maximum element (e.g., sorting an already-sorted array with first/last element as pivot)."
+        "Partitioning Invariant: After partitioning, the pivot element occupies its exact final sorted position.",
+        "Lomuto Partitioning: Uses single direction scan. Simple to implement, performs ~3x more swaps than Hoare.",
+        "Hoare Partitioning: Uses bidirectional converging pointers. Faster in practice.",
+        "Randomized Pivot: Picking pivot randomly avoids worst-case O(N^2) on sorted inputs."
       ],
       "importantPoints": [
-        "Quick Sort is an in-place sort: auxiliary memory is O(log N) for the recursion call stack.",
-        "Quick Sort is UNSTABLE by default (equal keys can have their relative order swapped during partitioning).",
-        "C++ `std::sort` and Java `Arrays.sort(primitive[])` use Dual-Pivot QuickSort / Introsort (hybrid of QuickSort, HeapSort, and InsertionSort)."
+        "Quick sort is cache-friendly and in-place O(log N) stack space.",
+        "Quick sort is NOT stable."
       ],
       "examples": [
-        "Partitioning array [10, 80, 30, 90, 40, 50, 70] with pivot = 70.",
-        "Median of Three pivot selection: choosing median of arr[low], arr[mid], arr[high] to prevent quadratic degradation."
+        "Example: Partition `[10, 80, 30, 90, 40, 50, 70]`, Pivot = 70 -> Result `[10, 30, 40, 50, 70, 90, 80]`."
       ],
       "algorithmSteps": [
-        "1. Choose a pivot element `P` from array `arr[low..high]`.",
-        "2. Partition `arr` around `P` such that all elements `< P` are placed to its left, and elements `> P` are to its right.",
-        "3. Let `pIndex` be the final index of pivot `P`.",
-        "4. Recursively call `quickSort(arr, low, pIndex - 1)`.",
-        "5. Recursively call `quickSort(arr, pIndex + 1, high)`."
+        "1. Choose pivot.",
+        "2. Partition array around pivot.",
+        "3. Recurse on left and right subarrays."
       ],
       "codeSnippets": [
         {
           "language": "cpp",
-          "title": "C++ QuickSort with Lomuto Partition",
-          "code": "#include <vector>\n#include <algorithm>\n\nint partition(std::vector<int>& arr, int low, int high) {\n    int pivot = arr[high];\n    int i = low - 1;\n    for (int j = low; j < high; ++j) {\n        if (arr[j] <= pivot) {\n            ++i;\n            std::swap(arr[i], arr[j]);\n        }\n    }\n    std::swap(arr[i + 1], arr[high]);\n    return i + 1;\n}\n\nvoid quickSort(std::vector<int>& arr, int low, int high) {\n    if (low < high) {\n        int pi = partition(arr, low, high);\n        quickSort(arr, low, pi - 1);\n        quickSort(arr, pi + 1, high);\n    }\n}",
-          "explanation": "In-place C++ QuickSort implementing Lomuto partitioning."
-        },
-        {
-          "language": "java",
-          "title": "Java QuickSort Implementation",
-          "code": "public class QuickSort {\n    public static void sort(int[] arr, int low, int high) {\n        if (low < high) {\n            int pi = partition(arr, low, high);\n            sort(arr, low, pi - 1);\n            sort(arr, pi + 1, high);\n        }\n    }\n\n    private static int partition(int[] arr, int low, int high) {\n        int pivot = arr[high];\n        int i = low - 1;\n        for (int j = low; j < high; j++) {\n            if (arr[j] < pivot) {\n                i++;\n                int temp = arr[i];\n                arr[i] = arr[j];\n                arr[j] = temp;\n            }\n        }\n        int temp = arr[i + 1];\n        arr[i + 1] = arr[high];\n        arr[high] = temp;\n        return i + 1;\n    }\n}",
-          "explanation": "Java recursive implementation with clear helper partition method."
-        },
-        {
-          "language": "python",
-          "title": "Python In-Place QuickSort",
-          "code": "def quick_sort(arr: list[int], low: int, high: int) -> None:\n    if low < high:\n        pi = partition(arr, low, high)\n        quick_sort(arr, low, pi - 1)\n        quick_sort(arr, pi + 1, high)\n\ndef partition(arr: list[int], low: int, high: int) -> int:\n    pivot = arr[high]\n    i = low - 1\n    for j in range(low, high):\n        if arr[j] <= pivot:\n            i += 1\n            arr[i], arr[j] = arr[j], arr[i]\n    arr[i + 1], arr[high] = arr[high], arr[i + 1]\n    return i + 1",
-          "explanation": "Python in-place recursive sorting utilizing tuple unpacking for swaps."
+          "title": "C++ Quick Sort",
+          "code": "#include <vector>\n#include <algorithm>\n\nint partition(std::vector<int>& arr, int low, int high) {\n    int pivot = arr[high];\n    int i = low - 1;\n    for (int j = low; j < high; ++j) {\n        if (arr[j] < pivot) {\n            ++i;\n            std::swap(arr[i], arr[j]);\n        }\n    }\n    std::swap(arr[i + 1], arr[high]);\n    return i + 1;\n}\n\nvoid quickSort(std::vector<int>& arr, int low, int high) {\n    if (low < high) {\n        int pi = partition(arr, low, high);\n        quickSort(arr, low, pi - 1);\n        quickSort(arr, pi + 1, high);\n    }\n}",
+          "explanation": "In-place Quick Sort using Lomuto partition."
         }
       ],
-      "timeComplexity": "O(N log N) average/best, O(N^2) worst case when poorly partitioned",
-      "spaceComplexity": "O(log N) recursion stack space (worst case O(N) without tail call optimization)",
+      "timeComplexity": "O(N log N) Average Case, O(N^2) Worst Case",
+      "spaceComplexity": "O(log N) Recursive call stack space",
       "keyTakeaways": [
-        "QuickSort's inner loop is extremely tight and hardware cache friendly.",
-        "Randomizing the pivot selection completely protects against adversarial O(N^2) worst-case inputs.",
-        "Unlike MergeSort, QuickSort requires O(1) extra auxiliary array storage."
+        "Quick Sort is preferred for arrays due to spatial locality and in-place partitioning."
       ],
       "commonMistakes": [
-        "Assuming Quick Sort is always O(N log N); without randomization, already-sorted input degenerates to O(N^2).",
-        "Believing Quick Sort is stable; partition swaps can alter relative positions of duplicates.",
-        "Stack overflow on massive arrays due to lack of tail call elimination."
-      ],
-      "relatedTopics": [
-        "Merge Sort",
-        "Heap Sort",
-        "Introsort",
-        "Divide and Conquer"
-      ]
-    }
-  },
-  {
-    "topicId": "merge-sort",
-    "chapterId": "dsa-u2-c2",
-    "unitId": "dsa-u2",
-    "subjectId": "dsa",
-    "topicNumber": 3,
-    "title": "Merge Sort & Stable Sorting Mechanics",
-    "estimatedMinutes": 20,
-    "difficulty": "Intermediate",
-    "summary": "Guaranteed O(N log N) divide-and-conquer sorting algorithm with stable order preservation.",
-    "subtopics": [
-      "Divide Phase Recurrence",
-      "Merge Two Sorted Arrays",
-      "Inversion Counting",
-      "Stability Properties"
-    ],
-    "content": {
-      "introduction": "Merge Sort is an archetype of divide-and-conquer design, dividing an array into two equal halves, sorting each recursively, and then merging the sorted halves in linear time. It guarantees O(N log N) time complexity under all conditions.",
-      "concepts": [
-        "Stable Sorting: Elements with identical keys maintain their original relative order after sorting.",
-        "Divide Step: Continually split array at midpoint until single-element base cases are reached: T(N) = 2T(N/2) + O(N).",
-        "Merge Step: Two-pointer technique comparing front elements of left and right subarrays, copying the smaller to temporary buffer.",
-        "External Sorting: Ideal for sorting data that exceeds RAM capacity (e.g. multi-gigabyte disk files) because sequential access patterns match disk hardware."
-      ],
-      "importantPoints": [
-        "Merge Sort requires O(N) auxiliary space for the merge buffer when implemented on arrays.",
-        "Preferred algorithm for sorting Linked Lists because merge operations require O(1) extra memory with pointer rewiring.",
-        "Inversion counting (used in collaborative filtering and ranking) can be computed in O(N log N) alongside the merge routine."
-      ],
-      "examples": [
-        "Sorting [38, 27, 43, 3, 9, 82, 10] step-by-step through recursive tree splits.",
-        "Counting inversions where arr[i] > arr[j] and i < j."
-      ],
-      "algorithmSteps": [
-        "1. If `low >= high`, return (base case).",
-        "2. Calculate `mid = low + (high - low) / 2`.",
-        "3. Recursively call `mergeSort(arr, low, mid)`.",
-        "4. Recursively call `mergeSort(arr, mid + 1, high)`.",
-        "5. Merge sorted subarrays `arr[low..mid]` and `arr[mid+1..high]` into temporary array and copy back."
-      ],
-      "codeSnippets": [
-        {
-          "language": "cpp",
-          "title": "C++ Merge Sort",
-          "code": "#include <vector>\n\nvoid merge(std::vector<int>& arr, int l, int m, int r) {\n    int n1 = m - l + 1, n2 = r - m;\n    std::vector<int> L(n1), R(n2);\n    for (int i = 0; i < n1; i++) L[i] = arr[l + i];\n    for (int j = 0; j < n2; j++) R[j] = arr[m + 1 + j];\n\n    int i = 0, j = 0, k = l;\n    while (i < n1 && j < n2) {\n        if (L[i] <= R[j]) arr[k++] = L[i++];\n        else arr[k++] = R[j++];\n    }\n    while (i < n1) arr[k++] = L[i++];\n    while (j < n2) arr[k++] = R[j++];\n}\n\nvoid mergeSort(std::vector<int>& arr, int l, int r) {\n    if (l < r) {\n        int m = l + (r - l) / 2;\n        mergeSort(arr, l, m);\n        mergeSort(arr, m + 1, r);\n        merge(arr, l, m, r);\n    }\n}",
-          "explanation": "Standard stable C++ Merge Sort implementation."
-        },
-        {
-          "language": "java",
-          "title": "Java Merge Sort",
-          "code": "public class MergeSort {\n    public static void sort(int[] arr, int l, int r) {\n        if (l < r) {\n            int m = l + (r - l) / 2;\n            sort(arr, l, m);\n            sort(arr, m + 1, r);\n            merge(arr, l, m, r);\n        }\n    }\n\n    private static void merge(int[] arr, int l, int m, int r) {\n        int[] temp = new int[r - l + 1];\n        int i = l, j = m + 1, k = 0;\n        while (i <= m && j <= r) {\n            if (arr[i] <= arr[j]) temp[k++] = arr[i++];\n            else temp[k++] = arr[j++];\n        }\n        while (i <= m) temp[k++] = arr[i++];\n        while (j <= r) temp[k++] = arr[j++];\n        System.arraycopy(temp, 0, arr, l, temp.length);\n    }\n}",
-          "explanation": "Clean Java implementation using System.arraycopy for buffer transfer."
-        }
-      ],
-      "timeComplexity": "O(N log N) in all cases (Best, Average, and Worst)",
-      "spaceComplexity": "O(N) auxiliary space + O(log N) call stack",
-      "keyTakeaways": [
-        "Merge Sort is deterministic: its runtime is strictly O(N log N) regardless of input ordering.",
-        "Preserves duplicate order (Stable), making it ideal for multi-column sorting.",
-        "Primary choice for linked list sorting and external disk sorting."
-      ],
-      "commonMistakes": [
-        "Using `<` instead of `<=` in the merge comparator, accidentally destroying stability.",
-        "Reallocating temporary arrays inside the recursive loop instead of using a single preallocated buffer.",
-        "Overlooking the O(N) space requirement when comparing against Quick Sort or Heap Sort."
-      ],
-      "relatedTopics": [
-        "Quick Sort",
-        "External Sorting",
-        "Inversion Count",
-        "Linked List Sorting"
-      ]
-    }
-  },
-  {
-    "topicId": "sql-joins",
-    "chapterId": "dbms-u1-c1",
-    "unitId": "dbms-u1",
-    "subjectId": "dbms",
-    "topicNumber": 1,
-    "title": "SQL Joins & Relational Querying",
-    "estimatedMinutes": 20,
-    "difficulty": "Beginner",
-    "summary": "Combining relational tuples across primary and foreign keys using INNER, LEFT, RIGHT, FULL, and CROSS JOIN operations.",
-    "subtopics": [
-      "INNER JOIN Logic",
-      "LEFT/RIGHT OUTER JOIN",
-      "FULL OUTER JOIN & Cartesian Product",
-      "Self Joins & NULL Handling"
-    ],
-    "content": {
-      "introduction": "SQL Joins allow relational databases to stitch normalized tables together based on matching primary-foreign key relationships. Understanding join semantics and NULL propagation is vital for writing high-performance database queries.",
-      "concepts": [
-        "INNER JOIN: Returns only rows where matching values exist in both tables.",
-        "LEFT OUTER JOIN: Returns all rows from left table, with matched values from right table, or NULL if no match exists.",
-        "RIGHT OUTER JOIN: Returns all rows from right table, with matched values from left table, or NULL if no match exists.",
-        "FULL OUTER JOIN: Returns all rows from both tables, filling missing matches with NULLs.",
-        "CROSS JOIN (Cartesian Product): Pairs every row in table A with every row in table B (size = |A| * |B|)."
-      ],
-      "importantPoints": [
-        "Joins on indexed columns use Hash Join or Nested Loop Index Scan, yielding fast execution.",
-        "Filtering in the `ON` clause vs `WHERE` clause has different effects in LEFT JOINs (filtering in WHERE turns LEFT JOIN into INNER JOIN).",
-        "Self Joins allow querying hierarchical structures within a single table (e.g. Employee-Manager table)."
-      ],
-      "examples": [
-        "Joining `Students` table with `CourseEnrollments` to find all enrolled students.",
-        "Finding students who have NEVER submitted an assignment using `LEFT JOIN ... WHERE submission_id IS NULL`."
-      ],
-      "algorithmSteps": [
-        "1. Identify primary table and joining tables.",
-        "2. Determine primary key / foreign key join condition (`ON a.id = b.a_id`).",
-        "3. Choose join type based on whether unmatched rows must be preserved.",
-        "4. Apply filtering criteria in `WHERE` and aggregate using `GROUP BY`."
-      ],
-      "codeSnippets": [
-        {
-          "language": "sql",
-          "title": "SQL Join Examples",
-          "code": "-- 1. INNER JOIN: Only students with enrolled courses\nSELECT s.student_id, s.name, c.course_title\nFROM Students s\nINNER JOIN Enrollments e ON s.student_id = e.student_id\nINNER JOIN Courses c ON e.course_id = c.course_id;\n\n-- 2. LEFT JOIN: All students, even if they have 0 test attempts\nSELECT s.name, COUNT(tr.id) AS total_tests_taken\nFROM Students s\nLEFT JOIN TestResults tr ON s.student_id = tr.student_id\nGROUP BY s.student_id, s.name;\n\n-- 3. Self Join: Employee and Manager Hierarchy\nSELECT e.name AS Employee, m.name AS Manager\nFROM Employees e\nLEFT JOIN Employees m ON e.manager_id = m.employee_id;",
-          "explanation": "Production SQL examples illustrating INNER, LEFT with aggregations, and Self-Joins."
-        }
-      ],
-      "timeComplexity": "O(M + N) with Hash Join on indexed keys, O(M * N) with unindexed Nested Loop Join",
-      "spaceComplexity": "O(M) memory for building in-memory hash tables during join resolution",
-      "keyTakeaways": [
-        "Use INNER JOIN when you strictly need matched pairs.",
-        "Use LEFT JOIN when you must preserve all master records regardless of transaction existence.",
-        "Ensure foreign keys have indexes created to avoid slow full-table scans."
-      ],
-      "commonMistakes": [
-        "Putting left table filtering conditions in the `WHERE` clause after a `LEFT JOIN`, inadvertently converting it into an `INNER JOIN`.",
-        "Creating unintentional Cartesian products (`CROSS JOIN`) by omitting join predicates in `ON` clauses."
-      ],
-      "relatedTopics": [
-        "Primary Keys",
-        "Normalization",
-        "Indexing & B-Trees",
-        "Subqueries"
-      ]
-    }
-  },
-  {
-    "topicId": "dbms-normalization",
-    "chapterId": "dbms-u2-c1",
-    "unitId": "dbms-u2",
-    "subjectId": "dbms",
-    "topicNumber": 2,
-    "title": "Database Normalization (1NF, 2NF, 3NF, BCNF)",
-    "estimatedMinutes": 25,
-    "difficulty": "Intermediate",
-    "summary": "Systematic schema decomposition to eliminate insertion, deletion, and update anomalies using functional dependencies.",
-    "subtopics": [
-      "Functional Dependencies",
-      "1NF Atomic Values",
-      "2NF Partial Dependency Removal",
-      "3NF Transitive Dependency Removal",
-      "Boyce-Codd Normal Form (BCNF)"
-    ],
-    "content": {
-      "introduction": "Database Normalization is the formal process of structuring relational schemas to minimize data redundancy and eliminate update anomalies (Insertion, Deletion, and Modification anomalies) while preserving data integrity.",
-      "concepts": [
-        "1NF (First Normal Form): Every column contains atomic (indivisible) values; no multi-valued attributes or repeating groups.",
-        "2NF (Second Normal Form): Must be in 1NF AND have no Partial Dependencies (no non-prime attribute may depend on a proper subset of any candidate key).",
-        "3NF (Third Normal Form): Must be in 2NF AND have no Transitive Dependencies (no non-prime attribute depends on another non-prime attribute). In X -> Y, X is super key OR Y is prime attribute.",
-        "BCNF (Boyce-Codd Normal Form): Stricter than 3NF. For every non-trivial functional dependency X -> Y, X MUST be a Super Key."
-      ],
-      "importantPoints": [
-        "Lossless Join Decomposition: When decomposing relation R into R1 and R2, R1 ∩ R2 must determine at least R1 or R2.",
-        "Dependency Preservation: All functional dependencies of the original schema must be verifiable in the individual decomposed tables.",
-        "3NF always guarantees both Lossless Join AND Dependency Preservation; BCNF guarantees Lossless Join but may not preserve dependencies."
-      ],
-      "examples": [
-        "Decomposing `StudentCourse(StudentID, CourseID, StudentName, CourseFee)` from 1NF to 2NF.",
-        "Decomposing `Employee(EmpID, DeptID, DeptName)` from 2NF to 3NF to eliminate `EmpID -> DeptID -> DeptName` transitive dependency."
-      ],
-      "algorithmSteps": [
-        "1. Identify all Candidate Keys using closure of attribute sets.",
-        "2. Check for 1NF (ensure atomic scalar columns).",
-        "3. Check for 2NF: If compound candidate key exists, ensure no non-prime attribute depends on a partial key.",
-        "4. Check for 3NF: Ensure non-prime attributes only depend directly on Candidate Keys.",
-        "5. Decompose relations using projection preserving candidate key determinants."
-      ],
-      "codeSnippets": [
-        {
-          "language": "sql",
-          "title": "Normalized Schema DDL",
-          "code": "-- Normalized 3NF Schema Example\nCREATE TABLE Departments (\n    dept_id INT PRIMARY KEY,\n    dept_name VARCHAR(100) NOT NULL\n);\n\nCREATE TABLE Students (\n    student_id INT PRIMARY KEY,\n    name VARCHAR(100) NOT NULL,\n    dept_id INT REFERENCES Departments(dept_id)\n);\n\nCREATE TABLE Courses (\n    course_id INT PRIMARY KEY,\n    title VARCHAR(100) NOT NULL,\n    credits INT NOT NULL\n);\n\nCREATE TABLE Enrollments (\n    student_id INT REFERENCES Students(student_id),\n    course_id INT REFERENCES Courses(course_id),\n    grade CHAR(2),\n    PRIMARY KEY (student_id, course_id)\n);",
-          "explanation": "3NF relational schema free from partial and transitive dependencies."
-        }
-      ],
-      "timeComplexity": "O(2^N) theoretical attribute closure analysis in worst case, O(N^2) in standard schema designs",
-      "spaceComplexity": "Eliminates duplicate storage rows, dramatically reducing disk footprint",
-      "keyTakeaways": [
-        "1NF: Atomic attributes.",
-        "2NF: No partial dependency (relevant when candidate key is composite).",
-        "3NF: No transitive dependency.",
-        "BCNF: Determinant in every non-trivial FD must be a Super Key."
-      ],
-      "commonMistakes": [
-        "Confusing candidate keys with primary keys (2NF checks against ALL candidate keys, not just the chosen primary key).",
-        "Assuming BCNF is always superior to 3NF without realizing BCNF can drop dependency preservation.",
-        "Over-normalizing OLAP analytics databases (where intentional denormalization is preferred for read speed)."
-      ],
-      "relatedTopics": [
-        "Functional Dependencies",
-        "Candidate Keys",
-        "Denormalization",
-        "SQL Joins"
-      ]
-    }
-  },
-  {
-    "topicId": "cpu-scheduling",
-    "chapterId": "os-u1-c1",
-    "unitId": "os-u1",
-    "subjectId": "os",
-    "topicNumber": 1,
-    "title": "CPU Scheduling Algorithms (FCFS, SJF, Round Robin)",
-    "estimatedMinutes": 20,
-    "difficulty": "Beginner",
-    "summary": "Preemptive and non-preemptive algorithms for allocating CPU burst cycles to active ready processes.",
-    "subtopics": [
-      "FCFS & Convoy Effect",
-      "SJF & Shortest Remaining Time First (SRTF)",
-      "Round Robin & Time Quantum Sizing",
-      "Turnaround & Waiting Time Metrics"
-    ],
-    "content": {
-      "introduction": "CPU Scheduling is the process by which the operating system decides which process in the Ready Queue should be allocated CPU execution time. Efficient scheduling maximizes CPU utilization, minimizes turnaround time, and ensures responsive interactive systems.",
-      "concepts": [
-        "First-Come, First-Served (FCFS): Non-preemptive. Simple FIFO queue, but suffers from the Convoy Effect (short processes stuck waiting behind huge CPU bursts).",
-        "Shortest Job First (SJF): Provably optimal in minimizing average waiting time, but impractical in pure form because future burst times cannot be known in advance.",
-        "Shortest Remaining Time First (SRTF): Preemptive variant of SJF. Preempts current process if a newly arrived process has a shorter remaining burst.",
-        "Round Robin (RR): Preemptive with a fixed Time Quantum `Q`. Ensures fairness and responsiveness in timesharing systems."
-      ],
-      "importantPoints": [
-        "Time Quantum Selection in Round Robin: If `Q` is too large, RR degenerates to FCFS. If `Q` is too small, context switching overhead dominates CPU cycles.",
-        "Rule of Thumb: 80% of CPU bursts should be shorter than the chosen Time Quantum `Q`.",
-        "Starvation: In Priority and SJF scheduling, long jobs can starve indefinitely if shorter jobs continuously arrive."
-      ],
-      "examples": [
-        "Calculate Waiting Time and Turnaround Time for processes P1(burst=6), P2(burst=8), P3(burst=7), P4(burst=3) with arrival time 0.",
-        "Gantt Chart construction for Round Robin with Time Quantum = 4ms."
-      ],
-      "algorithmSteps": [
-        "1. Turnaround Time = Completion Time - Arrival Time.",
-        "2. Waiting Time = Turnaround Time - Burst Time.",
-        "3. Response Time = Time at which process first gets CPU - Arrival Time.",
-        "4. Average Waiting Time = Sum of Waiting Times / Total Processes."
-      ],
-      "codeSnippets": [
-        {
-          "language": "cpp",
-          "title": "C++ Round Robin Scheduling Simulation",
-          "code": "#include <iostream>\n#include <vector>\n#include <queue>\n\nstruct Process {\n    int id;\n    int burstTime;\n    int remainingTime;\n    int completionTime;\n};\n\nvoid roundRobin(std::vector<Process>& proc, int quantum) {\n    int time = 0;\n    std::queue<int> q;\n    for (size_t i = 0; i < proc.size(); i++) q.push(i);\n\n    while (!q.empty()) {\n        int idx = q.front();\n        q.pop();\n        if (proc[idx].remainingTime > quantum) {\n            time += quantum;\n            proc[idx].remainingTime -= quantum;\n            q.push(idx);\n        } else {\n            time += proc[idx].remainingTime;\n            proc[idx].remainingTime = 0;\n            proc[idx].completionTime = time;\n        }\n    }\n}",
-          "explanation": "Round Robin CPU scheduler simulation using FIFO process queues."
-        }
-      ],
-      "timeComplexity": "O(N log N) using priority queues for SJF/Priority, O(N * (Burst/Q)) for Round Robin",
-      "spaceComplexity": "O(N) for Ready Queue and PCB descriptor state storage",
-      "keyTakeaways": [
-        "SJF produces minimum average waiting time.",
-        "Round Robin is the foundation of interactive multitasking operating systems.",
-        "Aging technique (gradually increasing priority of waiting processes) prevents starvation in priority scheduling."
-      ],
-      "commonMistakes": [
-        "Confusing Waiting Time with Turnaround Time (Turnaround = Completion - Arrival; Waiting = Turnaround - Burst).",
-        "Forgetting context switch latency when modeling Round Robin performance."
-      ],
-      "relatedTopics": [
-        "Process Control Block",
-        "Context Switching",
-        "Multilevel Feedback Queues",
-        "Process Synchronization"
-      ]
-    }
-  },
-  {
-    "topicId": "virtual-memory-paging",
-    "chapterId": "os-u3-c1",
-    "unitId": "os-u3",
-    "subjectId": "os",
-    "topicNumber": 2,
-    "title": "Virtual Memory, Paging & Page Replacement",
-    "estimatedMinutes": 25,
-    "difficulty": "Intermediate",
-    "summary": "Translating logical addresses to physical frames, handling page faults, and page replacement algorithms (FIFO, LRU, Optimal).",
-    "subtopics": [
-      "Page Table & MMU Translation",
-      "Translation Lookaside Buffer (TLB)",
-      "Page Fault Interrupt Handling",
-      "Page Replacement (FIFO, LRU, Belady's Anomaly)"
-    ],
-    "content": {
-      "introduction": "Virtual Memory gives each running process the illusion of a contiguous address space larger than physical RAM. The Memory Management Unit (MMU) maps logical page numbers to physical frame numbers using Page Tables and TLBs.",
-      "concepts": [
-        "Paging: Dividing logical memory into fixed-size Pages (typically 4KB) and physical memory into identical-size Frames.",
-        "Page Fault: Hardware interrupt triggered when a process attempts to access a page whose valid/invalid bit is set to invalid (not currently present in RAM).",
-        "TLB (Translation Lookaside Buffer): High-speed hardware associative cache storing recent virtual-to-physical translations.",
-        "Page Replacement Algorithms: Deciding which victim page to swap out to disk when all physical frames are occupied."
-      ],
-      "importantPoints": [
-        "Effective Access Time (EAT) = (TLB hit ratio * (TLB time + Memory time)) + ((1 - TLB hit ratio) * (TLB time + 2 * Memory time)).",
-        "Belady's Anomaly: In FIFO page replacement, increasing the number of physical page frames can paradoxically increase the number of page faults.",
-        "LRU (Least Recently Used) is an approximation of the theoretical Optimal Page Replacement (MIN/OPT) algorithm and is immune to Belady's anomaly."
-      ],
-      "examples": [
-        "Reference string: 7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2, 1, 2, 0, 1, 7, 0, 1 with 3 physical frames.",
-        "Calculating page fault count under FIFO vs LRU."
-      ],
-      "algorithmSteps": [
-        "1. CPU generates virtual address (Page Number `p`, Page Offset `d`).",
-        "2. Check TLB: If TLB hit, fetch frame number `f` immediately.",
-        "3. If TLB miss, lookup Page Table in main memory.",
-        "4. If Valid bit is 0, trigger Page Fault Trap to OS.",
-        "5. OS finds empty frame or invokes Page Replacement Algorithm (LRU) to evict victim page.",
-        "6. Swap requested page from disk into RAM, update Page Table valid bit to 1, restart CPU instruction."
-      ],
-      "codeSnippets": [
-        {
-          "language": "cpp",
-          "title": "C++ LRU Page Replacement Simulation",
-          "code": "#include <vector>\n#include <unordered_map>\n#include <list>\n#include <iostream>\n\nint countLRUPageFaults(const std::vector<int>& pages, int capacity) {\n    std::unordered_map<int, std::list<int>::iterator> pageMap;\n    std::list<int> lruList;\n    int pageFaults = 0;\n\n    for (int page : pages) {\n        if (pageMap.find(page) == pageMap.end()) {\n            pageFaults++;\n            if (static_cast<int>(lruList.size()) == capacity) {\n                int victim = lruList.back();\n                lruList.pop_back();\n                pageMap.erase(victim);\n            }\n        } else {\n            lruList.erase(pageMap[page]);\n        }\n        lruList.push_front(page);\n        pageMap[page] = lruList.begin();\n    }\n    return pageFaults;\n}",
-          "explanation": "O(1) LRU Page Replacement using Hash Map and Doubly Linked List."
-        }
-      ],
-      "timeComplexity": "O(1) memory lookup with TLB hit; ~10-20ms penalty on Page Fault due to disk I/O",
-      "spaceComplexity": "O(P) Page table size proportional to number of virtual pages (mitigated by Multi-level page tables)",
-      "keyTakeaways": [
-        "Page Offset `d` passes through unchanged from logical to physical address.",
-        "LRU and Optimal algorithms never suffer from Belady's anomaly (they are Stack algorithms).",
-        "Thrashing occurs when the system spends more time swapping pages than executing instructions."
-      ],
-      "commonMistakes": [
-        "Believing FIFO always improves with more memory (Belady's anomaly counterexamples prove otherwise).",
-        "Assuming page offset changes during MMU translation (only the page number is replaced by frame number).",
-        "Ignoring the massive performance cost of page faults (~100,000x slower than RAM access)."
-      ],
-      "relatedTopics": [
-        "Segmentation",
-        "Thrashing",
-        "Working Set Model",
-        "Memory Management Unit"
-      ]
-    }
-  },
-  {
-    "topicId": "tcp-handshake",
-    "chapterId": "cn-u3-c1",
-    "unitId": "cn-u3",
-    "subjectId": "cn",
-    "topicNumber": 1,
-    "title": "TCP 3-Way Handshake & Connection Teardown",
-    "estimatedMinutes": 20,
-    "difficulty": "Beginner",
-    "summary": "Reliable bidirectional stream connection establishment (SYN, SYN-ACK, ACK) and graceful 4-way termination (FIN-ACK).",
-    "subtopics": [
-      "SYN / SYN-ACK / ACK Mechanics",
-      "Initial Sequence Numbers (ISN)",
-      "TCP 4-Way FIN Teardown",
-      "TIME_WAIT State & SYN Flood Attacks"
-    ],
-    "content": {
-      "introduction": "Transmission Control Protocol (TCP) is a connection-oriented, reliable transport protocol that guarantees ordered, error-checked packet delivery. Before any application data (HTTP, SSH) flows, endpoints establish synchronized sequence numbers via the 3-Way Handshake.",
-      "concepts": [
-        "SYN (Synchronize): Client sends randomly chosen initial sequence number `ISN_C`.",
-        "SYN-ACK: Server acknowledges client's sequence number (`ACK = ISN_C + 1`) and sends its own `ISN_S`.",
-        "ACK: Client acknowledges server's sequence number (`ACK = ISN_S + 1`). Connection is now ESTABLISHED.",
-        "TIME_WAIT State: Client waits 2 * MSL (Maximum Segment Lifetime, typically 60-120s) before closing to guarantee last ACK reached server and flush lingering duplicate packets."
-      ],
-      "importantPoints": [
-        "SYN Flooding: DoS attack sending thousands of SYN packets without completing the 3rd ACK, exhausting server connection backlogs (mitigated by SYN Cookies).",
-        "TCP Half-Close: One endpoint finishes sending data (sends FIN) but can continue receiving data from the peer.",
-        "Piggybacking: The final ACK packet of the handshake can simultaneously carry initial application payload (e.g. HTTP GET request in TCP Fast Open)."
-      ],
-      "examples": [
-        "Wireshark packet capture showing SYN (Seq=100) -> SYN-ACK (Seq=300, Ack=101) -> ACK (Seq=101, Ack=301).",
-        "Analyzing why `netstat` displays thousands of sockets stuck in `TIME_WAIT`."
-      ],
-      "algorithmSteps": [
-        "1. Client -> Server: `[SYN], Seq = x`",
-        "2. Server -> Client: `[SYN, ACK], Seq = y, Ack = x + 1`",
-        "3. Client -> Server: `[ACK], Seq = x + 1, Ack = y + 1`",
-        "4. Both sides transition to `ESTABLISHED` state."
-      ],
-      "codeSnippets": [
-        {
-          "language": "javascript",
-          "title": "Node.js TCP Client/Server Handshake Verification",
-          "code": "const net = require('net');\n\n// TCP Server\nconst server = net.createServer((socket) => {\n  console.log('Client connected (3-Way Handshake Completed)');\n  socket.write('Hello TCP Client!\\n');\n  socket.on('data', (data) => console.log('Received:', data.toString()));\n});\nserver.listen(8080, () => console.log('TCP Server listening on port 8080'));\n\n// TCP Client\nconst client = net.createConnection({ port: 8080 }, () => {\n  console.log('Connected to server');\n  client.write('Client ready for communication');\n});",
-          "explanation": "Low-level Node.js socket demonstration triggering kernel TCP handshake."
-        }
-      ],
-      "timeComplexity": "1 RTT (Round Trip Time) connection latency overhead prior to payload delivery",
-      "spaceComplexity": "O(1) memory for Socket TCB (Transmission Control Block) kernel struct",
-      "keyTakeaways": [
-        "Handshake establishes mutual agreement on starting sequence numbers for reliable byte streaming.",
-        "Connection termination requires 4 packets (FIN -> ACK -> FIN -> ACK) because TCP is full-duplex.",
-        "SYN Cookies defend servers against denial-of-service memory exhaustion."
-      ],
-      "commonMistakes": [
-        "Believing the 3-way handshake carries user payload (unless TCP Fast Open is specifically negotiated).",
-        "Assuming `TIME_WAIT` is a bug; it is an essential safeguard to prevent delayed duplicate packets from corrupting new connections."
-      ],
-      "relatedTopics": [
-        "UDP vs TCP",
-        "Flow Control & Sliding Window",
-        "Congestion Control",
-        "SYN Flood Attacks"
-      ]
-    }
-  },
-  {
-    "topicId": "solid-principles",
-    "chapterId": "oops-u2-c1",
-    "unitId": "oops-u2",
-    "subjectId": "oops",
-    "topicNumber": 1,
-    "title": "SOLID Principles & Clean Code Architecture",
-    "estimatedMinutes": 20,
-    "difficulty": "Intermediate",
-    "summary": "Five essential design principles for building maintainable, decoupled, and extensible object-oriented software.",
-    "subtopics": [
-      "Single Responsibility (SRP)",
-      "Open/Closed (OCP)",
-      "Liskov Substitution (LSP)",
-      "Interface Segregation (ISP)",
-      "Dependency Inversion (DIP)"
-    ],
-    "content": {
-      "introduction": "SOLID is an acronym for five foundational design principles introduced by Robert C. Martin (Uncle Bob). Following SOLID produces modular systems that are easy to test, refactor, and extend without causing cascading code regressions.",
-      "concepts": [
-        "S — Single Responsibility Principle (SRP): A class should have one, and only one, reason to change.",
-        "O — Open/Closed Principle (OCP): Software entities should be open for extension, but closed for modification.",
-        "L — Liskov Substitution Principle (LSP): Subtypes must be substitutable for their base types without altering program correctness.",
-        "I — Interface Segregation Principle (ISP): Clients should not be forced to depend upon interfaces they do not use.",
-        "D — Dependency Inversion Principle (DIP): High-level modules should not depend on low-level modules; both should depend on abstractions (interfaces)."
-      ],
-      "importantPoints": [
-        "LSP Violation Classic: Making a `Square` class inherit from `Rectangle` and overriding `setWidth`/`setHeight` breaks client code expecting independent dimensions.",
-        "Dependency Injection (DI) is the primary design pattern used to realize the Dependency Inversion Principle.",
-        "Open/Closed principle is achieved through Polymorphism and Strategy patterns."
-      ],
-      "examples": [
-        "Refactoring a monolithic `UserManager` (handles validation, database saving, and email sending) into 3 focused SRP classes.",
-        "Using Payment Gateway interfaces to add PayPal/Stripe support without modifying checkout logic (OCP)."
-      ],
-      "algorithmSteps": [
-        "1. Identify responsibilities in classes and split if multiple change actors exist (SRP).",
-        "2. Replace conditionals on type (`switch (type)`) with Polymorphic strategies (OCP).",
-        "3. Ensure derived classes uphold all contracts and invariants of base class (LSP).",
-        "4. Break monolithic fat interfaces into small client-specific interfaces (ISP).",
-        "5. Inject interface abstractions rather than instantiating concrete classes with `new` (DIP)."
-      ],
-      "codeSnippets": [
-        {
-          "language": "java",
-          "title": "Java Dependency Inversion Principle (DIP)",
-          "code": "// Interface Abstraction\ninterface NotificationService {\n    void send(String message, String recipient);\n}\n\n// Low-level modules\nclass EmailService implements NotificationService {\n    public void send(String msg, String to) { System.out.println(\"Email to \" + to + \": \" + msg); }\n}\n\nclass SmsService implements NotificationService {\n    public void send(String msg, String to) { System.out.println(\"SMS to \" + to + \": \" + msg); }\n}\n\n// High-level module depends on Abstraction, NOT concrete classes\nclass OrderProcessor {\n    private final NotificationService notifier;\n\n    public OrderProcessor(NotificationService notifier) { // Injected via constructor\n        this.notifier = notifier;\n    }\n\n    public void completeOrder(String user) {\n        // ... process payment ...\n        notifier.send(\"Your order is confirmed!\", user);\n    }\n}",
-          "explanation": "Dependency Inversion in Java: OrderProcessor is decoupled from concrete notification implementations."
-        },
-        {
-          "language": "python",
-          "title": "Python Open/Closed Principle (OCP)",
-          "code": "from abc import ABC, abstractmethod\n\nclass PaymentStrategy(ABC):\n    @abstractmethod\n    def pay(self, amount: float) -> None:\n        pass\n\nclass CreditCardPayment(PaymentStrategy):\n    def pay(self, amount: float) -> None:\n        print(f\"Paid ${amount} via Credit Card\")\n\nclass CryptoPayment(PaymentStrategy):\n    def pay(self, amount: float) -> None:\n        print(f\"Paid ${amount} via Ethereum\")\n\n# Open for extension (new payment methods), closed for modification\nclass Checkout:\n    def process(self, payment: PaymentStrategy, amount: float):\n        payment.pay(amount)",
-          "explanation": "Python Strategy pattern satisfying the Open/Closed Principle."
-        }
-      ],
-      "timeComplexity": "O(1) runtime dispatch overhead through virtual tables / interface lookups",
-      "spaceComplexity": "Negligible memory overhead for interface references",
-      "keyTakeaways": [
-        "SOLID prevents software rot and fragile dependencies.",
-        "Always favor composition and interfaces over deep inheritance trees.",
-        "Single Responsibility is the most violated principle in real-world codebases."
-      ],
-      "relatedTopics": [
-        "Factory Pattern",
-        "Dependency Injection",
-        "Design Patterns",
-        "Polymorphism"
-      ]
-    }
-  },
-  {
-    "topicId": "algorithm-complexity",
-    "chapterId": "dsa-u1-c1",
-    "unitId": "dsa-u1",
-    "subjectId": "dsa",
-    "topicNumber": 1,
-    "title": "Asymptotic Analysis & Big-O Notation",
-    "estimatedMinutes": 25,
-    "difficulty": "Beginner",
-    "summary": "Asymptotic growth rate analysis, Big-O, Big-Omega, Big-Theta, and recurrence relation solutions.",
-    "subtopics": [
-      "Big-O Upper Bound",
-      "Big-Omega Lower Bound",
-      "Big-Theta Tight Bound",
-      "Space-Time Tradeoffs"
-    ],
-    "content": {
-      "introduction": "Asymptotic Analysis is the foundational tool used to evaluate the efficiency of algorithms independently of machine hardware, programming language, or compiler optimizations.",
-      "concepts": [
-        "Big-O (Worst-Case Upper Bound): Describes the upper limit of running time.",
-        "Big-Omega (Best-Case Lower Bound): Describes the minimum running time.",
-        "Big-Theta (Tight Bound): Characterizes running time when upper and lower bounds coincide."
-      ],
-      "importantPoints": [
-        "Drop constant factors: O(2N) simplifies to O(N).",
-        "Focus on highest-degree terms: O(N^2 + 5N + 100) simplifies to O(N^2)."
-      ],
-      "examples": [
-        "Single loop over N elements: O(N).",
-        "Nested loops over N elements: O(N^2).",
-        "Halving search space at each step: O(log N)."
-      ],
-      "algorithmSteps": [
-        "1. Identify input size N.",
-        "2. Count primitive operations executed as a function of N.",
-        "3. Keep dominant term and drop lower-order terms."
-      ],
-      "codeSnippets": [
-        {
-          "language": "cpp",
-          "title": "Linear vs Quadratic Growth Example",
-          "code": "#include <iostream>\nusing namespace std;\n\nvoid analyzeLoops(int n) {\n    // Linear loop: O(n)\n    for(int i=0; i<n; i++) cout << i << \" \";\n    cout << endl;\n    // Quadratic nested loop: O(n^2)\n    for(int i=0; i<n; i++) {\n        for(int j=0; j<n; j++) cout << \"(\" << i << \",\" << j << \") \";\n    }\n}",
-          "explanation": "Comparison of O(n) single loop vs O(n^2) nested loop."
-        }
-      ],
-      "timeComplexity": "O(1) calculation method for asymptotic classification",
-      "spaceComplexity": "O(1) auxiliary space",
-      "keyTakeaways": [
-        "Always express time complexity in terms of input size N."
-      ],
-      "commonMistakes": [
-        "Confusing Big-O worst case with average case behavior."
+        "Choosing the first or last element as pivot on already sorted arrays without randomization."
       ]
     }
   },
@@ -1173,50 +785,160 @@ export const CURRICULUM_TOPICS = [
     "unitId": "dsa-u3",
     "subjectId": "dsa",
     "topicNumber": 1,
-    "title": "Singly & Doubly Linked List Operations",
+    "title": "Singly & Doubly Linked List Architecture & Pointer Manipulation",
     "estimatedMinutes": 25,
     "difficulty": "Beginner",
-    "summary": "Dynamic memory allocation, node pointer manipulation, insertion, deletion, and Floyd's Cycle Detection.",
+    "summary": "Dynamic linear memory structures connected via node pointers, enabling O(1) insertions/deletions.",
     "subtopics": [
-      "Node Pointer Structures",
-      "Head & Tail References",
-      "Cycle Detection",
-      "Reversal Algorithm"
+      "Node Memory Layout",
+      "Singly vs Doubly Linked Lists",
+      "Head & Tail Pointer Management",
+      "O(1) Insertion & Deletion at Head"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "Linked Lists store elements in non-contiguous memory locations connected via explicit node pointers.",
+      "introduction": "A Linked List is a linear dynamic data structure where elements are not stored in contiguous memory locations. Instead, each element (node) contains data and a pointer/reference to the next node in memory, enabling dynamic resizing without expensive reallocations.",
       "concepts": [
-        "Node Structure: Contains data field and pointer to next node.",
-        "Singly vs Doubly: Doubly linked lists maintain both next and prev pointers.",
-        "Floyd's Cycle Finding: Two-pointer slow and fast approach to detect loops in O(N) time and O(1) space."
+        "Singly Linked List: Each node contains `data` and a `next` pointer.",
+        "Doubly Linked List: Each node contains `data`, `prev`, and `next` pointers, enabling bidirectional traversal.",
+        "Circular Linked List: The last node's `next` loops back to the head node."
       ],
       "importantPoints": [
-        "Insertion at head is O(1) whereas array insertion at index 0 is O(N)."
+        "Insert/Delete at Head: O(1) time.",
+        "Lookup by Index: O(N) sequential traversal."
       ],
       "examples": [
-        "Reversing a Singly Linked List in-place."
+        "Example: Reversing a Singly Linked List `1 -> 2 -> 3 -> 4 -> NULL` -> Result `4 -> 3 -> 2 -> 1 -> NULL`."
       ],
       "algorithmSteps": [
-        "1. Initialize prev = NULL, curr = head.",
-        "2. Save next node.",
-        "3. Reverse pointer: curr->next = prev.",
-        "4. Advance pointers."
+        "1. Allocate new node on heap.",
+        "2. Update pointers.",
+        "3. Free detached memory in C++."
       ],
       "codeSnippets": [
         {
-          "language": "python",
-          "title": "Python Linked List Reversal",
-          "code": "class Node:\n    def __init__(self, val):\n        self.val = val\n        self.next = None\n\ndef reverse_list(head):\n    prev, curr = None, head\n    while curr:\n        nxt = curr.next\n        curr.next = prev\n        prev = curr\n        curr = nxt\n    return prev",
-          "explanation": "In-place iterative linked list reversal."
+          "language": "cpp",
+          "title": "C++ Linked List Reverse",
+          "code": "struct ListNode {\n    int val;\n    ListNode* next;\n    ListNode(int x) : val(x), next(nullptr) {}\n};\n\nListNode* reverseList(ListNode* head) {\n    ListNode* prev = nullptr;\n    ListNode* curr = head;\n    while (curr != nullptr) {\n        ListNode* nextNode = curr->next;\n        curr->next = prev;\n        prev = curr;\n        curr = nextNode;\n    }\n    return prev;\n}",
+          "explanation": "Iterative 3-pointer linked list reversal."
         }
       ],
-      "timeComplexity": "Insertion at head: O(1), Search: O(N)",
-      "spaceComplexity": "O(1) auxiliary space for pointer manipulations",
+      "timeComplexity": "O(1) Insertion/Deletion at known pointer, O(N) Search",
+      "spaceComplexity": "O(N) Total storage space",
       "keyTakeaways": [
-        "Handle boundary cases: empty list, single node, two nodes."
+        "Use dummy head nodes to eliminate edge-case branching."
       ],
       "commonMistakes": [
-        "Losing reference to next node during pointer assignment leading to memory leaks."
+        "Dereferencing nullptr when accessing curr->next."
+      ]
+    }
+  },
+  {
+    "topicId": "stacks-and-queues",
+    "chapterId": "dsa-u3-c2",
+    "unitId": "dsa-u3",
+    "subjectId": "dsa",
+    "topicNumber": 1,
+    "title": "Stacks, Queues & Monotonic Stack Applications",
+    "estimatedMinutes": 30,
+    "difficulty": "Beginner",
+    "summary": "LIFO and FIFO linear data structures, circular queue buffers, and monotonic stack algorithms.",
+    "subtopics": [
+      "LIFO vs FIFO Mechanics",
+      "Stack Infix to Postfix Conversion",
+      "Circular Queue Array Implementation",
+      "Next Greater Element (Monotonic Stack)"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "Stacks and Queues are fundamental linear abstract data types. A Stack operates on a Last-In, First-Out (LIFO) principle, while a Queue operates on a First-In, First-Out (FIFO) principle. Monotonic stacks maintain elements in strictly monotonic order, optimizing Next Greater Element queries from O(N^2) to O(N).",
+      "concepts": [
+        "Stack (LIFO): Insertion (push) and removal (pop) occur strictly at the top in O(1) time.",
+        "Queue (FIFO): Insertion (enqueue) occurs at the rear; removal (dequeue) occurs at the front in O(1) time.",
+        "Circular Queue: Avoids memory waste in fixed arrays by wrapping indices using modulo arithmetic: `(rear + 1) % capacity`.",
+        "Monotonic Stack: A stack where elements are kept in monotonic increasing or decreasing order, solving Next Greater Element / Stock Span problems in linear O(N) time."
+      ],
+      "importantPoints": [
+        "Stack is used in function call stack recursion, expression evaluation, and browser back buttons.",
+        "Queue is used in CPU scheduling, BFS graph traversal, and asynchronous message buffers (RabbitMQ/Kafka)."
+      ],
+      "examples": [
+        "Example: Next Greater Element for `[4, 5, 2, 25]` using Monotonic Stack -> Result `[5, 25, 25, -1]`."
+      ],
+      "algorithmSteps": [
+        "1. Initialize empty Stack.",
+        "2. Iterate through array.",
+        "3. Pop smaller elements to maintain decreasing invariant.",
+        "4. Record next greater element."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Monotonic Stack (Next Greater Element)",
+          "code": "#include <vector>\n#include <stack>\n\nstd::vector<int> nextGreaterElements(const std::vector<int>& arr) {\n    int n = arr.size();\n    std::vector<int> nge(n, -1);\n    std::stack<int> st;\n    for (int i = n - 1; i >= 0; --i) {\n        while (!st.empty() && st.top() <= arr[i]) st.pop();\n        if (!st.empty()) nge[i] = st.top();\n        st.push(arr[i]);\n    }\n    return nge;\n}",
+          "explanation": "Finds Next Greater Element in O(N) linear time using monotonic stack."
+        }
+      ],
+      "timeComplexity": "O(1) Push/Pop/Enqueue/Dequeue, O(N) Monotonic Stack Scan",
+      "spaceComplexity": "O(N) Auxiliary stack memory",
+      "keyTakeaways": [
+        "Monotonic Stack reduces quadratic comparison loops to single pass."
+      ],
+      "commonMistakes": [
+        "Using a standard array for Queue with shift() in JavaScript / Python causing O(N) dequeue overhead (use double-ended queue / deque instead)."
+      ]
+    }
+  },
+  {
+    "topicId": "floyds-cycle-detection",
+    "chapterId": "dsa-u3-c1",
+    "unitId": "dsa-u3",
+    "subjectId": "dsa",
+    "topicNumber": 2,
+    "title": "Floyd's Cycle-Finding Algorithm (Tortoise & Hare)",
+    "estimatedMinutes": 25,
+    "difficulty": "Intermediate",
+    "summary": "O(N) time and O(1) space pointer algorithm for detecting and locating loop entry nodes in linked structures.",
+    "subtopics": [
+      "Two Pointer Speed Differential",
+      "Cycle Detection Proof",
+      "Finding Loop Entry Node",
+      "Calculating Loop Length"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "Floyd's Cycle Detection Algorithm uses two pointers moving at different speeds (slow moves 1 step, fast moves 2 steps) to detect if a cycle exists in a linked list in O(N) time and O(1) auxiliary space.",
+      "concepts": [
+        "Speed Differential: The distance between fast and slow increases by 1 node in every step inside a cycle, ensuring collision.",
+        "Collision Point: If `slow == fast`, a cycle is guaranteed.",
+        "Finding Entry Point: Reset `slow = head`, advance both by 1 step until they meet at the cycle entry node."
+      ],
+      "importantPoints": [
+        "Detects loops in O(N) time and O(1) space without using HashSets."
+      ],
+      "examples": [
+        "Example: List with loop at node 3 -> Slow and fast meet inside loop, reset slow to head, meet at node 3."
+      ],
+      "algorithmSteps": [
+        "1. `slow = head`, `fast = head`.",
+        "2. While `fast && fast->next`: `slow = slow->next`, `fast = fast->next->next`.",
+        "3. If `slow == fast`, cycle found."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Floyd's Cycle Detection",
+          "code": "ListNode* detectCycle(ListNode* head) {\n    if (!head || !head->next) return nullptr;\n    ListNode *slow = head, *fast = head;\n    while (fast && fast->next) {\n        slow = slow->next;\n        fast = fast->next->next;\n        if (slow == fast) {\n            ListNode* entry = head;\n            while (entry != slow) {\n                entry = entry->next;\n                slow = slow->next;\n            }\n            return entry;\n        }\n    }\n    return nullptr;\n}",
+          "explanation": "Cycle detection and entry point discovery."
+        }
+      ],
+      "timeComplexity": "O(N) Linear Time",
+      "spaceComplexity": "O(1) Auxiliary Space",
+      "keyTakeaways": [
+        "Floyd's algorithm avoids O(N) memory overhead of HashSets."
+      ],
+      "commonMistakes": [
+        "Accessing fast->next->next when fast->next is nullptr."
       ]
     }
   },
@@ -1226,47 +948,108 @@ export const CURRICULUM_TOPICS = [
     "unitId": "dsa-u4",
     "subjectId": "dsa",
     "topicNumber": 1,
-    "title": "Binary Search Trees & Traversal Algorithms",
+    "title": "Binary Search Trees (BST): Properties, Traversals & Invariants",
     "estimatedMinutes": 30,
-    "difficulty": "Intermediate",
-    "summary": "Hierarchical tree structures, BST invariant property, Inorder, Preorder, Postorder traversals, and deletion algorithms.",
+    "difficulty": "Beginner",
+    "summary": "Hierarchical node structures where every node's left subtree contains smaller keys and right subtree contains larger keys.",
     "subtopics": [
-      "BST Invariant",
-      "Inorder Traversal (Sorted Output)",
-      "Preorder/Postorder",
-      "Deletion Scenarios"
+      "BST Ordering Property",
+      "Inorder, Preorder, Postorder Traversals",
+      "Search, Insert & Delete Operations",
+      "Inorder Successor & Predecessor",
+      "Degenerate Tree (Skewed BST)"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "A Binary Search Tree (BST) is a binary tree where left child < root < right child for every subtree.",
+      "introduction": "A Binary Search Tree (BST) is a binary tree data structure where each node has at most two children, satisfying the strict BST invariant: for any given node X, all values in its left subtree are strictly less than X.val, and all values in its right subtree are strictly greater than X.val.",
       "concepts": [
-        "BST Invariant: Enables O(log N) average lookup, insertion, and deletion.",
-        "Inorder Traversal: Visits Left -> Root -> Right, generating strictly sorted sequence."
+        "BST Invariant: LeftSubtree.keys < Root.key < RightSubtree.keys.",
+        "Inorder Traversal: Visits nodes in strictly sorted ascending order (Left -> Root -> Right).",
+        "Search & Insertion: O(H) time where H is tree height.",
+        "Deletion Cases: Leaf node (direct delete), One child (replace with child), Two children (replace with Inorder Successor)."
       ],
       "importantPoints": [
-        "Inorder traversal of BST always produces sorted keys."
+        "Inorder traversal of BST always produces sorted elements.",
+        "Height of balanced BST is O(log N); skewed BST is O(N)."
       ],
       "examples": [
-        "Inserting keys [50, 30, 70, 20, 40] into empty BST."
+        "Example: Insert [50, 30, 70, 20, 40] -> Inorder traversal: [20, 30, 40, 50, 70]."
       ],
       "algorithmSteps": [
-        "1. Compare key with root node.",
-        "2. Recurse left if key < root, right if key > root."
+        "1. Start at root.",
+        "2. If target < curr.val, go left; if target > curr.val, go right.",
+        "3. Return node when found."
       ],
       "codeSnippets": [
         {
-          "language": "java",
-          "title": "Java Inorder Traversal",
-          "code": "class TreeNode {\n    int val;\n    TreeNode left, right;\n    TreeNode(int x) { val = x; }\n}\n\nvoid inorder(TreeNode root) {\n    if (root == null) return;\n    inorder(root.left);\n    System.out.print(root.val + \" \");\n    inorder(root.right);\n}",
-          "explanation": "Recursive inorder traversal of Binary Search Tree."
+          "language": "cpp",
+          "title": "C++ BST Search & Insert",
+          "code": "struct TreeNode {\n    int val;\n    TreeNode *left, *right;\n    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}\n};\n\nTreeNode* insertBST(TreeNode* root, int val) {\n    if (!root) return new TreeNode(val);\n    if (val < root->val) root->left = insertBST(root->left, val);\n    else if (val > root->val) root->right = insertBST(root->right, val);\n    return root;\n}",
+          "explanation": "Recursive BST insert in C++."
         }
       ],
-      "timeComplexity": "Average: O(log N), Worst-case (skewed): O(N)",
-      "spaceComplexity": "O(H) recursion stack space where H is tree height",
+      "timeComplexity": "O(log N) Average Case, O(N) Worst Case",
+      "spaceComplexity": "O(H) Recursion stack depth",
       "keyTakeaways": [
-        "BST lookup degenerates to O(N) when inserted with sorted inputs."
+        "Use self-balancing trees (AVL/Red-Black) to avoid O(N) degeneration."
       ],
       "commonMistakes": [
-        "Forgetting to update parent pointers during node deletion."
+        "Checking only immediate parent-child relation rather than full subtree range."
+      ]
+    }
+  },
+  {
+    "topicId": "binary-heaps-priority-queues",
+    "chapterId": "dsa-u4-c2",
+    "unitId": "dsa-u4",
+    "subjectId": "dsa",
+    "topicNumber": 2,
+    "title": "Binary Heaps (Min/Max Heaps) & Priority Queues",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Array-based complete binary tree structures providing O(1) top priority retrieval and O(log N) insertions.",
+    "subtopics": [
+      "Complete Binary Tree Array Representation",
+      "Min-Heap vs Max-Heap Property",
+      "Heapify Up & Down",
+      "Priority Queue Interface"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "A Binary Heap is a complete binary tree stored compactly in an array that satisfies the Heap Property. In a Max-Heap, every parent is >= children; in a Min-Heap, every parent is <= children.",
+      "concepts": [
+        "Array Indices: For index i -> Parent = (i-1)/2, Left = 2i+1, Right = 2i+2.",
+        "Insert (Heapify Up): Append to end, bubble up (O(log N)).",
+        "Extract Top (Heapify Down): Swap root with last element, pop last, sift root down (O(log N)).",
+        "Build-Heap: O(N) linear time using bottom-up heapification."
+      ],
+      "importantPoints": [
+        "Peek Top: O(1) time.",
+        "Insert/Extract: O(log N) time."
+      ],
+      "examples": [
+        "Example: Min-Heap with elements [10, 20, 15, 30] -> Top is always 10."
+      ],
+      "algorithmSteps": [
+        "1. Insert at end of array.",
+        "2. Compare with parent and swap if smaller/larger.",
+        "3. Repeat until invariant restored."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Min-Heap",
+          "code": "#include <queue>\n#include <vector>\n#include <iostream>\n\nint main() {\n    std::priority_queue<int, std::vector<int>, std::greater<int>> minHeap;\n    minHeap.push(30); minHeap.push(10); minHeap.push(20);\n    while (!minHeap.empty()) {\n        std::cout << minHeap.top() << ' '; // Prints 10, 20, 30\n        minHeap.pop();\n    }\n    return 0;\n}",
+          "explanation": "C++ STL min-heap priority queue."
+        }
+      ],
+      "timeComplexity": "O(1) Peek, O(log N) Insert & Pop, O(N) Build-Heap",
+      "spaceComplexity": "O(N) contiguous array storage",
+      "keyTakeaways": [
+        "Building a heap from array is O(N), not O(N log N)."
+      ],
+      "commonMistakes": [
+        "Confusing Binary Heap (complete tree) with BST (ordered tree)."
       ]
     }
   },
@@ -1276,50 +1059,53 @@ export const CURRICULUM_TOPICS = [
     "unitId": "dsa-u5",
     "subjectId": "dsa",
     "topicNumber": 1,
-    "title": "AVL Trees & Self-Balancing Rotations",
+    "title": "AVL Trees & Self-Balancing Rotations (LL, RR, LR, RL)",
     "estimatedMinutes": 30,
-    "difficulty": "Advanced",
-    "summary": "Strict height-balanced binary search tree with Balance Factor in {-1, 0, 1} and LL, RR, LR, RL tree rotations.",
+    "difficulty": "Intermediate",
+    "summary": "Strictly height-balanced binary search trees guaranteeing O(log N) worst-case lookups via single and double tree rotations.",
     "subtopics": [
-      "Balance Factor Invariant",
-      "LL & RR Single Rotations",
-      "LR & RL Double Rotations",
-      "Strict O(log N) Guarantee"
+      "Balance Factor Invariant (-1, 0, +1)",
+      "Left-Left (LL) Single Right Rotation",
+      "Right-Right (RR) Single Left Rotation",
+      "Left-Right (LR) Double Rotation",
+      "Right-Left (RL) Double Rotation"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "AVL Trees are self-balancing binary search trees where height difference between left and right subtrees never exceeds 1.",
+      "introduction": "An AVL Tree is a self-balancing Binary Search Tree where the difference between heights of left and right subtrees (Balance Factor) for any node is strictly at most 1. Whenever an insertion or deletion violates this invariant, tree rotations restore balance in O(1) time.",
       "concepts": [
-        "Balance Factor = Height(Left) - Height(Right). Must be -1, 0, or +1.",
-        "Single Rotations: LL rotation fixes left-heavy subtree; RR rotation fixes right-heavy subtree.",
-        "Double Rotations: LR rotation = Left rotate left child then Right rotate root."
+        "Balance Factor: `BF(node) = height(left) - height(right)`.",
+        "LL Imbalance: Fixed with a Single Right Rotation.",
+        "RR Imbalance: Fixed with a Single Left Rotation.",
+        "LR / RL Imbalance: Fixed with Double Rotations.",
+        "Height Guarantee: Max height is strictly bounded by `1.44 * log2(N)`."
       ],
       "importantPoints": [
-        "AVL trees guarantee strict O(log N) lookup time even in worst-case insertions."
+        "Guarantees O(log N) worst-case search, insert, and delete."
       ],
       "examples": [
-        "LL Rotation when key 10 is inserted into root 30 -> child 20."
+        "Example: Insert [30, 20, 10] -> Right Rotate at 30 -> 20 becomes new root."
       ],
       "algorithmSteps": [
-        "1. Perform standard BST insertion.",
-        "2. Update node height.",
-        "3. Compute balance factor.",
-        "4. Apply single or double rotation if imbalanced."
+        "1. Standard BST insert.",
+        "2. Update node heights.",
+        "3. Rotate if BF not in {-1, 0, 1}."
       ],
       "codeSnippets": [
         {
           "language": "cpp",
-          "title": "C++ Right Rotation (LL Fix)",
-          "code": "struct Node {\n    int key, height;\n    Node *left, *right;\n};\n\nNode* rightRotate(Node* y) {\n    Node* x = y->left;\n    Node* T2 = x->right;\n    x->right = y;\n    y->left = T2;\n    y->height = max(height(y->left), height(y->right)) + 1;\n    x->height = max(height(x->left), height(x->right)) + 1;\n    return x;\n}",
-          "explanation": "Right rotation to re-balance an LL-imbalanced AVL node."
+          "title": "C++ Right Rotation",
+          "code": "struct Node {\n    int key, height;\n    Node *left, *right;\n};\n\nNode* rightRotate(Node* y) {\n    Node* x = y->left;\n    Node* T2 = x->right;\n    x->right = y;\n    y->left = T2;\n    y->height = 1 + std::max(y->left ? y->left->height : 0, y->right ? y->right->height : 0);\n    x->height = 1 + std::max(x->left ? x->left->height : 0, x->right ? x->right->height : 0);\n    return x;\n}",
+          "explanation": "Right rotation re-linking pointers in O(1)."
         }
       ],
-      "timeComplexity": "O(log N) for Search, Insertion, and Deletion guaranteed",
-      "spaceComplexity": "O(N) node storage space",
+      "timeComplexity": "O(log N) Search, Insert, and Delete",
+      "spaceComplexity": "O(N) Memory storage",
       "keyTakeaways": [
-        "AVL trees provide faster lookups than Red-Black trees due to stricter height balancing."
+        "AVL trees are ideal for lookup-heavy datasets."
       ],
       "commonMistakes": [
-        "Failing to update height attributes after pointer re-assignments."
+        "Forgetting to update heights after rotation."
       ]
     }
   },
@@ -1329,49 +1115,262 @@ export const CURRICULUM_TOPICS = [
     "unitId": "dsa-u6",
     "subjectId": "dsa",
     "topicNumber": 1,
-    "title": "Graph Traversal (BFS & DFS) & Shortest Path",
-    "estimatedMinutes": 35,
-    "difficulty": "Advanced",
-    "summary": "Breadth-First Search queue traversal, Depth-First Search recursion stack, connected components, and Dijkstra's algorithm.",
+    "title": "Graph Traversals (BFS & DFS), Cycle Detection & Shortest Paths",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Fundamental graph exploration algorithms using Queues (BFS) and Stacks/Recursion (DFS) for connectivity and cycle analysis.",
     "subtopics": [
-      "Adjacency List/Matrix Representation",
-      "BFS Queue Level Order",
-      "DFS Recursion Stack",
-      "Dijkstra Priority Queue"
+      "Adjacency List vs Matrix",
+      "Breadth-First Search (BFS)",
+      "Depth-First Search (DFS)",
+      "Cycle Detection",
+      "Topological Sorting"
     ],
+    "hasVisualization": true,
     "content": {
-      "introduction": "Graphs represent complex networks of vertices connected by edges. Traversals visit every vertex systematically.",
+      "introduction": "Graphs are non-linear data structures consisting of vertices and edges. Breadth-First Search (BFS) explores vertices level-by-level using a FIFO queue, while Depth-First Search (DFS) dives deep along each branch before backtracking using recursion or a LIFO stack.",
       "concepts": [
-        "BFS (Breadth-First Search): Uses Queue data structure to explore level-by-level, finding unweighted shortest paths.",
-        "DFS (Depth-First Search): Uses Stack/Recursion to explore deeply along branches before backtracking.",
-        "Dijkstra's Algorithm: Uses Min-Heap Priority Queue to find shortest paths in non-negative edge-weighted graphs."
+        "BFS: Level-order traversal using Queue. Finds shortest path in unweighted graphs in O(V + E).",
+        "DFS: Deep exploration using recursion/Stack. Used for cycle detection and topological sorting.",
+        "Cycle Detection: Track visited nodes and recursion stack (directed) or parent pointers (undirected)."
       ],
       "importantPoints": [
-        "BFS finds the shortest path in unweighted graphs."
+        "BFS guarantees shortest path in unweighted graphs."
       ],
       "examples": [
-        "Social network degree of separation lookup using BFS."
+        "Example: BFS on graph 0-1, 0-2, 1-2 -> Order: 0, 1, 2."
       ],
       "algorithmSteps": [
-        "1. Mark source visited.",
-        "2. Enqueue source into Queue.",
-        "3. While queue not empty, pop u, visit unvisited neighbors v."
+        "1. Initialize Queue/Stack.",
+        "2. Mark visited.",
+        "3. Traverse neighbors."
       ],
       "codeSnippets": [
         {
-          "language": "python",
-          "title": "Python Breadth-First Search",
-          "code": "from collections import deque\n\ndef bfs(adj, start):\n    visited = set([start])\n    queue = deque([start])\n    while queue:\n        node = queue.popleft()\n        print(node, end=\" \")\n        for neighbor in adj[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)",
-          "explanation": "Standard BFS traversal using deque."
+          "language": "cpp",
+          "title": "C++ BFS",
+          "code": "#include <vector>\n#include <queue>\n\nvoid bfs(int src, const std::vector<std::vector<int>>& adj, std::vector<bool>& visited) {\n    std::queue<int> q;\n    q.push(src);\n    visited[src] = true;\n    while (!q.empty()) {\n        int u = q.front(); q.pop();\n        for (int v : adj[u]) {\n            if (!visited[v]) {\n                visited[v] = true;\n                q.push(v);\n            }\n        }\n    }\n}",
+          "explanation": "Standard BFS using queue."
         }
       ],
-      "timeComplexity": "O(V + E) for BFS & DFS; O((V + E) log V) for Dijkstra",
-      "spaceComplexity": "O(V) visited set and queue memory",
+      "timeComplexity": "O(V + E) Linear Time with Adjacency List",
+      "spaceComplexity": "O(V) Memory for visited array and queue",
       "keyTakeaways": [
-        "Always maintain a visited set to avoid infinite loops in cyclic graphs."
+        "Always maintain a visited array to prevent infinite loops."
       ],
       "commonMistakes": [
-        "Forgetting to mark nodes visited upon enqueueing leading to duplicate queue entries."
+        "Using BFS on weighted graphs expecting shortest paths."
+      ]
+    }
+  },
+  {
+    "topicId": "dijkstra-shortest-path",
+    "chapterId": "dsa-u6-c1",
+    "unitId": "dsa-u6",
+    "subjectId": "dsa",
+    "topicNumber": 2,
+    "title": "Dijkstra's Shortest Path Algorithm & Priority Queues",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Greedy single-source shortest path algorithm on weighted graphs with non-negative edge weights.",
+    "subtopics": [
+      "Greedy Relaxation Principle",
+      "Min-Heap Optimization",
+      "Distance Array",
+      "Failure on Negative Edge Weights"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "Dijkstra's Algorithm finds the shortest path from a starting source vertex to all other vertices in a weighted graph with non-negative edge weights by greedily selecting the unvisited vertex with the smallest tentative distance.",
+      "concepts": [
+        "Edge Relaxation: If `dist[U] + weight < dist[V]`, update `dist[V] = dist[U] + weight`.",
+        "Min-Heap Priority Queue: Accelerates lookup to O((V + E) log V).",
+        "Fails on Negative Weights: Negative edges violate greedy monotonic distance growth."
+      ],
+      "importantPoints": [
+        "Dijkstra solves Single-Source Shortest Path in O((V + E) log V)."
+      ],
+      "examples": [
+        "Example: A-(2)->C, A-(4)->B, C-(1)->B -> Shortest path to B is A->C->B with distance 3."
+      ],
+      "algorithmSteps": [
+        "1. `dist[src] = 0`, all other dist = \u221e.",
+        "2. Insert (0, src) into Min-Heap.",
+        "3. Pop min distance vertex and relax neighbors."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Dijkstra",
+          "code": "#include <vector>\n#include <queue>\n\nconst int INF = 1e9;\ntypedef std::pair<int, int> pii;\n\nstd::vector<int> dijkstra(int n, int src, const std::vector<std::vector<pii>>& adj) {\n    std::vector<int> dist(n, INF);\n    std::priority_queue<pii, std::vector<pii>, std::greater<pii>> pq;\n    dist[src] = 0;\n    pq.push({0, src});\n    while (!pq.empty()) {\n        auto [d, u] = pq.top(); pq.pop();\n        if (d > dist[u]) continue;\n        for (auto [v, w] : adj[u]) {\n            if (dist[u] + w < dist[v]) {\n                dist[v] = dist[u] + w;\n                pq.push({dist[v], v});\n            }\n        }\n    }\n    return dist;\n}",
+          "explanation": "Dijkstra shortest path in C++."
+        }
+      ],
+      "timeComplexity": "O((V + E) log V) Time Complexity",
+      "spaceComplexity": "O(V + E) Memory for Adjacency List and Distance Array",
+      "keyTakeaways": [
+        "Dijkstra powers real-world GPS and network routing."
+      ],
+      "commonMistakes": [
+        "Applying Dijkstra to graphs with negative edges."
+      ]
+    }
+  },
+  {
+    "topicId": "sql-joins",
+    "chapterId": "dbms-u1-c1",
+    "unitId": "dbms-u1",
+    "subjectId": "dbms",
+    "topicNumber": 1,
+    "title": "SQL Joins, Relational Algebra & Query Execution",
+    "estimatedMinutes": 25,
+    "difficulty": "Beginner",
+    "summary": "Combining tables via Inner, Left, Right, Full Outer, and Cross Joins with execution plans.",
+    "subtopics": [
+      "Inner Join",
+      "Left / Right Outer Joins",
+      "Full Outer Join",
+      "Cross Join Cartesian Product"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "SQL Joins combine rows from two or more tables based on a related common key (foreign key constraint), reconstructing relational views.",
+      "concepts": [
+        "Inner Join: Returns only matching rows in both tables (A \u2229 B).",
+        "Left Join: Returns all left table records and matching right records.",
+        "Cross Join: Produces Cartesian Product (A \u00d7 B)."
+      ],
+      "importantPoints": [
+        "Always index foreign key columns to avoid full table scans."
+      ],
+      "examples": [
+        "Example: `SELECT * FROM users u INNER JOIN orders o ON u.id = o.user_id;`"
+      ],
+      "algorithmSteps": [
+        "1. Parse query.",
+        "2. Optimize joins.",
+        "3. Execute index/hash joins."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "SQL Join Queries",
+          "code": "SELECT u.name, o.total FROM users u INNER JOIN orders o ON u.id = o.user_id;",
+          "explanation": "Inner join example."
+        }
+      ],
+      "timeComplexity": "O(N + M) for Hash/Merge Join",
+      "spaceComplexity": "O(min(N, M)) memory",
+      "keyTakeaways": [
+        "Filter rows with WHERE before joins to save buffer pool memory."
+      ],
+      "commonMistakes": [
+        "Omitting join condition causing unintentional Cross Joins."
+      ]
+    }
+  },
+  {
+    "topicId": "database-indexing-btrees",
+    "chapterId": "dbms-u1-c1",
+    "unitId": "dbms-u1",
+    "subjectId": "dbms",
+    "topicNumber": 2,
+    "title": "Database Indexing Architecture & B+ Tree Structures",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Storage engine indexing internals, clustered vs non-clustered indexes, and B+ Tree lookups.",
+    "subtopics": [
+      "Clustered vs Non-Clustered Indexes",
+      "B+ Tree Data Structure",
+      "Composite Indexes"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "A database index is an auxiliary B+ Tree data structure that allows the storage engine to locate specific records in O(log N) disk block I/O operations rather than performing a full table scan.",
+      "concepts": [
+        "B+ Tree: Balanced multi-way tree with all records in sequentially linked leaf nodes.",
+        "Clustered Index: Determines physical disk order of table rows (only 1 per table).",
+        "Composite Indexes: Follow Leftmost Prefix Rule."
+      ],
+      "importantPoints": [
+        "Indexes speed up SELECT but add write overhead to INSERT/UPDATE."
+      ],
+      "examples": [
+        "Example: `CREATE INDEX idx_email ON users(email);`"
+      ],
+      "algorithmSteps": [
+        "1. Descend B+ tree.",
+        "2. Locate leaf page.",
+        "3. Fetch row."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "SQL Index",
+          "code": "CREATE INDEX idx_user_email ON users(email);",
+          "explanation": "Index creation."
+        }
+      ],
+      "timeComplexity": "O(log_B N) Search and Insert",
+      "spaceComplexity": "O(N) Disk space",
+      "keyTakeaways": [
+        "Index high-cardinality columns used in WHERE and JOIN."
+      ],
+      "commonMistakes": [
+        "Applying SQL functions on indexed columns in WHERE clause (disables index)."
+      ]
+    }
+  },
+  {
+    "topicId": "dbms-normalization",
+    "chapterId": "dbms-u2-c1",
+    "unitId": "dbms-u2",
+    "subjectId": "dbms",
+    "topicNumber": 1,
+    "title": "Database Normalization: 1NF, 2NF, 3NF & Boyce-Codd (BCNF)",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Systematic schema decomposition technique to eliminate update, insertion, and deletion anomalies.",
+    "subtopics": [
+      "1NF: Atomic Values",
+      "2NF: No Partial Dependencies",
+      "3NF: No Transitive Dependencies",
+      "BCNF: Determinants are Superkeys"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Database normalization structures relational schemas to minimize redundancy and eliminate anomalies while ensuring lossless joins and dependency preservation.",
+      "concepts": [
+        "1NF: Atomic values per cell.",
+        "2NF: No partial functional dependencies on composite keys.",
+        "3NF: No transitive dependencies.",
+        "BCNF: Strict 3NF where every determinant is a superkey."
+      ],
+      "importantPoints": [
+        "BCNF guarantees lossless joins."
+      ],
+      "examples": [
+        "Example: Split Student_Course into Students and Enrollments tables."
+      ],
+      "algorithmSteps": [
+        "1. Compute attribute closures.",
+        "2. Decompose schemas violating normal forms."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "Normalized Schema (SQL)",
+          "code": "CREATE TABLE students (id INT PRIMARY KEY, name VARCHAR(100));\nCREATE TABLE enrollments (student_id INT, course_id INT, PRIMARY KEY(student_id, course_id));",
+          "explanation": "Normalized schema."
+        }
+      ],
+      "timeComplexity": "O(2^N) candidate key derivation",
+      "spaceComplexity": "O(N) schema metadata",
+      "keyTakeaways": [
+        "OLTP systems favor 3NF normalization."
+      ],
+      "commonMistakes": [
+        "Over-normalizing OLAP analytical databases."
       ]
     }
   },
@@ -1381,51 +1380,106 @@ export const CURRICULUM_TOPICS = [
     "unitId": "dbms-u3",
     "subjectId": "dbms",
     "topicNumber": 1,
-    "title": "ACID Properties & Transaction Concurrency",
-    "estimatedMinutes": 25,
-    "difficulty": "Intermediate",
-    "summary": "Atomicity, Consistency, Isolation, Durability, 2-Phase Locking (2PL), serializability, and isolation levels.",
+    "title": "ACID Properties & Database Concurrency Control",
+    "estimatedMinutes": 30,
+    "difficulty": "Beginner",
+    "summary": "Atomicity, Consistency, Isolation, and Durability guarantees in transactional database management systems.",
     "subtopics": [
-      "Atomicity & Rollbacks",
+      "Atomicity",
+      "Consistency",
       "Isolation Levels",
-      "2-Phase Locking (2PL)",
-      "Deadlock Detection"
+      "Durability & WAL"
     ],
+    "hasVisualization": false,
     "content": {
-      "introduction": "Database transactions ensure reliable execution of database operations under concurrent user access and system failures.",
+      "introduction": "A Transaction is a logical unit of work. ACID guarantees data integrity under concurrent access and crashes.",
       "concepts": [
-        "Atomicity: All-or-nothing execution.",
-        "Consistency: Database transitions from one valid state to another.",
-        "Isolation: Concurrent transactions execute independently without mutual interference.",
-        "Durability: Committed transactions persist permanently across crashes."
+        "Atomicity: All or nothing execution (Undo log).",
+        "Consistency: Preserves schema invariants.",
+        "Isolation: Prevents dirty and non-repeatable reads (MVCC / 2PL).",
+        "Durability: Committed data survives crashes (Write-Ahead Logging - WAL)."
       ],
       "importantPoints": [
-        "Serializable isolation level provides the highest guarantees but lowest concurrency throughput."
+        "Write-Ahead Logging flushes log records before data pages."
       ],
       "examples": [
-        "Bank transfer of $500 from Account A to Account B."
+        "Example: Bank balance transfer with BEGIN TRANSACTION and COMMIT."
       ],
       "algorithmSteps": [
-        "1. BEGIN TRANSACTION",
-        "2. DEBIT Account A",
-        "3. CREDIT Account B",
-        "4. COMMIT TRANSACTION"
+        "1. BEGIN.",
+        "2. Execute DML with WAL.",
+        "3. COMMIT."
       ],
       "codeSnippets": [
         {
-          "language": "sql",
-          "title": "SQL Transaction Control",
-          "code": "BEGIN TRANSACTION;\nUPDATE accounts SET balance = balance - 500 WHERE account_id = 'A';\nUPDATE accounts SET balance = balance + 500 WHERE account_id = 'B';\nCOMMIT;",
-          "explanation": "Atomic bank transfer transaction block."
+          "language": "javascript",
+          "title": "SQL Transaction",
+          "code": "BEGIN TRANSACTION;\nUPDATE accounts SET balance = balance - 100 WHERE id = 'A';\nUPDATE accounts SET balance = balance + 100 WHERE id = 'B';\nCOMMIT;",
+          "explanation": "Atomic bank transfer."
         }
       ],
-      "timeComplexity": "O(1) transaction lock acquisition overhead",
-      "spaceComplexity": "O(L) log buffer storage for WAL (Write-Ahead Logging)",
+      "timeComplexity": "O(1) commit with WAL append",
+      "spaceComplexity": "O(N) undo log space",
       "keyTakeaways": [
-        "Write-Ahead Logging (WAL) ensures Durability across system crashes."
+        "Keep transactions short to prevent row lock contention."
       ],
       "commonMistakes": [
-        "Failing to handle deadlock exceptions in application business logic."
+        "Leaving transactions open during external API calls."
+      ]
+    }
+  },
+  {
+    "topicId": "cpu-scheduling",
+    "chapterId": "os-u1-c1",
+    "unitId": "os-u1",
+    "subjectId": "os",
+    "topicNumber": 1,
+    "title": "CPU Scheduling Algorithms (FCFS, SJF, Round Robin & Priority)",
+    "estimatedMinutes": 30,
+    "difficulty": "Beginner",
+    "summary": "OS process scheduling strategies, preemptive vs non-preemptive execution, Gantt charts, and turnaround times.",
+    "subtopics": [
+      "FCFS & Convoy Effect",
+      "SJF & SRTF",
+      "Round Robin & Time Quantum",
+      "Priority & Aging"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "CPU Scheduling allocates CPU execution time to ready processes to maximize throughput and minimize waiting time.",
+      "concepts": [
+        "FCFS: Simple FIFO queue, suffers from Convoy Effect.",
+        "SJF: Optimal in minimizing average waiting time.",
+        "Round Robin: Preemptive time-slice sharing for interactive systems.",
+        "Aging: Prevents process starvation in Priority scheduling."
+      ],
+      "importantPoints": [
+        "Turnaround Time = Completion - Arrival.",
+        "Waiting Time = Turnaround - Burst."
+      ],
+      "examples": [
+        "Example: SJF order P2(3ms), P3(3ms), P1(24ms) reduces avg waiting from 17ms to 3ms."
+      ],
+      "algorithmSteps": [
+        "1. Ready Queue.",
+        "2. Dispatcher context switch.",
+        "3. Time slice / I/O interrupt."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Round Robin",
+          "code": "// Round Robin Scheduler Simulation\n#include <queue>\n#include <vector>\n// Process scheduling loop...",
+          "explanation": "Round Robin execution."
+        }
+      ],
+      "timeComplexity": "O(N log N) for priority queue, O(1) in Round Robin",
+      "spaceComplexity": "O(N) queue memory",
+      "keyTakeaways": [
+        "SJF minimizes average waiting time."
+      ],
+      "commonMistakes": [
+        "Setting time quantum too small causing excessive context switching."
       ]
     }
   },
@@ -1435,49 +1489,103 @@ export const CURRICULUM_TOPICS = [
     "unitId": "os-u2",
     "subjectId": "os",
     "topicNumber": 1,
-    "title": "Process Synchronization & Banker's Algorithm",
+    "title": "Deadlock Characterization & Banker's Safety Algorithm",
     "estimatedMinutes": 30,
     "difficulty": "Intermediate",
-    "summary": "Mutual exclusion, semaphores, deadlock prevention, detection, and Banker's safety state algorithm.",
+    "summary": "The 4 Coffman deadlock conditions, Resource Allocation Graphs, and Banker's algorithm safe sequence discovery.",
     "subtopics": [
-      "4 Deadlock Conditions",
-      "Mutex & Semaphores",
-      "Banker's Safety Algorithm",
-      "Resource Allocation Graph"
+      "4 Coffman Conditions",
+      "Resource Allocation Graphs",
+      "Banker's Algorithm",
+      "Safe States"
     ],
+    "hasVisualization": false,
     "content": {
-      "introduction": "Process synchronization coordinates concurrent execution to prevent data races and deadlock states.",
+      "introduction": "Deadlock occurs when processes hold resources while waiting for others in a cyclic dependency. Banker's algorithm ensures resource allocation keeps the system in a safe state.",
       "concepts": [
-        "4 Deadlock Necessary Conditions: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.",
-        "Banker's Algorithm: Tests for safety by simulating allocation of maximum declared resources."
+        "4 Coffman Conditions: Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait.",
+        "Banker's Algorithm: Tests if granting request leaves a valid Safe Sequence."
       ],
       "importantPoints": [
-        "All 4 conditions must hold simultaneously for a deadlock to occur."
+        "Eliminating any SINGLE Coffman condition prevents deadlock."
       ],
       "examples": [
-        "Dining Philosophers problem synchronization using semaphores."
+        "Example: Allocation, Max, and Available matrices tested for safe sequence `<P1, P3, P4, P0, P2>`."
       ],
       "algorithmSteps": [
-        "1. Calculate Need = Max - Allocation.",
-        "2. Find process P whose Need <= Available.",
-        "3. Assume P finishes and releases Allocation to Available.",
-        "4. Repeat until all finish."
+        "1. Find process with Need <= Available.",
+        "2. Reclaim allocation.",
+        "3. Repeat."
       ],
       "codeSnippets": [
         {
           "language": "cpp",
-          "title": "C++ Mutex Synchronization",
-          "code": "#include <mutex>\n#include <thread>\n\nstd::mutex mtx;\nint counter = 0;\n\nvoid increment() {\n    std::lock_guard<std::mutex> lock(mtx);\n    counter++;\n}",
-          "explanation": "Thread-safe counter increment using mutex lock_guard."
+          "title": "C++ Banker's Algorithm",
+          "code": "bool isSafe(int n, int m, ...);",
+          "explanation": "Banker's safety check."
         }
       ],
-      "timeComplexity": "O(N^2 * M) safety check for N processes and M resource types",
-      "spaceComplexity": "O(N * M) allocation matrix memory",
+      "timeComplexity": "O(M * N^2) Complexity",
+      "spaceComplexity": "O(N * M) Matrix storage",
       "keyTakeaways": [
-        "Banker's algorithm guarantees deadlock avoidance by maintaining a safe state."
+        "Total resource ordering prevents Circular Wait."
       ],
       "commonMistakes": [
-        "Holding mutex locks while making blocking I/O calls causing circular waits."
+        "Assuming all cycles in Resource Allocation Graphs imply deadlock."
+      ]
+    }
+  },
+  {
+    "topicId": "virtual-memory-paging",
+    "chapterId": "os-u3-c1",
+    "unitId": "os-u3",
+    "subjectId": "os",
+    "topicNumber": 1,
+    "title": "Virtual Memory, Paging & Page Replacement Algorithms",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "Memory management units (MMU), page tables, TLB address translation, demand paging, and page replacement policies.",
+    "subtopics": [
+      "Paging Architecture",
+      "TLB Address Translation",
+      "Page Fault Handling",
+      "FIFO, LRU & Optimal Replacement"
+    ],
+    "hasVisualization": true,
+    "content": {
+      "introduction": "Virtual memory provides each process with a large virtual address space mapped to physical RAM frames via page tables and TLB hardware.",
+      "concepts": [
+        "Paging: Virtual pages (4KB) mapped to physical frames.",
+        "TLB: Hardware cache for fast address translation (~1ns).",
+        "Page Fault: Trap to OS when requested page is on disk swap space.",
+        "Page Replacement: LRU evicts least recently used page."
+      ],
+      "importantPoints": [
+        "Belady's Anomaly: FIFO page faults can increase with more frames."
+      ],
+      "examples": [
+        "Example: LRU page replacement on string `7, 0, 1, 2, 0, 3` with 3 frames."
+      ],
+      "algorithmSteps": [
+        "1. MMU checks TLB.",
+        "2. On miss, walk page table.",
+        "3. On fault, swap page from disk."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ LRU Simulation",
+          "code": "// LRU Page Replacement in C++",
+          "explanation": "LRU page fault counter."
+        }
+      ],
+      "timeComplexity": "O(1) TLB hit, ~5ms Page Fault disk I/O",
+      "spaceComplexity": "O(N) Page table storage",
+      "keyTakeaways": [
+        "Maintain spatial and temporal locality to prevent thrashing."
+      ],
+      "commonMistakes": [
+        "Confusing page size with frame size (they are identical)."
       ]
     }
   },
@@ -1487,363 +1595,48 @@ export const CURRICULUM_TOPICS = [
     "unitId": "cn-u1",
     "subjectId": "cn",
     "topicNumber": 1,
-    "title": "OSI 7-Layer & TCP/IP Reference Model",
-    "estimatedMinutes": 20,
+    "title": "OSI 7-Layer Reference Model vs TCP/IP Protocol Stack",
+    "estimatedMinutes": 25,
     "difficulty": "Beginner",
-    "summary": "Physical, Data Link, Network, Transport, Session, Presentation, Application layers, and data encapsulation.",
+    "summary": "Comprehensive architectural comparison of networking layers, Protocol Data Units (PDUs), and data encapsulation.",
     "subtopics": [
-      "Physical to Application Layer",
-      "Data Encapsulation Headers",
-      "MAC vs IP vs Port Addresses",
-      "PDU Types"
+      "7 Layers of OSI",
+      "TCP/IP Protocol Suite",
+      "Data Encapsulation (PDU)",
+      "Switches vs Routers"
     ],
+    "hasVisualization": false,
     "content": {
-      "introduction": "The OSI 7-Layer model standardizes network communication functions across heterogeneous hardware systems.",
+      "introduction": "The OSI model provides a 7-layer theoretical networking framework, while TCP/IP is the practical 4-layer protocol suite powering the global Internet.",
       "concepts": [
-        "7 OSI Layers: Physical, Data Link, Network, Transport, Session, Presentation, Application.",
-        "Encapsulation: Headers added at each layer (Bits -> Frames -> Packets -> Segments -> Data)."
+        "7 OSI Layers: Physical (Bits), Data Link (Frames), Network (Packets), Transport (Segments), Session, Presentation, Application.",
+        "Encapsulation: Headers added descending the stack.",
+        "Layer 2 vs Layer 3: Switches inspect MAC addresses; Routers inspect IP addresses."
       ],
       "importantPoints": [
-        "Switches operate at Layer 2 (Data Link), Routers at Layer 3 (Network)."
+        "MAC addresses are local to subnet; IP addresses are globally routed."
       ],
       "examples": [
-        "Web browser fetching web page over HTTPS (Layer 7 Application down to Layer 1 Physical)."
+        "Example: Browser HTTPS request descending from Application layer to Ethernet bits."
       ],
       "algorithmSteps": [
-        "1. Application creates Data.",
-        "2. Transport adds TCP Port header.",
-        "3. Network adds IP header.",
-        "4. Data Link adds MAC Ethernet header."
+        "1. App data -> 2. TCP Segment -> 3. IP Packet -> 4. Ethernet Frame -> 5. Physical Bits."
       ],
       "codeSnippets": [
         {
           "language": "python",
-          "title": "Python Socket Application Layer Test",
-          "code": "import socket\n\ns = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\ns.connect((\"example.com\", 80))\ns.sendall(b\"GET / HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n\")\nresponse = s.recv(4096)\nprint(response.decode()[:100])",
-          "explanation": "Low-level socket HTTP GET request across OSI layers."
+          "title": "Python TCP Socket",
+          "code": "import socket\ns = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\ns.connect(('www.google.com', 80))",
+          "explanation": "Socket connection over Layer 4."
         }
       ],
-      "timeComplexity": "O(L) header processing per protocol layer",
-      "spaceComplexity": "O(H) header memory overhead per packet",
+      "timeComplexity": "O(1) Encapsulation per packet",
+      "spaceComplexity": "O(1) Interface buffer memory",
       "keyTakeaways": [
-        "TCP/IP combines OSI layers 5-7 into the single Application layer."
+        "Layer-by-layer troubleshooting (ping for L3, curl for L7)."
       ],
       "commonMistakes": [
         "Confusing Layer 2 MAC addresses with Layer 3 IP addresses."
-      ]
-    }
-  },
-  {
-    "topicId": "oop-four-pillars",
-    "chapterId": "oops-u1-c1",
-    "unitId": "oops-u1",
-    "subjectId": "oops",
-    "topicNumber": 1,
-    "title": "The 4 Pillars of Object-Oriented Programming",
-    "estimatedMinutes": 25,
-    "difficulty": "Beginner",
-    "summary": "Encapsulation, Data Abstraction, Inheritance, and Method Overloading/Overriding Polymorphism.",
-    "subtopics": [
-      "Encapsulation & Access Modifiers",
-      "Abstraction Interfaces",
-      "Inheritance Code Reuse",
-      "Polymorphism Virtual Functions"
-    ],
-    "content": {
-      "introduction": "OOP structures programs around self-contained objects encapsulating state data and behavior methods.",
-      "concepts": [
-        "Encapsulation: Bundling data and methods into a single class with private access control.",
-        "Abstraction: Hiding internal implementation details behind clean public interfaces.",
-        "Inheritance: Creating sub-classes that derive attributes and methods from super-classes.",
-        "Polymorphism: Overriding methods to execute different runtime behavior through uniform interface pointers."
-      ],
-      "importantPoints": [
-        "Polymorphism enables open-closed extensibility."
-      ],
-      "examples": [
-        "Shape super-class with Circle and Rectangle derived classes overriding draw()."
-      ],
-      "algorithmSteps": [
-        "1. Define Class interface.",
-        "2. Encapsulate data variables private.",
-        "3. Expose getter/setter methods."
-      ],
-      "codeSnippets": [
-        {
-          "language": "java",
-          "title": "Java Polymorphism Example",
-          "code": "abstract class Shape {\n    abstract double area();\n}\n\nclass Circle extends Shape {\n    double r;\n    Circle(double r) { this.r = r; }\n    double area() { return Math.PI * r * r; }\n}\n\nclass Rectangle extends Shape {\n    double w, h;\n    Rectangle(double w, double h) { this.w = w; this.h = h; }\n    double area() { return w * h; }\n}",
-          "explanation": "Polymorphic area calculation in Java."
-        }
-      ],
-      "timeComplexity": "O(1) method dispatch overhead via virtual method tables (vtables)",
-      "spaceComplexity": "O(1) memory overhead per object instance",
-      "keyTakeaways": [
-        "Favor composition over inheritance to avoid tight coupling."
-      ],
-      "commonMistakes": [
-        "Making class data members public, violating encapsulation."
-      ]
-    }
-  },
-  {
-    "topicId": "system-design-scalability",
-    "chapterId": "sd-u1-c1",
-    "unitId": "sd-u1",
-    "subjectId": "system-design",
-    "topicNumber": 1,
-    "title": "System Design: Scalability, Caching & Load Balancing",
-    "estimatedMinutes": 35,
-    "difficulty": "Advanced",
-    "summary": "Horizontal scaling, Round-Robin load balancing, Redis caching strategies, and Consistent Hashing.",
-    "subtopics": [
-      "Horizontal vs Vertical Scaling",
-      "Load Balancer Algorithms",
-      "Cache Eviction (LRU)",
-      "Consistent Hashing"
-    ],
-    "content": {
-      "introduction": "System Design focuses on building distributed web systems capable of serving millions of concurrent requests reliably.",
-      "concepts": [
-        "Horizontal Scaling: Adding more server instances behind a load balancer.",
-        "Caching (Redis/Memcached): Storing hot data in memory to reduce database read pressure.",
-        "Consistent Hashing: Distributes keys evenly across dynamically scaling cache server clusters."
-      ],
-      "importantPoints": [
-        "Caching read-heavy data reduces database latency from 50ms to <1ms."
-      ],
-      "examples": [
-        "Designing URL Shortener (TinyURL) or Twitter Feed Architecture."
-      ],
-      "algorithmSteps": [
-        "1. Client sends request to DNS.",
-        "2. DNS resolves to Load Balancer IP.",
-        "3. Load Balancer forwards to stateless Web Server.",
-        "4. Server checks Redis cache before querying DB."
-      ],
-      "codeSnippets": [
-        {
-          "language": "javascript",
-          "title": "Node.js Redis Caching Middleware",
-          "code": "const redis = require('redis');\nconst client = redis.createClient();\n\nasync function getCachedData(req, res, next) {\n    const cacheKey = req.originalUrl;\n    const data = await client.get(cacheKey);\n    if (data) {\n        return res.json(JSON.parse(data));\n    }\n    next();\n}",
-          "explanation": "Express middleware serving cached JSON responses from Redis."
-        }
-      ],
-      "timeComplexity": "O(1) Redis memory cache lookup",
-      "spaceComplexity": "O(N) cache memory footprint",
-      "keyTakeaways": [
-        "Design for stateless web servers to allow easy horizontal auto-scaling."
-      ],
-      "commonMistakes": [
-        "Using single point of failure (SPOF) database instances without read replicas."
-      ]
-    }
-  },
-  {
-    "topicId": "web-http-rest",
-    "chapterId": "web-u1-c1",
-    "unitId": "web-dev",
-    "subjectId": "web-dev",
-    "topicNumber": 1,
-    "title": "HTTP Protocol, REST APIs & Full Stack Architecture",
-    "estimatedMinutes": 25,
-    "difficulty": "Beginner",
-    "summary": "HTTP methods (GET, POST, PUT, DELETE), status codes, REST architectural constraints, and CORS.",
-    "subtopics": [
-      "HTTP Request/Response Lifecycle",
-      "RESTful Resource Paths",
-      "HTTP Status Codes",
-      "CORS Headers"
-    ],
-    "content": {
-      "introduction": "REST (Representational State Transfer) is the standard architectural style for client-server web API communications.",
-      "concepts": [
-        "Stateless Communications: Every request contains all context needed to execute.",
-        "CRUD Mappings: GET (Read), POST (Create), PUT (Update), DELETE (Remove)."
-      ],
-      "importantPoints": [
-        "HTTP status codes 2xx indicate success, 4xx client errors, 5xx server errors."
-      ],
-      "examples": [
-        "RESTful API endpoint `GET /api/v1/users/123` returning JSON user payload."
-      ],
-      "algorithmSteps": [
-        "1. Client sends HTTP request.",
-        "2. Server parses URL route & headers.",
-        "3. Controller queries database.",
-        "4. Server returns HTTP response."
-      ],
-      "codeSnippets": [
-        {
-          "language": "javascript",
-          "title": "Express.js REST Controller",
-          "code": "const express = require('express');\nconst app = express();\n\napp.get('/api/users/:id', async (req, res) => {\n    const user = await User.findById(req.params.id);\n    if (!user) return res.status(404).json({ message: \"User not found\" });\n    res.json(user);\n});",
-          "explanation": "Express RESTful GET endpoint returning JSON response."
-        }
-      ],
-      "timeComplexity": "O(1) route parsing overhead",
-      "spaceComplexity": "O(R) response payload buffer space",
-      "keyTakeaways": [
-        "Always use nouns for REST resource endpoints, not verbs."
-      ],
-      "commonMistakes": [
-        "Returning HTTP 200 OK status for server failure responses."
-      ]
-    }
-  },
-  {
-    "topicId": "quantitative-aptitude-reasoning",
-    "chapterId": "apt-u1-c1",
-    "unitId": "aptitude",
-    "subjectId": "aptitude",
-    "topicNumber": 1,
-    "title": "Quantitative Reasoning: Time, Speed, Distance & Work",
-    "estimatedMinutes": 20,
-    "difficulty": "Beginner",
-    "summary": "Speed-distance-time formulas, relative speed, train problems, and time-and-work efficiency ratios.",
-    "subtopics": [
-      "Speed = Distance / Time",
-      "Relative Speed Same/Opposite Direction",
-      "Work = Rate * Time",
-      "Pipes & Cisterns"
-    ],
-    "content": {
-      "introduction": "Quantitative aptitude evaluates numerical problem-solving efficiency required during Round 1 placement assessments.",
-      "concepts": [
-        "Speed = Distance / Time.",
-        "Relative Speed: Add speeds when objects move in opposite directions; subtract when moving in same direction."
-      ],
-      "importantPoints": [
-        "Convert km/h to m/s by multiplying with (5/18)."
-      ],
-      "examples": [
-        "Two trains 150m and 200m long moving in opposite directions at 54 km/h and 36 km/h."
-      ],
-      "algorithmSteps": [
-        "1. Convert units to SI (m/s).",
-        "2. Calculate total distance = length1 + length2.",
-        "3. Calculate relative speed = speed1 + speed2.",
-        "4. Time = Distance / Relative Speed."
-      ],
-      "codeSnippets": [
-        {
-          "language": "python",
-          "title": "Python Relative Speed Calculator",
-          "code": "def time_to_cross(l1, l2, s1_kmh, s2_kmh):\n    total_dist = l1 + l2 # meters\n    rel_speed_ms = (s1_kmh + s2_kmh) * (5 / 18) # m/s\n    return total_dist / rel_speed_ms\n\nprint(\"Cross time:\", time_to_cross(150, 200, 54, 36), \"seconds\")",
-          "explanation": "Calculates time taken for two trains to cross each other."
-        }
-      ],
-      "timeComplexity": "O(1) formula calculation",
-      "spaceComplexity": "O(1) auxiliary space",
-      "keyTakeaways": [
-        "Always double check unit consistency (meters vs kilometers, seconds vs hours)."
-      ],
-      "commonMistakes": [
-        "Subtracting speeds when moving in opposite directions instead of adding."
-      ]
-    }
-  },
-  {
-    "topicId": "instruction-set-architecture",
-    "chapterId": "coa-u1-c1",
-    "unitId": "coa",
-    "subjectId": "coa",
-    "topicNumber": 1,
-    "title": "Instruction Set Architecture & Von Neumann Model",
-    "estimatedMinutes": 25,
-    "difficulty": "Beginner",
-    "summary": "Von Neumann architecture, fetch-decode-execute cycle, registers, memory bus, and CISC vs RISC processors.",
-    "subtopics": [
-      "Von Neumann Architecture",
-      "Fetch-Decode-Execute Cycle",
-      "RISC vs CISC",
-      "ALU & Registers"
-    ],
-    "content": {
-      "introduction": "Computer Organization defines the hardware implementation of the Instruction Set Architecture (ISA).",
-      "concepts": [
-        "Von Neumann Model: Shared memory storing both data and program instructions.",
-        "Fetch-Decode-Execute Cycle: CPU reads instruction from memory (PC), decodes opcode, and executes in ALU."
-      ],
-      "importantPoints": [
-        "Von Neumann bottleneck occurs due to shared bus for data and instructions."
-      ],
-      "examples": [
-        "MIPS 32-bit R-type instruction execution in ALU."
-      ],
-      "algorithmSteps": [
-        "1. Fetch instruction from address in Program Counter (PC).",
-        "2. Increment PC.",
-        "3. Decode instruction opcode.",
-        "4. Execute in ALU."
-      ],
-      "codeSnippets": [
-        {
-          "language": "cpp",
-          "title": "C++ CPU Fetch-Execute Simulation",
-          "code": "struct CPU {\n    int PC = 0;\n    int registers[8] = {0};\n    void step(int instruction) {\n        int opcode = (instruction >> 12) & 0xF;\n        int reg1 = (instruction >> 8) & 0xF;\n        int reg2 = instruction & 0xFF;\n        if (opcode == 1) registers[reg1] += reg2; // ADD\n        PC++;\n    }\n};",
-          "explanation": "Basic simulation of CPU instruction fetch-decode-execute step."
-        }
-      ],
-      "timeComplexity": "O(1) clock cycle step per instruction pipeline stage",
-      "spaceComplexity": "O(R) register file memory",
-      "keyTakeaways": [
-        "Pipelining improves CPU instruction throughput by overlapping execution stages."
-      ],
-      "commonMistakes": [
-        "Confusing RISC simple single-cycle instructions with CISC complex instructions."
-      ]
-    }
-  },
-  {
-    "topicId": "sdlc-agile-scrum",
-    "chapterId": "se-u1-c1",
-    "unitId": "se",
-    "subjectId": "software-engineering",
-    "topicNumber": 1,
-    "title": "Software Development Life Cycle (SDLC) & Agile Scrum",
-    "estimatedMinutes": 20,
-    "difficulty": "Beginner",
-    "summary": "Waterfall vs Agile methodology, Scrum roles (Product Owner, Scrum Master, Team), Sprints, and User Stories.",
-    "subtopics": [
-      "SDLC Phases",
-      "Agile Manifesto Values",
-      "Scrum Roles & Ceremonies",
-      "Sprint Backlog"
-    ],
-    "content": {
-      "introduction": "Software Engineering applies structured processes to design, develop, test, and maintain large-scale software systems.",
-      "concepts": [
-        "Waterfall Model: Sequential phases (Requirements -> Design -> Implementation -> Verification -> Maintenance).",
-        "Agile Methodology: Iterative development delivering working software increments in 2-4 week Sprints."
-      ],
-      "importantPoints": [
-        "Agile prioritizes responding to change over following a rigid plan."
-      ],
-      "examples": [
-        "Planning a 2-week Sprint backlog for LearnX feature release."
-      ],
-      "algorithmSteps": [
-        "1. Backlog Grooming.",
-        "2. Sprint Planning.",
-        "3. Daily Standup (15 min).",
-        "4. Sprint Review & Retrospective."
-      ],
-      "codeSnippets": [
-        {
-          "language": "python",
-          "title": "Python User Story Velocity Calculator",
-          "code": "def calculate_sprint_velocity(completed_story_points):\n    return sum(completed_story_points) / len(completed_story_points)\n\npoints = [24, 30, 28, 32]\nprint(\"Average Velocity:\", calculate_sprint_velocity(points), \"points/sprint\")",
-          "explanation": "Calculates average team velocity across past Agile sprints."
-        }
-      ],
-      "timeComplexity": "O(1) velocity computation",
-      "spaceComplexity": "O(1) memory overhead",
-      "keyTakeaways": [
-        "Daily Standups focus on: what I did yesterday, what I will do today, and any blockers."
-      ],
-      "commonMistakes": [
-        "Treating Sprints as mini-waterfall phases within a 2-week cycle."
       ]
     }
   },
@@ -1858,68 +1651,362 @@ export const CURRICULUM_TOPICS = [
     "difficulty": "Intermediate",
     "summary": "Subnet masks, prefix lengths (/24, /16, /8), usable host calculations, network ID vs broadcast address, and CIDR hierarchical routing aggregation.",
     "subtopics": [
-      "Classful vs Classless Inter-Domain Routing (CIDR)",
-      "Subnet Mask Binary Math & Bitwise ANDing",
-      "Calculating Usable Hosts (2^(32-n) - 2)",
-      "Network Address vs Directed Broadcast Address",
-      "IPv6 128-bit Hexadecimal Addressing & Transition"
+      "Classless Inter-Domain Routing (CIDR)",
+      "Subnet Mask Bitwise Math",
+      "Usable Host Formula: 2^(32-n) - 2",
+      "Network vs Broadcast ID"
     ],
+    "hasVisualization": false,
     "content": {
-      "introduction": "IP Subnetting is the fundamental networking process of partitioning a single physical network into multiple logical sub-networks (subnets). By segmenting address spaces, organizations minimize broadcast domain traffic, enforce security boundaries between departments, and dramatically optimize IP address utilization.",
+      "introduction": "IP Subnetting partitions a physical network into multiple logical subnets to minimize broadcast traffic, enforce security, and optimize address allocation.",
       "concepts": [
-        "CIDR (Classless Inter-Domain Routing): Deprecates rigid Class A/B/C addressing by using flexible prefix lengths (e.g., 192.168.1.0/26 means 26 bits are dedicated to the Network ID, leaving 6 bits for Host IDs).",
-        "Network ID Determination: Computed by performing a bitwise AND operation between the 32-bit IP Address and the 32-bit Subnet Mask.",
-        "Total vs Usable Hosts: A subnet with `h` host bits has `2^h` total addresses. The first address (all host bits 0) is reserved as the Network ID, and the last address (all host bits 1) is reserved as the Directed Broadcast Address. Therefore, usable hosts = `2^h - 2`.",
-        "Subnetting vs Supernetting (Route Aggregation): Subnetting divides large address blocks into smaller subnets; Supernetting aggregates multiple contiguous small subnets into a single routing table entry to reduce router memory overhead.",
-        "IPv6 Advantages: Expands address space from 32-bit (4.3 billion addresses) to 128-bit (3.4 × 10^38 addresses), eliminating the strict requirement for NAT (Network Address Translation) and incorporating IPSec security by default."
+        "CIDR: Flexible prefix lengths (e.g. `/26` = 26 network bits, 6 host bits).",
+        "Network ID: Bitwise AND between IP and Subnet Mask.",
+        "Usable Hosts: `2^h - 2` (subtracting Network ID and Broadcast ID)."
       ],
       "importantPoints": [
-        "A /24 subnet has 256 total IP addresses, but only 254 usable host addresses.",
-        "A /30 subnet has 4 total IP addresses, providing exactly 2 usable host addresses — ideal for point-to-point router serial links.",
-        "Private IP ranges (RFC 1918): 10.0.0.0/8 (Class A), 172.16.0.0/12 (Class B), 192.168.0.0/16 (Class C)."
+        "A /24 subnet has 254 usable hosts; /30 has 2 usable hosts."
       ],
       "examples": [
-        "Example 1: Given IP `192.168.10.75/26`.\n• Subnet mask: `255.255.255.192` (26 ones, 6 zeros).\n• Host bits `h = 32 - 26 = 6`.\n• Total addresses per subnet = `2^6 = 64`.\n• Usable hosts = `64 - 2 = 62`.\n• Subnet boundaries: `192.168.10.0–63`, `192.168.10.64–127`, `192.168.10.128–191`, `192.168.10.192–255`.\n• For IP `192.168.10.75`: Network ID = `192.168.10.64`, First usable = `192.168.10.65`, Last usable = `192.168.10.126`, Broadcast = `192.168.10.127`.",
-        "Example 2: A company needs 4 departments with 25 computers each. Starting from `192.168.1.0/24`, allocate `/27` subnets (`2^5 - 2 = 30` usable hosts per department)."
+        "Example: `192.168.10.75/26` -> Network ID: `192.168.10.64`, Broadcast: `192.168.10.127`, Usable: 62 hosts."
       ],
       "algorithmSteps": [
-        "1. Identify required host count `H` per department.",
-        "2. Find smallest integer `h` such that `2^h - 2 >= H`.",
-        "3. Compute new prefix length: `prefix = 32 - h`.",
-        "4. Calculate Block Size (magic number) = `2^h` (or `256 - interesting_octet_mask`).",
-        "5. List subnets by incrementing network ID in multiples of Block Size from 0.",
-        "6. Assign first host = `Network ID + 1`, last host = `Broadcast ID - 1`, Broadcast = `Next Network ID - 1`."
+        "1. Host count H -> 2. Find h such that 2^h - 2 >= H -> 3. Prefix = 32 - h."
       ],
       "codeSnippets": [
         {
           "language": "python",
-          "title": "Python IPv4 Subnet & Usable Host Calculator",
-          "code": "import ipaddress\n\ndef calculate_subnet_details(cidr_str: str):\n    network = ipaddress.IPv4Network(cidr_str, strict=False)\n    \n    print(f\"Network ID:        {network.network_address}\")\n    print(f\"Netmask:           {network.netmask}\")\n    print(f\"Broadcast ID:      {network.broadcast_address}\")\n    print(f\"Total Addresses:   {network.num_addresses}\")\n    print(f\"Usable Hosts:      {network.num_addresses - 2 if network.prefixlen < 31 else network.num_addresses}\")\n    print(f\"First Usable Host: {network.network_address + 1}\")\n    print(f\"Last Usable Host:  {network.broadcast_address - 1}\")\n\n# Example: 192.168.10.75 with /26 prefix\ncalculate_subnet_details(\"192.168.10.75/26\")",
-          "explanation": "Utilizes Python standard ipaddress library to compute network boundaries, host ranges, and broadcast addresses."
-        },
-        {
-          "language": "javascript",
-          "title": "JavaScript Bitwise Subnet Mask Calculator",
-          "code": "function getSubnetInfo(ipStr, cidrPrefix) {\n  const ipParts = ipStr.split(\".\").map(Number);\n  const ipNum = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];\n  \n  const maskNum = cidrPrefix === 0 ? 0 : (~0 << (32 - cidrPrefix));\n  const netNum = (ipNum & maskNum) >>> 0;\n  const broadcastNum = (netNum | (~maskNum >>> 0)) >>> 0;\n  \n  const numToIp = (num) => [\n    (num >>> 24) & 255,\n    (num >>> 16) & 255,\n    (num >>> 8) & 255,\n    num & 255\n  ].join(\".\");\n\n  const hostBits = 32 - cidrPrefix;\n  const totalHosts = Math.pow(2, hostBits);\n  const usableHosts = hostBits >= 2 ? totalHosts - 2 : 0;\n\n  return {\n    networkId: numToIp(netNum),\n    broadcastId: numToIp(broadcastNum),\n    netmask: numToIp(maskNum >>> 0),\n    totalHosts,\n    usableHosts\n  };\n}\n\nconsole.log(getSubnetInfo(\"192.168.10.75\", 26));",
-          "explanation": "Performs bitwise AND and shift arithmetic to derive network address and broadcast address in Node.js/JS."
-        },
-        {
-          "language": "cpp",
-          "title": "C++ Bitwise Network ID Calculation",
-          "code": "#include <iostream>\n#include <string>\n#include <cstdint>\n\nuint32_t ipToUint(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {\n    return (a << 24) | (b << 16) | (c << 8) | d;\n}\n\nvoid printIp(uint32_t ip) {\n    std::cout << ((ip >> 24) & 0xFF) << \".\"\n              << ((ip >> 16) & 0xFF) << \".\"\n              << ((ip >> 8) & 0xFF) << \".\"\n              << (ip & 0xFF) << \"\\n\";\n}\n\nint main() {\n    uint32_t ip = ipToUint(192, 168, 10, 75);\n    int prefix = 26;\n    uint32_t mask = (~0U) << (32 - prefix);\n    uint32_t networkId = ip & mask;\n    uint32_t broadcastId = networkId | (~mask);\n\n    std::cout << \"Network ID:   \"; printIp(networkId);\n    std::cout << \"Broadcast ID: \"; printIp(broadcastId);\n    return 0;\n}",
-          "explanation": "High-performance C++ bitwise IP manipulation using 32-bit unsigned integers."
+          "title": "Python Subnet Calculator",
+          "code": "import ipaddress\nnet = ipaddress.IPv4Network('192.168.10.75/26', strict=False)\nprint(net.network_address, net.broadcast_address)",
+          "explanation": "Subnet calculator."
         }
       ],
-      "timeComplexity": "O(1) bitwise ALU operations",
-      "spaceComplexity": "O(1) register allocation",
+      "timeComplexity": "O(1) Bitwise ALU operations",
+      "spaceComplexity": "O(1) Memory",
       "keyTakeaways": [
-        "Usable hosts formula is always 2^(32 - prefix) - 2.",
-        "Always subtract 2 for the Network address and Broadcast address.",
-        "CIDR allows variable length subnet masking (VLSM) for flexible network engineering."
+        "Always subtract 2 for network and broadcast addresses."
       ],
       "commonMistakes": [
-        "Assigning the Network ID or Broadcast address to a physical computer host interface.",
-        "Assuming all subnets must be equal size (VLSM allows subnets of varying prefix lengths like /24, /27, and /30 in the same network)."
+        "Assigning Network ID or Broadcast address to a host."
+      ]
+    }
+  },
+  {
+    "topicId": "tcp-handshake",
+    "chapterId": "cn-u3-c1",
+    "unitId": "cn-u3",
+    "subjectId": "cn",
+    "topicNumber": 1,
+    "title": "TCP 3-Way Handshake & 4-Way Connection Teardown",
+    "estimatedMinutes": 25,
+    "difficulty": "Beginner",
+    "summary": "Connection-oriented transport protocol mechanics, sequence numbers, SYN-ACK exchanges, and TIME_WAIT socket states.",
+    "subtopics": [
+      "TCP 3-Way Handshake (SYN, SYN-ACK, ACK)",
+      "4-Way Teardown (FIN-ACK)",
+      "TIME_WAIT State",
+      "SYN Flood Protection"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Transmission Control Protocol (TCP) provides reliable, ordered, error-checked stream delivery, establishing connections via a 3-Way Handshake.",
+      "concepts": [
+        "3-Way Handshake: 1. Client SYN -> 2. Server SYN-ACK -> 3. Client ACK.",
+        "4-Way Teardown: Each direction closed independently with FIN-ACK.",
+        "TIME_WAIT: Socket waits 2*MSL to prevent old duplicate packets from corrupting new connections."
+      ],
+      "importantPoints": [
+        "Random ISN generation prevents TCP sequence prediction attacks."
+      ],
+      "examples": [
+        "Example: Client Seq=1000 -> Server Ack=1001, Seq=5000 -> Client Ack=5001."
+      ],
+      "algorithmSteps": [
+        "1. Client connect() -> 2. Server accept() -> 3. ESTABLISHED."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "Node.js TCP Server",
+          "code": "const net = require('net');\nconst server = net.createServer((sock) => sock.write('Hello TCP!\\n'));\nserver.listen(8080);",
+          "explanation": "TCP socket in Node.js."
+        }
+      ],
+      "timeComplexity": "O(1) Protocol exchange",
+      "spaceComplexity": "O(1) TCB socket memory",
+      "keyTakeaways": [
+        "TCP provides guaranteed in-order stream delivery."
+      ],
+      "commonMistakes": [
+        "Assuming TCP connection teardown is instantaneous (requires 4-way FIN-ACK)."
+      ]
+    }
+  },
+  {
+    "topicId": "oop-four-pillars",
+    "chapterId": "oops-u1-c1",
+    "unitId": "oops-u1",
+    "subjectId": "oops",
+    "topicNumber": 1,
+    "title": "The 4 Pillars of Object-Oriented Programming",
+    "estimatedMinutes": 25,
+    "difficulty": "Beginner",
+    "summary": "Encapsulation, Data Abstraction, Inheritance Hierarchies, and Polymorphism with virtual method tables.",
+    "subtopics": [
+      "Encapsulation",
+      "Abstraction",
+      "Inheritance",
+      "Polymorphism & vtable"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Object-Oriented Programming organizes code into modular objects embodying Encapsulation, Abstraction, Inheritance, and Polymorphism.",
+      "concepts": [
+        "Encapsulation: Bundling data and methods, restricting direct access.",
+        "Abstraction: Hiding implementation details via interfaces.",
+        "Inheritance: Code reusability via parent-child classes.",
+        "Polymorphism: Single interface, multiple implementations via vtables."
+      ],
+      "importantPoints": [
+        "Declare base destructors as virtual in C++."
+      ],
+      "examples": [
+        "Example: Shape base class with Circle and Rectangle polymorphic draw() overrides."
+      ],
+      "algorithmSteps": [
+        "1. Declare interface/abstract class.",
+        "2. Override in child.",
+        "3. Call polymorphically."
+      ],
+      "codeSnippets": [
+        {
+          "language": "cpp",
+          "title": "C++ Polymorphism",
+          "code": "class Shape { public: virtual void draw() = 0; virtual ~Shape() = default; };",
+          "explanation": "Abstract base class."
+        }
+      ],
+      "timeComplexity": "O(1) vtable dynamic dispatch",
+      "spaceComplexity": "O(1) vptr pointer per object",
+      "keyTakeaways": [
+        "Program to an interface, not an implementation."
+      ],
+      "commonMistakes": [
+        "Omitting virtual keyword in C++ base classes."
+      ]
+    }
+  },
+  {
+    "topicId": "solid-principles",
+    "chapterId": "oops-u2-c1",
+    "unitId": "oops-u2",
+    "subjectId": "oops",
+    "topicNumber": 1,
+    "title": "SOLID Principles & Clean Code Architecture",
+    "estimatedMinutes": 30,
+    "difficulty": "Intermediate",
+    "summary": "The 5 foundational software engineering design principles for writing scalable, decoupled, and maintainable enterprise codebases.",
+    "subtopics": [
+      "Single Responsibility (SRP)",
+      "Open-Closed (OCP)",
+      "Liskov Substitution (LSP)",
+      "Interface Segregation (ISP)",
+      "Dependency Inversion (DIP)"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "SOLID design principles create maintainable, flexible, and testable decoupled object-oriented systems.",
+      "concepts": [
+        "S: Class has one reason to change.",
+        "O: Open for extension, closed for modification.",
+        "L: Subtypes substitutable for base types.",
+        "I: Specific client interfaces.",
+        "D: Depend on abstractions, not concretions."
+      ],
+      "importantPoints": [
+        "Dependency Injection is the practical application of DIP."
+      ],
+      "examples": [
+        "Example: Injecting NotificationSender interface into UserService."
+      ],
+      "algorithmSteps": [
+        "1. Audit responsibilities.",
+        "2. Introduce interfaces.",
+        "3. Inject dependencies."
+      ],
+      "codeSnippets": [
+        {
+          "language": "python",
+          "title": "Python SOLID",
+          "code": "class NotificationSender(ABC): pass\nclass EmailSender(NotificationSender): pass",
+          "explanation": "SOLID implementation."
+        }
+      ],
+      "timeComplexity": "O(1) Execution overhead",
+      "spaceComplexity": "O(1) Memory footprint",
+      "keyTakeaways": [
+        "SOLID code is straightforward to mock and unit test."
+      ],
+      "commonMistakes": [
+        "Creating monolithic God Objects with dozens of responsibilities."
+      ]
+    }
+  },
+  {
+    "topicId": "system-design-scalability",
+    "chapterId": "sd-u1-c1",
+    "unitId": "sd-u1",
+    "subjectId": "system-design",
+    "topicNumber": 1,
+    "title": "System Design: Scalability, Caching & Load Balancing",
+    "estimatedMinutes": 35,
+    "difficulty": "Advanced",
+    "summary": "Architecting distributed web systems from 1 to 10 million users: horizontal scaling, Redis caching tiers, database sharding, and the CAP theorem.",
+    "subtopics": [
+      "Horizontal vs Vertical Scaling",
+      "L4 vs L7 Load Balancing",
+      "Redis Distributed Caching",
+      "Database Sharding",
+      "The CAP Theorem"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "System Design architects high-availability, fault-tolerant distributed web applications serving millions of requests per second.",
+      "concepts": [
+        "Horizontal Scaling: Adding commodity stateless nodes behind a Load Balancer.",
+        "Caching (Redis): Cache-aside pattern reducing database read load by 90%+.",
+        "Database Sharding: Partitioning rows by key across multiple database nodes.",
+        "CAP Theorem: Choose CP (Consistency) or AP (Availability) under Network Partitions."
+      ],
+      "importantPoints": [
+        "Stateless web tiers allow effortless auto-scaling."
+      ],
+      "examples": [
+        "Example: TinyURL scaling 100M reads/day using Redis cache-aside."
+      ],
+      "algorithmSteps": [
+        "1. DNS -> 2. Load Balancer -> 3. Stateless App Server -> 4. Redis -> 5. Database."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "Redis Cache-Aside",
+          "code": "const cached = await redis.get(`user:${id}`);\nif (cached) return JSON.parse(cached);\nconst user = await db.query(...);\nawait redis.setex(`user:${id}`, 3600, JSON.stringify(user));",
+          "explanation": "Cache-aside pattern."
+        }
+      ],
+      "timeComplexity": "O(1) Redis memory cache (~1ms)",
+      "spaceComplexity": "O(N) RAM storage with LRU eviction",
+      "keyTakeaways": [
+        "Keep application servers strictly stateless."
+      ],
+      "commonMistakes": [
+        "Forgetting TTL on cache keys causing memory leaks."
+      ]
+    }
+  },
+  {
+    "topicId": "web-http-rest",
+    "chapterId": "web-u1-c1",
+    "unitId": "web-u1",
+    "subjectId": "web-dev",
+    "topicNumber": 1,
+    "title": "HTTP Protocol, REST APIs & Asynchronous Architecture",
+    "estimatedMinutes": 25,
+    "difficulty": "Beginner",
+    "summary": "The HTTP/HTTPS request-response lifecycle, RESTful architectural constraints, status codes, and JavaScript Event Loop execution.",
+    "subtopics": [
+      "HTTP/1.1 vs HTTP/2",
+      "REST Constraints",
+      "Status Codes (200, 201, 400, 401, 403, 404, 500)",
+      "JavaScript Event Loop"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Web applications communicate over HTTP/HTTPS protocols using RESTful APIs. JavaScript executes asynchronously via a single-threaded Event Loop.",
+      "concepts": [
+        "REST Principles: Statelessness, Uniform Interface, Resource-based URLs.",
+        "Idempotency: GET, PUT, DELETE are idempotent; POST is not.",
+        "Event Loop: Microtasks (Promises) execute before Macrotasks (setTimeout)."
+      ],
+      "importantPoints": [
+        "401 = Unauthenticated; 403 = Authenticated but Unauthorized."
+      ],
+      "examples": [
+        "Example: `GET /api/v1/users` -> Returns list of users in JSON."
+      ],
+      "algorithmSteps": [
+        "1. Client TLS Handshake -> 2. Send HTTP Request -> 3. Server Async Process -> 4. Return Status & JSON."
+      ],
+      "codeSnippets": [
+        {
+          "language": "javascript",
+          "title": "Express REST API",
+          "code": "app.get('/api/users', async (req, res) => res.json(await getUsers()));",
+          "explanation": "REST endpoint in Express."
+        }
+      ],
+      "timeComplexity": "O(1) Non-blocking event loop dispatch",
+      "spaceComplexity": "O(N) Connection socket buffers",
+      "keyTakeaways": [
+        "Use plural nouns for REST endpoints."
+      ],
+      "commonMistakes": [
+        "Blocking the single Node.js main thread with CPU-intensive loops."
+      ]
+    }
+  },
+  {
+    "topicId": "quantitative-aptitude-reasoning",
+    "chapterId": "apt-u1-c1",
+    "unitId": "apt-u1",
+    "subjectId": "aptitude",
+    "topicNumber": 1,
+    "title": "Quantitative Aptitude: Time, Speed, Distance & Work Calculations",
+    "estimatedMinutes": 20,
+    "difficulty": "Beginner",
+    "summary": "Essential mathematical formulas, relative speed mechanics, train crossing problems, and time-and-work efficiency ratios for placement assessments.",
+    "subtopics": [
+      "Speed = Distance / Time",
+      "Relative Speed",
+      "Train Problems",
+      "Time and Work Formulas",
+      "Pipes and Cisterns"
+    ],
+    "hasVisualization": false,
+    "content": {
+      "introduction": "Quantitative Aptitude evaluates computational speed and mathematical reasoning for technical campus placement assessments.",
+      "concepts": [
+        "Speed = Distance / Time. Multiply km/h by 5/18 to get m/s.",
+        "Relative Speed: Add speeds in opposite directions; subtract in same direction.",
+        "Combined Work: A in X days, B in Y days -> Together = (X*Y)/(X+Y) days."
+      ],
+      "importantPoints": [
+        "Unify all units to meters and seconds before calculation."
+      ],
+      "examples": [
+        "Example: 150m train at 54 km/h crossing 200m platform -> Time = 350 / 15 = 23.33s."
+      ],
+      "algorithmSteps": [
+        "1. Convert units to SI.",
+        "2. Apply relative speed / work formula.",
+        "3. Solve algebraically."
+      ],
+      "codeSnippets": [
+        {
+          "language": "python",
+          "title": "Python Relative Speed",
+          "code": "def cross_time(l1, l2, speed_kmh): return (l1 + l2) / (speed_kmh * 5/18)",
+          "explanation": "Train crossing time calculator."
+        }
+      ],
+      "timeComplexity": "O(1) Formula calculation",
+      "spaceComplexity": "O(1) Auxiliary space",
+      "keyTakeaways": [
+        "Use LCM method for complex 3-person Time and Work problems."
+      ],
+      "commonMistakes": [
+        "Subtracting speeds when objects move in opposite directions instead of adding."
       ]
     }
   }
