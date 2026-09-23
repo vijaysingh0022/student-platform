@@ -341,7 +341,9 @@ const Dashboard = () => {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Job Ready</p>
                 <p className="text-base font-extrabold text-white leading-none mt-0.5">
-                  {jobReadinessScore !== null ? `${jobReadinessScore}%` : "84%"}
+                  {typeof jobReadinessScore === "number" && !isNaN(jobReadinessScore)
+                    ? `${jobReadinessScore}%`
+                    : "84%"}
                 </p>
               </div>
             </div>
@@ -418,6 +420,31 @@ const Dashboard = () => {
                   ? `${learningData.continueLearning.unitTitle || "Unit 1"} • ${learningData.continueLearning.chapterTitle || "Chapter 1"}`
                   : "Master high-frequency concepts with structured theory, multi-language code playground, algorithm visualizers, and topic tests."}
               </p>
+            </div>
+
+            {/* Informative Milestone Overview Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+              <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-center gap-2.5">
+                <span className="text-lg">⚡</span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">Estimated Time</p>
+                  <p className="text-xs font-semibold text-slate-700">~20-25 Mins</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-2xl bg-sky-50/70 border border-sky-100 flex items-center gap-2.5">
+                <span className="text-lg">🎯</span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-sky-700">Topic Scope</p>
+                  <p className="text-xs font-semibold text-slate-700">Theory & Visualizer</p>
+                </div>
+              </div>
+              <div className="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center gap-2.5">
+                <span className="text-lg">🏆</span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Mastery Quiz</p>
+                  <p className="text-xs font-semibold text-slate-700">5 Practice MCQs</p>
+                </div>
+              </div>
             </div>
           </div>
 

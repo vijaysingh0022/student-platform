@@ -187,6 +187,8 @@ export const AppStateProvider = ({ children }) => {
         roadmaps,
         totalTestsTaken,
         subjectAverages,
+        jobReadinessScore,
+        roadmapProgress,
         testVersion,
         careerVersion,
         roadmapVersion,
