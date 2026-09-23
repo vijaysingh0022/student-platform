@@ -8,29 +8,35 @@ export default {
         mono:  ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       colors: {
-        bg:      "#f8f8fc",
+        bg:      "#f0f6fc",   /* soft blue white — global page background */
         surface: "#ffffff",
-        surface2:"#f1f1f7",
+        surface2:"#e8f2fb",
         accent: {
-          DEFAULT: "#7c3aed",
-          2: "#0ea5e9",
-          3: "#059669",
+          DEFAULT: "#0284c7",  /* sky-600 */
+          2: "#2563eb",        /* blue-600 */
+          3: "#059669",        /* emerald */
         },
         brand: {
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed",
-          700: "#6d28d9",
+          400: "#38bdf8",  /* sky-400 */
+          500: "#0ea5e9",  /* sky-500 */
+          600: "#0284c7",  /* sky-600 */
+          700: "#0369a1",  /* sky-700 */
         },
         sky: {
+          50:  "#f0f9ff",
+          100: "#e0f2fe",
+          200: "#bae6fd",
+          300: "#7dd3fc",
           400: "#38bdf8",
           500: "#0ea5e9",
+          600: "#0284c7",
+          700: "#0369a1",
         },
         dark: {
-          900: "#1a1a2e",
-          800: "#2d2d44",
-          700: "#4a4a68",
-          600: "#6e6e8d",
+          900: "#0f172a",  /* slate-900 */
+          800: "#1e293b",  /* slate-800 */
+          700: "#334155",  /* slate-700 */
+          600: "#475569",  /* slate-600 */
         },
       },
       borderRadius: {
@@ -41,17 +47,17 @@ export default {
         "2xl": "2rem",
       },
       boxShadow: {
-        sm:   "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)",
-        DEFAULT:"0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)",
-        lg:   "0 12px 40px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.05)",
-        "glow-purple": "0 0 24px rgba(124,58,237,0.18)",
-        "glow-sky":    "0 0 24px rgba(14,165,233,0.18)",
-        "glow-purple-lg": "0 0 40px rgba(124,58,237,0.25)",
+        sm:   "0 1px 3px rgba(2,132,199,0.07), 0 1px 2px rgba(0,0,0,0.04)",
+        DEFAULT:"0 4px 16px rgba(2,132,199,0.09), 0 1px 3px rgba(0,0,0,0.04)",
+        lg:   "0 12px 40px rgba(2,132,199,0.12), 0 2px 6px rgba(0,0,0,0.05)",
+        "glow-blue":   "0 0 24px rgba(2,132,199,0.20)",
+        "glow-sky":    "0 0 24px rgba(14,165,233,0.22)",
+        "glow-blue-lg": "0 0 40px rgba(2,132,199,0.28)",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "btn-gradient":    "linear-gradient(135deg, #7c3aed 0%, #0ea5e9 100%)",
-        "card-gradient":   "linear-gradient(160deg, #ffffff 0%, #f8f8fc 100%)",
+        "btn-gradient":    "linear-gradient(135deg, #0284c7 0%, #2563eb 100%)",
+        "card-gradient":   "linear-gradient(160deg, #ffffff 0%, #f0f6fc 100%)",
       },
       animation: {
         "fade-in-up":  "fadeInUp 0.42s cubic-bezier(0.22,1,0.36,1) both",

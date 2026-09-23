@@ -6,39 +6,40 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────────── */
 :root {
+  /* ── Soft Blue White Global Palette (matches Landing Page) ── */
   /* Backgrounds */
-  --c-bg:         #f8f8fc;
-  --c-bg2:        #f1f1f7;
-  --c-surface:    #ffffff;
-  --c-surface2:   #fafafa;
+  --c-bg:         #f0f6fc;   /* soft blue white — main page background */
+  --c-bg2:        #e8f2fb;   /* slightly deeper soft blue — alt bg */
+  --c-surface:    #ffffff;   /* pure white cards/panels */
+  --c-surface2:   #f8fafc;   /* off-white surface variant */
 
   /* Borders */
-  --c-border:     rgba(0,0,0,0.07);
-  --c-border-md:  rgba(0,0,0,0.12);
+  --c-border:     rgba(56, 152, 220, 0.12);  /* soft sky blue borders */
+  --c-border-md:  rgba(56, 152, 220, 0.22);  /* medium sky blue borders */
 
   /* Text */
-  --c-text:       #1a1a2e;
-  --c-text-2:     #4a4a68;
-  --c-muted:      #8f8faa;
+  --c-text:       #0f172a;   /* slate-900 */
+  --c-text-2:     #334155;   /* slate-700 */
+  --c-muted:      #64748b;   /* slate-500 */
 
-  /* Accents */
-  --c-accent:     #7c3aed;   /* violet */
-  --c-accent-lt:  #ede9fe;   /* violet tint */
-  --c-accent2:    #0ea5e9;   /* sky blue */
-  --c-accent2-lt: #e0f2fe;   /* sky tint */
-  --c-accent3:    #059669;   /* emerald */
+  /* Accents — sky blue primary palette */
+  --c-accent:     #0284c7;   /* sky-600 — primary blue accent */
+  --c-accent-lt:  #e0f2fe;   /* sky-100 tint */
+  --c-accent2:    #2563eb;   /* blue-600 — secondary */
+  --c-accent2-lt: #dbeafe;   /* blue-100 tint */
+  --c-accent3:    #059669;   /* emerald — success */
   --c-danger:     #dc2626;
   --c-danger-lt:  #fee2e2;
   --c-warn:       #d97706;
   --c-warn-lt:    #fef3c7;
 
-  /* Shadows */
-  --shadow-xs:  0 1px 2px rgba(0,0,0,0.06);
-  --shadow-sm:  0 2px 6px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow:     0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.06);
-  --shadow-md:  0 8px 28px rgba(0,0,0,0.1),  0 2px 6px rgba(0,0,0,0.07);
-  --shadow-lg:  0 16px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.07);
-  --shadow-accent: 0 4px 20px rgba(124,58,237,0.22);
+  /* Shadows — soft sky blue tinted */
+  --shadow-xs:  0 1px 2px rgba(2, 132, 199, 0.06);
+  --shadow-sm:  0 2px 6px rgba(2, 132, 199, 0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:     0 4px 16px rgba(2, 132, 199, 0.09), 0 1px 4px rgba(0,0,0,0.05);
+  --shadow-md:  0 8px 28px rgba(2, 132, 199, 0.10), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:  0 16px 48px rgba(2, 132, 199, 0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-accent: 0 4px 20px rgba(2, 132, 199, 0.22);
 
   /* Misc */
   --radius-sm:  0.5rem;
@@ -64,9 +65,9 @@
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: var(--c-bg);
+    background-color: #f0f6fc;  /* soft blue white — same as landing page */
     min-height: 100vh;
-    color: var(--c-text);
+    color: #0f172a;
     overflow-x: hidden;
     line-height: 1.6;
   }
@@ -82,14 +83,14 @@
   a { text-decoration: none; color: inherit; }
   button { font-family: inherit; cursor: pointer; }
 
-  /* Scrollbar */
+  /* Scrollbar — sky blue themed */
   ::-webkit-scrollbar        { width: 5px; }
-  ::-webkit-scrollbar-track  { background: transparent; }
-  ::-webkit-scrollbar-thumb  { background: rgba(124,58,237,0.2); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,0.4); }
+  ::-webkit-scrollbar-track  { background: #e0f2fe; }
+  ::-webkit-scrollbar-thumb  { background: rgba(2, 132, 199, 0.35); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(2, 132, 199, 0.6); }
 
-  /* Selection */
-  ::selection { background: rgba(124,58,237,0.15); color: var(--c-text); }
+  /* Selection — sky blue */
+  ::selection { background: rgba(2, 132, 199, 0.15); color: #0f172a; }
 }
 
 /* ─── Component System ──────────────────────────────────────────── */
