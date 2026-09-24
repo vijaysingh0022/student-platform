@@ -173,6 +173,19 @@ const Navbar = () => {
               <span>Learn</span>
             </Link>
 
+            {/* Exam Prep */}
+            <Link
+              to="/exam-prep"
+              id="nav-exam-prep"
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+                isActive("/exam-prep")
+                  ? "bg-cyan-100 text-cyan-900 shadow-xs ring-1 ring-cyan-200"
+                  : "text-slate-700 hover:text-cyan-600 hover:bg-cyan-50/80"
+              }`}
+            >
+              <span>🎓 Exam Prep</span>
+            </Link>
+
             {/* Take Test */}
             <Link
               to="/test/DSA"
@@ -827,6 +840,15 @@ const Navbar = () => {
                   }`}
                 >
                   <span>📚</span> Learn
+                </Link>
+                <Link
+                  to="/exam-prep"
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center gap-2 p-2.5 rounded-xl text-xs font-bold ${
+                    isActive("/exam-prep") ? "bg-cyan-100 text-cyan-900 font-bold" : "bg-cyan-50 text-cyan-700 hover:bg-cyan-100"
+                  }`}
+                >
+                  <span>🎓</span> Exam Prep
                 </Link>
                 <Link
                   to="/test/DSA"
