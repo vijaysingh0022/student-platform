@@ -6,7 +6,7 @@ import {
   getExamHistory,
   generateAIExamQuestions,
 } from "../controllers/examPrepController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import protect from "../middleware/auth.js";
 
 const router = express.Router();
 

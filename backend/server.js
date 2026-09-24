@@ -149,4 +149,5 @@ if (!process.env.VERCEL) {
     });
 }
 
+// Export app for serverless or testing
 export default app;

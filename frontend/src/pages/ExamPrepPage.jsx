@@ -16,6 +16,63 @@ const EXAM_MODES = [
   { id: "weak", name: "Weak Topic Focus", icon: "🎯", desc: "Targeted practice on topics needing improvement." },
 ];
 
+const DEFAULT_FILTER_OPTIONS = {
+  universities: ["All Universities", "AKTU", "VTU", "SPPU", "Anna University", "GATE", "Generic CSE"],
+  semesters: ["All Semesters", "Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6", "Semester 7", "Semester 8"],
+  years: ["All Years", 2024, 2023, 2022, 2021, 2020],
+  questionTypes: [
+    { id: "All", name: "All Types" },
+    { id: "mcq", name: "MCQs (Multiple Choice)" },
+    { id: "short", name: "Short Answer Questions" },
+    { id: "long", name: "Long Answer Questions" },
+    { id: "numerical", name: "Numerical Problems" },
+    { id: "pyq", name: "PYQs (Previous Year Questions)" },
+  ],
+  difficulties: ["All", "Easy", "Medium", "Hard"],
+  subjects: [
+    {
+      id: "dsa",
+      name: "Data Structures & Algorithms",
+      units: [
+        { id: "unit-1", name: "Unit 1: Linear Data Structures & Analysis", topics: [{ id: "arrays-matrices", name: "Arrays & Matrices" }, { id: "stacks-queues", name: "Stacks & Queues" }] },
+        { id: "unit-2", name: "Unit 2: Trees & Binary Search Trees", topics: [{ id: "tree-traversals", name: "Tree Traversals" }, { id: "avl-trees", name: "AVL Trees & Balance Factors" }] },
+        { id: "unit-3", name: "Unit 3: Graphs & Shortest Paths", topics: [{ id: "dijkstra-algorithm", name: "Dijkstra's Algorithm" }] },
+      ],
+    },
+    {
+      id: "dbms",
+      name: "Database Management Systems",
+      units: [
+        { id: "unit-1", name: "Unit 1: ER Model & Relational Algebra", topics: [{ id: "er-diagrams", name: "ER Diagrams & Mapping" }] },
+        { id: "unit-2", name: "Unit 2: SQL & Relational Calculus", topics: [{ id: "sql-joins", name: "SQL Joins & Subqueries" }] },
+        { id: "unit-3", name: "Unit 3: Transactions & Concurrency Control", topics: [{ id: "acid-properties", name: "ACID Properties & Serializability" }] },
+      ],
+    },
+    {
+      id: "os",
+      name: "Operating Systems",
+      units: [
+        { id: "unit-1", name: "Unit 1: Process Management & CPU Scheduling", topics: [{ id: "cpu-scheduling", name: "CPU Scheduling Algorithms" }] },
+        { id: "unit-2", name: "Unit 2: Memory Management & Paging", topics: [{ id: "virtual-memory", name: "Virtual Memory & Page Faults" }] },
+      ],
+    },
+    {
+      id: "cn",
+      name: "Computer Networks",
+      units: [
+        { id: "unit-1", name: "Unit 1: Data Link & Network Layer", topics: [{ id: "ip-addressing", name: "IP Subnetting & CIDR" }] },
+      ],
+    },
+    {
+      id: "system-design",
+      name: "System Design & Architecture",
+      units: [
+        { id: "unit-1", name: "Unit 1: Scalability & Distributed Systems", topics: [{ id: "load-balancing", name: "Load Balancing & Caching" }] },
+      ],
+    },
+  ],
+};
+
 export default function ExamPrepPage() {
   const [filters, setFilters] = useState({
     university: "All Universities",
@@ -28,14 +85,7 @@ export default function ExamPrepPage() {
     topicId: "All",
   });
 
-  const [filterOptions, setFilterOptions] = useState({
-    universities: [],
-    semesters: [],
-    years: [],
-    questionTypes: [],
-    difficulties: [],
-    subjects: [],
-  });
+  const [filterOptions, setFilterOptions] = useState(DEFAULT_FILTER_OPTIONS);
 
   const [activeMode, setActiveMode] = useState("exam");
   const [questions, setQuestions] = useState([]);
@@ -83,7 +133,9 @@ export default function ExamPrepPage() {
   const fetchFilters = async () => {
     try {
       const res = await getExamFilters();
-      if (res.data) setFilterOptions(res.data);
+      if (res.data && res.data.subjects && res.data.subjects.length > 0) {
+        setFilterOptions(res.data);
+      }
     } catch (err) {
       console.error("Failed to load filters:", err);
     }
@@ -102,7 +154,7 @@ export default function ExamPrepPage() {
         questionType: filters.questionType,
         topicId: filters.topicId,
       });
-      if (res.data && res.data.questions) {
+      if (res.data && Array.isArray(res.data.questions)) {
         setQuestions(res.data.questions);
       }
     } catch (err) {
