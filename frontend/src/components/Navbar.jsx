@@ -145,10 +145,10 @@ const Navbar = () => {
             <Link
               to="/dashboard"
               id="nav-dashboard"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/dashboard")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -161,10 +161,10 @@ const Navbar = () => {
             <Link
               to="/learn"
               id="nav-learn"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/learn")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -177,10 +177,10 @@ const Navbar = () => {
             <Link
               to="/exam-prep"
               id="nav-exam-prep"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all duration-150 ${
                 isActive("/exam-prep")
-                  ? "bg-cyan-100 text-cyan-900 shadow-xs ring-1 ring-cyan-200"
-                  : "text-slate-700 hover:text-cyan-600 hover:bg-cyan-50/80"
+                  ? "bg-cyan-100 text-cyan-950 shadow-xs ring-1 ring-cyan-300"
+                  : "text-slate-800 hover:text-cyan-600 hover:bg-cyan-50"
               }`}
             >
               <span>🎓 Exam Prep</span>
@@ -190,10 +190,10 @@ const Navbar = () => {
             <Link
               to="/test/DSA"
               id="nav-take-test"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/test/DSA")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -206,10 +206,10 @@ const Navbar = () => {
             <Link
               to="/quiz-generator"
               id="nav-ai-quiz"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/quiz-generator")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -222,10 +222,10 @@ const Navbar = () => {
             <Link
               to="/tutor"
               id="nav-ai-tutor"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/tutor")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -241,10 +241,10 @@ const Navbar = () => {
             <Link
               to="/roadmap"
               id="nav-roadmap"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/roadmap")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -257,10 +257,10 @@ const Navbar = () => {
             <Link
               to="/career-readiness"
               id="nav-career-engine"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isActive("/career-readiness")
-                  ? "bg-violet-100/80 text-violet-900 shadow-xs ring-1 ring-violet-200"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                  ? "bg-violet-100 text-violet-950 shadow-xs ring-1 ring-violet-300"
+                  : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
               }`}
             >
               <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
@@ -274,10 +274,10 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                   isMoreActive || toolsMenuOpen
-                    ? "bg-violet-50 text-violet-800 ring-1 ring-violet-200"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
+                    ? "bg-violet-100 text-violet-950 ring-1 ring-violet-300"
+                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
                 }`}
               >
                 <span>More</span>

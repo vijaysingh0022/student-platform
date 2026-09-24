@@ -302,16 +302,16 @@ const Dashboard = () => {
                   <h1 className="dash-heading text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
                     {getGreeting()}, <span className="text-violet-400">{user?.name?.split(" ")[0] || "Scholar"}</span>! 👋
                   </h1>
-                  <p className="text-sm text-slate-400 mt-2 max-w-lg leading-relaxed">
+                  <p className="text-sm font-semibold text-slate-200 mt-2 max-w-lg leading-relaxed">
                     Your personalized CSE learning command center. Track mastery, practice algorithms, crack interviews.
                   </p>
                 </div>
 
                 {/* XP Progress Bar */}
                 <div className="max-w-xs space-y-1">
-                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                  <div className="flex justify-between text-[11px] text-slate-200 font-bold">
                     <span>Level {studentLevel} → {studentLevel + 1}</span>
-                    <span className="text-violet-400 font-bold">{studentXP} XP</span>
+                    <span className="text-violet-300 font-extrabold">{studentXP} XP</span>
                   </div>
                   <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
@@ -333,8 +333,8 @@ const Dashboard = () => {
                   <div key={s.label} className={`stat-card p-4 rounded-2xl border backdrop-blur-sm ${s.bg} flex items-center gap-3`}>
                     <span className="text-2xl">{s.icon}</span>
                     <div>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider ${s.color}`}>{s.label}</p>
-                      <p className="text-base font-extrabold text-white leading-tight mt-0.5">{s.value}</p>
+                      <p className={`text-[11px] font-extrabold uppercase tracking-wider ${s.color}`}>{s.label}</p>
+                      <p className="text-base font-black text-white leading-tight mt-0.5">{s.value}</p>
                     </div>
                   </div>
                 ))}
@@ -343,16 +343,16 @@ const Dashboard = () => {
 
             {/* Quick Action Row */}
             <div className="mt-6 pt-5 border-t border-white/10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Quick Access</p>
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-200 mb-3">Quick Access</p>
               <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
                 {QUICK_ACTIONS.map((qa) => (
                   <Link
                     key={qa.label}
                     to={qa.to}
-                    className="quick-action flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/5 hover:bg-white/12 border border-white/8 text-center"
+                    className="quick-action flex flex-col items-center gap-1.5 p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-center"
                   >
                     <span className="text-xl">{qa.icon}</span>
-                    <span className="text-[10px] font-semibold text-slate-300 leading-none">{qa.label}</span>
+                    <span className="text-[11px] font-bold text-white leading-none">{qa.label}</span>
                   </Link>
                 ))}
               </div>
@@ -392,17 +392,17 @@ const Dashboard = () => {
           ].map((kpi, i) => (
             <div
               key={kpi.label}
-              className="stat-card bg-white rounded-2xl border p-5 shadow-sm"
+              className="stat-card bg-white rounded-2xl border p-5 shadow-sm hover:shadow-md transition"
               style={{ borderColor: kpi.border }}
             >
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: kpi.light }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-xs" style={{ background: kpi.light }}>
                   {kpi.icon}
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{kpi.label}</span>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">{kpi.label}</span>
               </div>
               <p className="dash-heading text-3xl font-black" style={{ color: kpi.color }}>{kpi.value}</p>
-              <p className="text-[11px] text-slate-400 mt-1">{kpi.sub}</p>
+              <p className="text-xs font-bold text-slate-600 mt-1">{kpi.sub}</p>
             </div>
           ))}
         </div>
@@ -421,7 +421,7 @@ const Dashboard = () => {
                 <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700">
                   📖 Continue Learning
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">
+                <span className="text-xs font-bold text-slate-700">
                   {learningData?.continueLearning?.subjectName || "Recommended"}
                 </span>
               </div>
@@ -429,7 +429,7 @@ const Dashboard = () => {
               <h2 className="dash-heading text-xl sm:text-2xl font-extrabold text-slate-900 mb-1">
                 {learningData?.continueLearning?.topicTitle || learningData?.recommendedNext?.topicTitle || "Arrays & Dynamic Memory"}
               </h2>
-              <p className="text-sm text-slate-500 mb-5">
+              <p className="text-sm font-semibold text-slate-700 mb-5">
                 {learningData?.continueLearning
                   ? `${learningData.continueLearning.unitTitle || "Unit 1"} • ${learningData.continueLearning.chapterTitle || "Chapter 1"}`
                   : "Master high-frequency concepts with structured theory, visualizers & quizzes."}
@@ -437,9 +437,9 @@ const Dashboard = () => {
 
               {/* Progress bar */}
               <div className="mb-5">
-                <div className="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
+                <div className="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
                   <span>Overall Progress</span>
-                  <span className="text-indigo-600 font-bold">{progressPercent}%</span>
+                  <span className="text-indigo-600 font-extrabold">{progressPercent}%</span>
                 </div>
                 <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
@@ -547,7 +547,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="dash-heading text-xl font-extrabold text-slate-900">Learning Modules</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Your full CSE preparation toolkit</p>
+              <p className="text-xs font-bold text-slate-700 mt-0.5">Your full CSE preparation toolkit</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -555,7 +555,7 @@ const Dashboard = () => {
               <Link
                 key={card.title}
                 to={card.to}
-                className="module-card group bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:border-transparent"
+                className="module-card group bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:border-slate-300 transition-all"
               >
                 {/* Top gradient strip */}
                 <div className={`h-1.5 bg-gradient-to-r ${card.gradient}`} />
@@ -564,14 +564,14 @@ const Dashboard = () => {
                     <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${card.gradient} flex items-center justify-center text-2xl shadow-sm`}>
                       {card.icon}
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+                    <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300">
                       {card.tag}
                     </span>
                   </div>
-                  <h3 className="dash-heading text-base font-extrabold text-slate-900 group-hover:text-slate-700">{card.title}</h3>
-                  <p className="text-[11px] text-violet-600 font-bold mb-2">{card.subtitle}</p>
-                  <p className="text-xs text-slate-500 leading-relaxed">{card.desc}</p>
-                  <div className="mt-4 flex items-center text-xs font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
+                  <h3 className="dash-heading text-base font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">{card.title}</h3>
+                  <p className="text-xs text-indigo-700 font-extrabold mb-2">{card.subtitle}</p>
+                  <p className="text-xs font-semibold text-slate-700 leading-relaxed">{card.desc}</p>
+                  <div className="mt-4 flex items-center text-xs font-extrabold text-indigo-600 group-hover:text-indigo-700 transition-colors">
                     Open Module <span className="ml-1 group-hover:translate-x-1 transition-transform inline-block">→</span>
                   </div>
                 </div>
@@ -588,7 +588,7 @@ const Dashboard = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="dash-heading text-lg font-extrabold text-slate-900">Diagnostic Tracker</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Select a subject to view scores & analytics</p>
+                <p className="text-xs font-bold text-slate-700 mt-0.5">Select a subject to view scores & analytics</p>
               </div>
               <Link
                 to={`/test/${selectedSubject}`}
