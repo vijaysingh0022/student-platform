@@ -116,8 +116,6 @@ const GraphVisualizer = ({ stepData, algorithmId }) => {
                   x1={sourceNode.x}
                   y1={sourceNode.y}
                   x2={targetNode.x}
-                  y2={targetNode.targetNode}
-                  x2={targetNode.x}
                   y2={targetNode.y}
                   stroke={strokeColor}
                   strokeWidth={strokeWidth}

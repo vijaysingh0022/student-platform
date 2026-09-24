@@ -26,6 +26,7 @@ const SUBJECTS = [
 
 const QUICK_ACTIONS = [
   { label: "Subjects", icon: "📚", to: "/learn", color: "#6366f1" },
+  { label: "Exam Prep", icon: "🎓", to: "/exam-prep", color: "#06b6d4" },
   { label: "Quiz", icon: "📝", to: "/test/DSA", color: "#0ea5e9" },
   { label: "AI Tutor", icon: "🤖", to: "/tutor", color: "#10b981" },
   { label: "Placement", icon: "🚀", to: "/placement-readiness", color: "#f59e0b" },
@@ -78,6 +79,11 @@ const MODULE_CARDS = [
     icon: "🧠", title: "Skill Graph", subtitle: "CSE Mastery Map",
     desc: "Visualise topic mastery across all 12 CSE domains with real data.",
     to: "/skill-graph", gradient: "from-violet-600 to-purple-700", tag: "Intelligence",
+  },
+  {
+    icon: "🎓", title: "Exam Preparation", subtitle: "PYQs & Timed Tests",
+    desc: "Unit-wise notes, previous year questions, timed tests, and instant AI evaluation.",
+    to: "/exam-prep", gradient: "from-cyan-500 to-blue-600", tag: "University Prep",
   },
   {
     icon: "📅", title: "AI Study Planner", subtitle: "Dynamic Roadmap",

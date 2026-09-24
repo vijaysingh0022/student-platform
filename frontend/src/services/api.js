@@ -237,4 +237,25 @@ export const getMockInterviewHistory = async (config = {}) => {
   return api.get("/interview/history", config);
 };
 
+// ─── Exam Preparation System ──────────────────────────────────────────────────
+export const getExamFilters = async (config = {}) => {
+  return api.get("/exam-prep/filters", config);
+};
+
+export const getExamQuestions = async (params = {}, config = {}) => {
+  return api.get("/exam-prep/questions", { params, ...config });
+};
+
+export const submitExamAttempt = async (data, config = {}) => {
+  return api.post("/exam-prep/submit", data, config);
+};
+
+export const getExamHistory = async (config = {}) => {
+  return api.get("/exam-prep/history", config);
+};
+
+export const generateAIExamQuestions = async (data, config = {}) => {
+  return api.post("/exam-prep/generate-ai", data, config);
+};
+
 export default api;

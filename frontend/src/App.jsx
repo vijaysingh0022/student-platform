@@ -24,6 +24,7 @@ import SkillGraphPage from "./pages/SkillGraphPage.jsx";
 import AlgorithmVisualizerPage from "./pages/AlgorithmVisualizerPage.jsx";
 import CodingLabPage from "./pages/CodingLabPage.jsx";
 import MockInterviewPage from "./pages/MockInterviewPage.jsx";
+import ExamPrepPage from "./pages/ExamPrepPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -225,6 +226,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <MockInterviewPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exam-prep"
+              element={
+                <ProtectedRoute>
+                  <ExamPrepPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exam"
+              element={
+                <ProtectedRoute>
+                  <ExamPrepPage />
                 </ProtectedRoute>
               }
             />

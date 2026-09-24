@@ -396,6 +396,23 @@ const Navbar = () => {
                   </Link>
 
                   <Link
+                    to="/exam-prep"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname === "/exam-prep"
+                        ? "bg-cyan-50 text-cyan-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0 border border-cyan-100 text-base">
+                      🎓
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">Exam Preparation</div>
+                      <div className="text-[11px] text-slate-400 font-medium">Unit PYQs, Exam Mode, Instant Eval & Revision</div>
+                    </div>
+                  </Link>
+
+                  <Link
                     to="/placement-readiness"
                     className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
                       location.pathname === "/placement-readiness"
