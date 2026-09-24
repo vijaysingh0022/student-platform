@@ -270,13 +270,15 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700">
-              <span className="text-amber-500 flex items-center gap-1">
-                <Flame className="w-3.5 h-3.5 fill-amber-500" /> 18 Day Streak
-              </span>
-              <span className="text-slate-300">|</span>
-              <span className="text-indigo-600 font-extrabold">4,850 XP</span>
-            </div>
+            {user && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700">
+                <span className="text-amber-500 flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 fill-amber-500" /> {user.streakDays || 18} Day Streak
+                </span>
+                <span className="text-slate-300">|</span>
+                <span className="text-indigo-600 font-extrabold">{user.totalXP || 4850} XP</span>
+              </div>
+            )}
 
             {user ? (
               <Link
@@ -704,7 +706,9 @@ export default function LandingPage() {
             {/* Top Row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
               <div>
-                <h3 className="text-2xl font-black text-white">Welcome back, Vijay 👋</h3>
+                <h3 className="text-2xl font-black text-white">
+                  {user ? `Welcome back, ${user.name || "Student"} 👋` : "Student Command Center Preview 👋"}
+                </h3>
                 <p className="text-xs text-slate-400 mt-1">Your CSE learning command center is up to date.</p>
               </div>
 
