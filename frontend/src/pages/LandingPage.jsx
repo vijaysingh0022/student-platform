@@ -118,10 +118,58 @@ export default function LandingPage() {
     const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
     scene.add(lines);
 
+    // 3D Geometric Floating Crystal Core Mesh
+    const coreGroup = new THREE.Group();
+
+    // Outer wireframe icosahedron
+    const icoGeo = new THREE.IcosahedronGeometry(34, 1);
+    const icoMat = new THREE.MeshBasicMaterial({
+      color: 0x2563eb,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.4
+    });
+    const icoMesh = new THREE.Mesh(icoGeo, icoMat);
+    coreGroup.add(icoMesh);
+
+    // Inner wireframe dodecahedron
+    const dodecaGeo = new THREE.DodecahedronGeometry(22, 0);
+    const dodecaMat = new THREE.MeshBasicMaterial({
+      color: 0x7c3aed,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.55
+    });
+    const dodecaMesh = new THREE.Mesh(dodecaGeo, dodecaMat);
+    coreGroup.add(dodecaMesh);
+
+    // Orbital Ring Torus
+    const ringGeo = new THREE.TorusGeometry(48, 0.8, 16, 80);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0x0284c7,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.5
+    });
+    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+    ringMesh.rotation.x = Math.PI / 3;
+    coreGroup.add(ringMesh);
+
+    coreGroup.position.set(100, 15, 0);
+    scene.add(coreGroup);
+
     let animationFrameId;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Rotate 3D Core Mesh
+      coreGroup.rotation.x += 0.004;
+      coreGroup.rotation.y += 0.007;
+      coreGroup.rotation.z += 0.002;
+      icoMesh.rotation.y -= 0.003;
+      dodecaMesh.rotation.x += 0.005;
+      ringMesh.rotation.z += 0.006;
 
       const posArray = geometry.attributes.position.array;
       for (let i = 0; i < particleCount; i++) {
@@ -250,6 +298,23 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1E2022] font-sans selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
+      <style>{`
+        .card-3d {
+          transition: transform 0.35s cubic-bezier(0.1, 0.8, 0.2, 1), box-shadow 0.35s ease;
+          transform-style: preserve-3d;
+        }
+        .card-3d:hover {
+          transform: translateY(-8px) rotateX(3deg) rotateY(-2deg) translateZ(12px);
+          box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.18), 0 12px 24px -6px rgba(124, 58, 237, 0.12);
+        }
+        .float-3d-1 { animation: float3d 6s ease-in-out infinite; }
+        .float-3d-2 { animation: float3d 7s ease-in-out infinite 1.5s; }
+        .float-3d-3 { animation: float3d 8s ease-in-out infinite 3s; }
+        @keyframes float3d {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+      `}</style>
       {/* ─── TOP NAVBAR ─────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-[#FAF8F5]/90 backdrop-blur-xl border-b border-[#EFEBE4] shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -520,9 +585,9 @@ export default function LandingPage() {
               return (
                 <motion.div
                   key={idx}
-                  whileHover={{ y: -6 }}
+                  whileHover={{ y: -8 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-white/95 border border-[#EBE5DA] rounded-3xl p-8 shadow-sm shadow-[#1E2022]/5 hover:shadow-xl hover:border-blue-300 transition flex flex-col justify-between group"
+                  className="card-3d bg-white/95 border border-[#EBE5DA] rounded-3xl p-8 shadow-sm hover:border-blue-400 transition flex flex-col justify-between group"
                 >
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
