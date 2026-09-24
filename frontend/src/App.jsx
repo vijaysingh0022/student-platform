@@ -20,6 +20,10 @@ import CurriculumSubjectsPage from "./pages/CurriculumSubjectsPage.jsx";
 import SubjectCurriculumPage from "./pages/SubjectCurriculumPage.jsx";
 import TopicLearningPage from "./pages/TopicLearningPage.jsx";
 import TopicQuizPage from "./pages/TopicQuizPage.jsx";
+import SkillGraphPage from "./pages/SkillGraphPage.jsx";
+import AlgorithmVisualizerPage from "./pages/AlgorithmVisualizerPage.jsx";
+import CodingLabPage from "./pages/CodingLabPage.jsx";
+import MockInterviewPage from "./pages/MockInterviewPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -163,6 +167,64 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RoadmapPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Skill Graph */}
+            <Route
+              path="/skill-graph"
+              element={
+                <ProtectedRoute>
+                  <SkillGraphPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visualizer"
+              element={
+                <ProtectedRoute>
+                  <AlgorithmVisualizerPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/algorithm-visualizer"
+              element={
+                <ProtectedRoute>
+                  <AlgorithmVisualizerPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coding-lab"
+              element={
+                <ProtectedRoute>
+                  <CodingLabPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coding"
+              element={
+                <ProtectedRoute>
+                  <CodingLabPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mock-interview"
+              element={
+                <ProtectedRoute>
+                  <MockInterviewPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview"
+              element={
+                <ProtectedRoute>
+                  <MockInterviewPage />
                 </ProtectedRoute>
               }
             />

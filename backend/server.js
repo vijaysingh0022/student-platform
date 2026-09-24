@@ -20,7 +20,10 @@ import privacyRoutes from "./routes/privacyRoutes.js";
 import systemRoutes from "./routes/systemRoutes.js";
 import learningRoutes from "./routes/learningRoutes.js";
 import noteRoutes from "./routes/noteRoutes.js";
-
+import adaptiveRoutes from "./routes/adaptiveRoutes.js";
+import skillGraphRoutes from "./routes/skillGraphRoutes.js";
+import codingRoutes from "./routes/codingRoutes.js";
+import interviewRoutes from "./routes/interviewRoutes.js";
 import {
   enterpriseSecurityHeaders,
   rateLimiter,
@@ -83,6 +86,11 @@ app.use("/api/institution", institutionRoutes);
 app.use("/api/offline", offlineRoutes);
 app.use("/api/learning", learningRoutes);
 app.use("/api/notes", noteRoutes);
+app.use("/api/career", careerRoutes);
+app.use("/api/adaptive", adaptiveRoutes);
+app.use("/api/skillgraph", skillGraphRoutes);
+app.use("/api/coding", codingRoutes);
+app.use("/api/interview", interviewRoutes);
 
 // Alias mounts for direct REST conventions requested by prompt
 app.use("/api/subjects", learningRoutes);

@@ -109,31 +109,23 @@ const MessageBubble = ({ msg, index, onQuickFollowUp }) => {
           <div className="flex flex-wrap items-center gap-2 mt-2 px-1">
             <button
               onClick={handleCopy}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all duration-200 flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
             >
               {copied ? "✓ Copied" : "📋 Copy"}
             </button>
 
-            {onQuickFollowUp && (
+            {onQuickFollowUp && index === msg.totalMsgs - 1 && (
               <>
-                <button
-                  onClick={() => onQuickFollowUp(`Can you explain the previous concept with a simple real-world analogy?`)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 bg-violet-50 border border-violet-200 text-violet-700 hover:bg-violet-100"
-                >
-                  💡 Simpler Analogy
-                </button>
-                <button
-                  onClick={() => onQuickFollowUp(`Can you provide a practical code or SQL example for this?`)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100"
-                >
-                  💻 Code Example
-                </button>
-                <button
-                  onClick={() => onQuickFollowUp(`Give me 1 quick multiple-choice quiz question to test if I understood this concept correctly.`)}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100"
-                >
-                  ❓ Quiz Me
-                </button>
+                <button onClick={() => onQuickFollowUp("Explain Simply")} className="quick-action-btn">👶 Explain Simply</button>
+                <button onClick={() => onQuickFollowUp("Give Real World Example")} className="quick-action-btn">🌍 Real World Example</button>
+                <button onClick={() => onQuickFollowUp("Show Visual")} className="quick-action-btn">📐 Show Visual</button>
+                <button onClick={() => onQuickFollowUp("Show Code")} className="quick-action-btn">💻 Show Code</button>
+                <button onClick={() => onQuickFollowUp("Dry Run")} className="quick-action-btn">👣 Dry Run</button>
+                <button onClick={() => onQuickFollowUp("Quiz Me")} className="quick-action-btn">❓ Quiz Me</button>
+                <button onClick={() => onQuickFollowUp("Give Interview Question")} className="quick-action-btn">💼 Interview Question</button>
+                <button onClick={() => onQuickFollowUp("Give Exam Answer")} className="quick-action-btn">📝 Exam Answer</button>
+                <button onClick={() => onQuickFollowUp("Give Short Notes")} className="quick-action-btn">📓 Short Notes</button>
+                <button onClick={() => onQuickFollowUp("Explain My Mistake")} className="quick-action-btn">⚠️ Explain My Mistake</button>
               </>
             )}
           </div>
@@ -231,6 +223,7 @@ const SUBJECT_SUGGESTIONS = {
 const Tutor = () => {
   const [searchParams] = useSearchParams();
   const [activeSubject, setActiveSubject] = useState("All Subjects");
+  const [activeTopic, setActiveTopic] = useState("");
   const [messages, setMessages] = useState([
     {
       role: "ai",
@@ -264,29 +257,38 @@ Select a subject pill above or type your question below! 🚀`,
   useEffect(() => {
     const q = searchParams.get("q") || searchParams.get("question");
     const subject = searchParams.get("subject") || "";
+    const topic = searchParams.get("topic") || "";
     if (subject) {
       setActiveSubject(subject);
     }
+    if (topic) {
+      setActiveTopic(topic);
+    }
     if (q && !hasAutoAsked.current) {
       hasAutoAsked.current = true;
-      executeQuestion(q, subject);
+      executeQuestion(q, subject, topic);
     }
   }, [searchParams]);
 
-  const executeQuestion = async (questionText, subjectContext = activeSubject) => {
+  const executeQuestion = async (questionText, subjectContext = activeSubject, topicContext = activeTopic) => {
     if (!questionText.trim() || loading) return;
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    setMessages((prev) => [
-      ...prev,
+    const newMessages = [
+      ...messages,
       { role: "user", text: questionText, time: now },
-    ]);
+    ];
+    setMessages(newMessages);
     setLoading(true);
 
     try {
+      const historyForApi = newMessages.filter(m => m.role === "user" || m.role === "ai").slice(1);
+      
       const { data } = await api.post("/tutor/ask", {
         question: questionText,
         subject: subjectContext !== "All Subjects" ? subjectContext : undefined,
+        topic: topicContext || undefined,
+        history: historyForApi
       });
 
       setMessages((prev) => [
@@ -356,14 +358,39 @@ Select a subject pill above or type your question below! 🚀`,
         </div>
 
         {/* Selected subject indicator */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="text-[11px] font-bold text-slate-500">Track:</span>
-          <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-800 shadow-xs flex items-center gap-1.5">
-            <span>{currentTrackObj.icon}</span>
-            <span>{currentTrackObj.label}</span>
-          </span>
+        <div className="flex flex-col items-start sm:items-end gap-1 self-start sm:self-auto">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-500">Context:</span>
+            <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-800 shadow-xs flex items-center gap-1.5">
+              <span>{currentTrackObj.icon}</span>
+              <span>{currentTrackObj.label}</span>
+            </span>
+          </div>
+          {activeTopic && (
+            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
+              <span className="text-slate-300">↳</span> Topic: <span className="text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">{activeTopic}</span>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Add this CSS for quick action buttons */}
+      <style>{`
+        .quick-action-btn {
+          padding: 0.25rem 0.6rem;
+          border-radius: 9999px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          transition: all 0.2s;
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #334155;
+        }
+        .quick-action-btn:hover {
+          background-color: #f1f5f9;
+          border-color: #cbd5e1;
+        }
+      `}</style>
 
       {/* ── 8-SUBJECT SCROLLABLE TRACK PILL SELECTOR ── */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-thin shrink-0">
@@ -394,7 +421,7 @@ Select a subject pill above or type your question below! 🚀`,
         {messages.map((msg, idx) => (
           <MessageBubble
             key={idx}
-            msg={msg}
+            msg={{...msg, totalMsgs: messages.length}}
             index={idx}
             onQuickFollowUp={(q) => executeQuestion(q)}
           />

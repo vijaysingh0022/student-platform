@@ -29,7 +29,7 @@ export const getSubjects = async (req, res) => {
   try {
     const userId = req.user?._id;
     let subjects = await Subject.find({ isActive: true }).sort({ order: 1 }).lean().catch(() => []);
-    if (!subjects || subjects.length === 0) {
+    if (!subjects || subjects.length < CURRICULUM_SUBJECTS.length) {
       subjects = CURRICULUM_SUBJECTS;
     }
 
@@ -40,8 +40,8 @@ export const getSubjects = async (req, res) => {
       userId ? TopicProgress.find({ user: userId }).lean().catch(() => []) : Promise.resolve([]),
     ]);
 
-    if (!allTopics || allTopics.length === 0) allTopics = CURRICULUM_TOPICS;
-    if (!allUnits || allUnits.length === 0) allUnits = CURRICULUM_UNITS;
+    if (!allTopics || allTopics.length < CURRICULUM_TOPICS.length) allTopics = CURRICULUM_TOPICS;
+    if (!allUnits || allUnits.length < CURRICULUM_UNITS.length) allUnits = CURRICULUM_UNITS;
 
     // Map progress by topicId
     const progressMap = new Map();
@@ -118,15 +118,18 @@ export const getSubjectHierarchy = async (req, res) => {
       userId ? TopicProgress.find({ user: userId, subjectId }).lean().catch(() => []) : Promise.resolve([]),
     ]);
 
-    // Fallback to in-memory curriculum if empty or partial
-    if (!units || units.length === 0) {
-      units = CURRICULUM_UNITS.filter(u => u.subjectId === subjectId);
+    const memoryUnits = CURRICULUM_UNITS.filter(u => u.subjectId === subjectId);
+    const memoryChapters = CURRICULUM_CHAPTERS.filter(c => c.subjectId === subjectId);
+    const memoryTopics = CURRICULUM_TOPICS.filter(t => t.subjectId === subjectId);
+
+    if (!units || units.length < memoryUnits.length) {
+      units = memoryUnits;
     }
-    if (!chapters || chapters.length === 0) {
-      chapters = CURRICULUM_CHAPTERS.filter(c => c.subjectId === subjectId);
+    if (!chapters || chapters.length < memoryChapters.length) {
+      chapters = memoryChapters;
     }
-    if (!topics || topics.length === 0) {
-      topics = CURRICULUM_TOPICS.filter(t => t.subjectId === subjectId);
+    if (!topics || topics.length < memoryTopics.length) {
+      topics = memoryTopics;
     }
 
     const progressMap = new Map();
@@ -788,5 +791,154 @@ export const getFacultyLearningAnalytics = async (req, res) => {
   } catch (err) {
     console.error("getFacultyLearningAnalytics error:", err);
     res.status(500).json({ message: "Failed to fetch faculty analytics." });
+  }
+};
+
+// ─── 9. GENERATE DYNAMIC AI ROADMAP FOR A UNIT ──────────────────────────────
+// @route POST /api/learning/units/:unitId/roadmap
+export const generateUnitRoadmap = async (req, res) => {
+  try {
+    const { unitId } = req.params;
+    const { level = "Beginner", dailyMinutes = 60, targetDays } = req.body;
+    const userId = req.user?._id;
+
+    let unit = await Unit.findOne({ unitId }).lean().catch(() => null);
+    if (!unit) {
+      unit = CURRICULUM_UNITS.find(u => u.unitId === unitId);
+    }
+    if (!unit) {
+      return res.status(404).json({ message: "Unit not found." });
+    }
+
+    let topics = await Topic.find({ unitId, isActive: true }).sort({ order: 1, topicNumber: 1 }).lean().catch(() => []);
+    if (!topics || topics.length < CURRICULUM_TOPICS.filter(t => t.unitId === unitId).length) {
+      topics = CURRICULUM_TOPICS.filter(t => t.unitId === unitId);
+    }
+
+    // Get user completed topics
+    const userProgress = userId ? await TopicProgress.find({ user: userId, unitId }).lean().catch(() => []) : [];
+    const completedSet = new Set(userProgress.filter(p => p.isCompleted).map(p => p.topicId));
+
+    // Dynamic days calculation based on topics count, difficulty, and daily study time
+    // level factor: Beginner = 1.3x time, Intermediate = 1.0x, Advanced = 0.85x
+    const levelMultipliers = { Beginner: 1.3, Intermediate: 1.0, Advanced: 0.85 };
+    const mult = levelMultipliers[level] || 1.0;
+
+    const totalTopicsMinutes = topics.reduce((sum, t) => sum + (t.estimatedMinutes || 25), 0) * mult;
+    let computedDays = Math.max(2, Math.ceil(totalTopicsMinutes / (dailyMinutes || 60)));
+
+    if (targetDays && targetDays >= 2 && targetDays <= 30) {
+      computedDays = targetDays;
+    }
+
+    // Distribute topics across (computedDays - 1) days, leaving the last day for revision & unit quiz
+    const studyDays = Math.max(1, computedDays - 1);
+    const topicsPerDay = Math.max(1, Math.ceil(topics.length / studyDays));
+
+    const days = [];
+    let topicIndex = 0;
+
+    for (let dayNum = 1; dayNum <= studyDays && topicIndex < topics.length; dayNum++) {
+      const dayTopics = topics.slice(topicIndex, topicIndex + topicsPerDay);
+      topicIndex += topicsPerDay;
+
+      if (dayTopics.length === 0) break;
+
+      const practicePerTopic = level === "Beginner" ? 3 : level === "Intermediate" ? 5 : 7;
+      const totalPractice = dayTopics.length * practicePerTopic;
+
+      days.push({
+        day: dayNum,
+        title: `Day ${dayNum} — ${dayTopics.map(t => t.title).join(", ")}`,
+        topicIds: dayTopics.map(t => t.topicId),
+        topicTitles: dayTopics.map(t => t.title),
+        practiceCount: totalPractice,
+        focusArea: dayTopics[0]?.summary || `Master core ${unit.title} concepts and algorithms.`,
+        isCompleted: dayTopics.every(t => completedSet.has(t.topicId)),
+      });
+    }
+
+    // Final Day: Revision & Assessment
+    days.push({
+      day: days.length + 1,
+      title: `Day ${days.length + 1} — Unit Revision, Mock Quiz & AI Assessment`,
+      topicIds: [],
+      topicTitles: ["Comprehensive Unit Review", "Diagnostic Unit Assessment"],
+      practiceCount: 15,
+      focusArea: `Consolidate all knowledge from ${unit.title}, review weak areas, and complete final readiness evaluation.`,
+      isCompleted: false,
+    });
+
+    res.json({
+      unit: {
+        unitId: unit.unitId,
+        subjectId: unit.subjectId,
+        title: unit.title,
+        difficulty: unit.difficulty || level,
+      },
+      level,
+      dailyMinutes,
+      totalDays: days.length,
+      days,
+    });
+  } catch (err) {
+    console.error("generateUnitRoadmap error:", err);
+    res.status(500).json({ message: "Failed to generate unit roadmap." });
+  }
+};
+
+// ─── 10. UNIVERSAL SEARCH ACROSS CURRICULUM ────────────────────────────────
+// @route GET /api/learning/search
+export const searchCurriculum = async (req, res) => {
+  try {
+    const { q = "", difficulty, status } = req.query;
+    const query = q.trim().toLowerCase();
+    const userId = req.user?._id;
+
+    const userProgress = userId ? await TopicProgress.find({ user: userId }).lean().catch(() => []) : [];
+    const completedSet = new Set(userProgress.filter(p => p.isCompleted).map(p => p.topicId));
+
+    // Search topics
+    let results = CURRICULUM_TOPICS.filter((t) => {
+      const matchText = !query ||
+        t.title.toLowerCase().includes(query) ||
+        t.summary?.toLowerCase().includes(query) ||
+        (t.subtopics || []).some(st => st.toLowerCase().includes(query)) ||
+        (t.content?.concepts || []).some(c => c.toLowerCase().includes(query));
+
+      const matchDifficulty = !difficulty || difficulty === "all" || t.difficulty.toLowerCase() === difficulty.toLowerCase();
+
+      const isCompleted = completedSet.has(t.topicId);
+      const matchStatus = !status || status === "all" || (status === "completed" ? isCompleted : !isCompleted);
+
+      return matchText && matchDifficulty && matchStatus;
+    });
+
+    // Enrich with subject & unit names
+    const enrichedResults = results.slice(0, 40).map((t) => {
+      const sub = CURRICULUM_SUBJECTS.find(s => s.subjectId === t.subjectId);
+      const u = CURRICULUM_UNITS.find(unit => unit.unitId === t.unitId);
+      return {
+        topicId: t.topicId,
+        title: t.title,
+        summary: t.summary,
+        estimatedMinutes: t.estimatedMinutes,
+        difficulty: t.difficulty,
+        subjectId: t.subjectId,
+        subjectName: sub?.name || t.subjectId,
+        unitId: t.unitId,
+        unitTitle: u?.title || t.unitId,
+        isCompleted: completedSet.has(t.topicId),
+      };
+    });
+
+    res.json({
+      query,
+      count: enrichedResults.length,
+      results: enrichedResults,
+    });
+  } catch (err) {
+    console.error("searchCurriculum error:", err);
+    res.status(500).json({ message: "Search failed." });
   }
 };

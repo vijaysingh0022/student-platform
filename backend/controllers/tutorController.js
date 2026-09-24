@@ -1,11 +1,15 @@
 import { getAIClient, getAIModel } from "../config/ai.js";
+import TopicProgress from "../models/TopicProgress.js";
+import User from "../models/User.js";
+import { Topic, Subject } from "../models/Curriculum.js";
 
-// @desc AI Tutor - answer a student's doubt/question
+// @desc AI Tutor - answer a student's doubt/question with context
 // @route POST /api/tutor/ask
-// body: { question, subject (optional context) }
+// body: { question, subject, topic, history }
 export const askTutor = async (req, res) => {
   try {
-    const { question, subject } = req.body;
+    const { question, subject, topic, history = [] } = req.body;
+    const userId = req.user?._id;
 
     if (!question || question.trim() === "") {
       return res.status(400).json({ message: "Question is required" });
@@ -25,32 +29,58 @@ export const askTutor = async (req, res) => {
 
     const domainFocus = subject && SUBJECT_GUIDELINES[subject] ? SUBJECT_GUIDELINES[subject] : "Provide accurate, clear, and high-impact computer science explanations.";
 
-    const systemPrompt = `You are an elite, patient, and highly engaging AI Academic Tutor for B.Tech Computer Science and Engineering students preparing for campus placements and semester exams.
-Subject Focus: ${subject || "General Computer Science"}
+    // 1. Fetch Student Context if logged in
+    let studentContextStr = "Student Context: Anonymous Student.";
+    if (userId) {
+      const [user, progressList] = await Promise.all([
+        User.findById(userId).lean(),
+        TopicProgress.find({ user: userId }).lean()
+      ]);
+
+      if (user) {
+        const completedCount = progressList.filter(p => p.isCompleted).length;
+        const weakTopics = progressList.filter(p => p.masteryStatus === "weak").map(p => p.topicId);
+        
+        studentContextStr = `Student Context:
+- Target Role/Goal: ${user.targetRole || "Software Engineer"}
+- Completed Topics: ${completedCount}
+- Weak Topics/Concepts: ${weakTopics.length > 0 ? weakTopics.slice(0, 5).join(", ") : "None detected"}
+- Current Focus: Subject: ${subject || "General"}, Topic: ${topic || "General"}
+`;
+      }
+    }
+
+    const systemPrompt = `You are an elite, patient, and highly engaging AI Personal CSE Mentor for B.Tech Computer Science and Engineering students.
+You MUST NOT behave like a generic chatbot. You are a mentor who knows the student's progress.
+
+${studentContextStr}
 Domain Guidance: ${domainFocus}
 
-Follow these strict formatting guidelines to make your answers exceptionally clear, visually appealing, and easy to study:
-1. Start with a crisp 1-2 sentence **TL;DR / Core Concept** summary with bold key terms.
-2. Use clean markdown formatting:
-   - Use '### 📌 Concept Overview', '### ⚙️ How It Works', '### 💡 Key Takeaway / Exam Tip', etc.
-   - Use bullet points (•) for step-by-step points instead of long paragraphs.
-   - Highlight key technical terms with backticks (\`term\`) or **bold**.
-3. When providing code, math or queries:
-   - Provide a brief 2-bullet approach first.
-   - Use proper markdown code blocks with explicit language tags (\`\`\`cpp, \`\`\`python, \`\`\`sql, \`\`\`java, \`\`\`javascript).
-   - Add clear comments inside the code explaining tricky lines.
-4. If the student asks about a concept or problem:
-   - Give both intuition (why it matters) and technical precision (how it works).
-   - Add a quick '💡 Common Interview/Exam Pitfall' section.
-5. Keep explanations concise, practical, and directly applicable to CSE placements.`;
+Follow these strict guidelines:
+1. ALWAYS acknowledge the student's context if relevant. E.g., if they ask about a topic they are weak in, say "I noticed you are currently weak in... Let's break it down."
+2. Structure your answers in clear steps when explaining a concept. E.g.:
+   Step 1 — Concept
+   Step 2 — Visual Example
+   Step 3 — Dry Run
+   Step 4 — Code
+   Step 5 — Practice
+3. Keep formatting clean with markdown. Use \`term\` or **bold** for key concepts. Provide syntax highlighted code blocks.
+4. Keep explanations concise, practical, and directly applicable to placements. Do not output walls of text. Use bullet points.`;
 
     const openai = getAIClient();
     const model = getAIModel();
+
+    // Map history to OpenAI format
+    const formattedHistory = history.map(msg => ({
+      role: msg.role === 'ai' ? 'assistant' : 'user',
+      content: msg.text
+    })).slice(-5); // Keep last 5 messages for context
 
     const completion = await openai.chat.completions.create({
       model,
       messages: [
         { role: "system", content: systemPrompt },
+        ...formattedHistory,
         { role: "user", content: question },
       ],
       max_tokens: 1200,

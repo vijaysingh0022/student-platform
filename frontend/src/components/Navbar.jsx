@@ -328,6 +328,74 @@ const Navbar = () => {
                   </Link>
 
                   <Link
+                    to="/skill-graph"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname === "/skill-graph"
+                        ? "bg-indigo-50 text-indigo-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100 text-base">
+                      🧬
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">Skill Graph</div>
+                      <div className="text-[11px] text-slate-400 font-medium">Live CSE mastery intelligence</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/visualizer"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname === "/visualizer"
+                        ? "bg-violet-50 text-violet-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center shrink-0 border border-violet-100 text-base">
+                      🧮
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">Algorithm Visualizer</div>
+                      <div className="text-[11px] text-slate-400 font-medium">15 interactive algorithm animations & AI explanations</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/coding-lab"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname === "/coding-lab"
+                        ? "bg-violet-50 text-violet-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100 text-base">
+                      💻
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">AI Coding Lab</div>
+                      <div className="text-[11px] text-slate-400 font-medium">Multi-language compiler, test cases & AI audit</div>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/mock-interview"
+                    className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                      location.pathname === "/mock-interview"
+                        ? "bg-violet-50 text-violet-900"
+                        : "hover:bg-slate-50 text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100 text-base">
+                      🎙️
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">AI Mock Interview</div>
+                      <div className="text-[11px] text-slate-400 font-medium">5 live rounds, AI follow-ups & hiring feedback</div>
+                    </div>
+                  </Link>
+
+                  <Link
                     to="/placement-readiness"
                     className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
                       location.pathname === "/placement-readiness"

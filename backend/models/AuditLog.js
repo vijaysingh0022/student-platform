@@ -22,6 +22,8 @@ const auditLogSchema = new mongoose.Schema(
         "SECURITY_ALERT",
         "ACCESS_DENIED",
         "CONSENT_UPDATED",
+        "ROADMAP_DAY_TOGGLED",
+        "ROADMAP_DAY_STATUS_UPDATED",
       ],
     },
     resource: { type: String, default: "/" },

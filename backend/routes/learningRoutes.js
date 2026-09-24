@@ -10,14 +10,22 @@ import {
   submitTopicQuiz,
   getStudentLearningSummary,
   getFacultyLearningAnalytics,
+  generateUnitRoadmap,
+  searchCurriculum,
 } from "../controllers/learningController.js";
 
 const router = express.Router();
+
+// Search across curriculum
+router.get("/search", protect, searchCurriculum);
 
 // Public / optional-auth routes for viewing curriculum
 router.get("/subjects", protect, getSubjects);
 router.get("/subjects/:subjectId", protect, getSubjectHierarchy);
 router.get("/topics/:topicId", protect, getTopicContent);
+
+// Unit Dynamic AI Roadmap generator
+router.post("/units/:unitId/roadmap", protect, generateUnitRoadmap);
 
 // Student progress & completion actions
 router.post("/topics/:topicId/read", protect, markTopicRead);

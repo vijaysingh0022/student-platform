@@ -298,9 +298,28 @@ const SubjectCurriculumPage = () => {
 
                                   {getStatusBadge(topic)}
 
+                                  {/* [Practice] */}
+                                  <Link
+                                    to={`/learn/${subject.subjectId}/${topic.topicId}?tab=practice`}
+                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-all shadow-xs hidden sm:block"
+                                  >
+                                    📝 Practice
+                                  </Link>
+
+                                  {/* [Ask AI] */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      handleAskTutor(e, topic.title, subject.name);
+                                    }}
+                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all shadow-xs hidden sm:block"
+                                  >
+                                    🤖 Ask AI
+                                  </button>
+
                                   <Link
                                     to={`/learn/${subject.subjectId}/${topic.topicId}`}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs"
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs ml-1"
                                   >
                                     Study →
                                   </Link>

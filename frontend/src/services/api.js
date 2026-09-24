@@ -160,9 +160,81 @@ export const getFacultyLearningStats = async (config = {}) => {
   return api.get("/learning/faculty/analytics", config);
 };
 
+export const generateUnitRoadmap = async (unitId, payload = {}, config = {}) => {
+  return api.post(`/learning/units/${unitId}/roadmap`, payload, config);
+};
+
+export const searchCurriculum = async (params = {}, config = {}) => {
+  return api.get("/learning/search", { params, ...config });
+};
+
 // Legacy SSO fallback
 export const ssoLogin = async (provider, config = {}) => {
   return api.post("/auth/sso", { provider }, config);
+};
+
+// ─── Dynamic AI Study Planner ───────────────────────────────────────────────
+export const generateStudyPlan = async (data, config = {}) => {
+  return api.post("/roadmap/generate", data, config);
+};
+
+export const getStudyPlan = async (subject, config = {}) => {
+  return api.get(`/roadmap/${subject}`, config);
+};
+
+export const updatePlanDayStatus = async (id, dayNumber, status, performanceRating = "good", config = {}) => {
+  return api.patch(`/roadmap/${id}/day-status`, { dayNumber, status, performanceRating }, config);
+};
+
+export const rescheduleStudyPlan = async (id, config = {}) => {
+  return api.post(`/roadmap/${id}/reschedule`, {}, config);
+};
+
+// ─── Skill Graph ─────────────────────────────────────────────────────────────
+export const getSkillGraph = async (config = {}) => {
+  return api.get("/skillgraph", config);
+};
+
+// ─── AI Coding Lab ────────────────────────────────────────────────────────────
+export const getCodingProblems = async (config = {}) => {
+  return api.get("/coding/problems", config);
+};
+
+export const runCodingCode = async (data, config = {}) => {
+  return api.post("/coding/run", data, config);
+};
+
+export const submitCodingCode = async (data, config = {}) => {
+  return api.post("/coding/submit", data, config);
+};
+
+export const debugCodingCode = async (data, config = {}) => {
+  return api.post("/coding/debug", data, config);
+};
+
+export const generateCodingTestCases = async (data, config = {}) => {
+  return api.post("/coding/generate-testcases", data, config);
+};
+
+// ─── AI Mock Interview ────────────────────────────────────────────────────────
+export const startMockInterview = async (role, config = {}) => {
+  return api.post("/interview/start", { role }, config);
+};
+
+export const submitInterviewAnswer = async (id, data, config = {}) => {
+  return api.post(`/interview/${id}/answer`, data, config);
+};
+
+export const submitInterviewFollowUp = async (id, data, config = {}) => {
+  return api.post(`/interview/${id}/follow-up-answer`, data, config);
+};
+
+export const completeMockInterview = async (id, config = {}) => {
+  return api.post(`/interview/${id}/complete`, {}, config);
+};
+
+export const getMockInterviewHistory = async (config = {}) => {
+  return api.get("/interview/history", config);
 };
 
 export default api;

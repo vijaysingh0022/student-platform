@@ -133,15 +133,16 @@ const TopicLearningPage = () => {
 
   const tabs = [
     { id: "content", label: "Content" },
-    { id: "examples", label: "Examples" },
+    { id: "examples", label: "Examples & Dry Run" },
     { id: "code", label: "Code" },
     ...(hasVisualization ? [{ id: "visualisation", label: "Visualisation" }] : []),
-    { id: "practice", label: "Practice" },
+    { id: "exam-prep", label: "Exam Prep" },
+    { id: "practice", label: "Practice & Interview" },
     { id: "notes", label: "Notes" },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#f0f6fc] py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
         {/* Breadcrumb Navigation Bar */}
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500 flex-wrap">
@@ -180,17 +181,36 @@ const TopicLearningPage = () => {
             </div>
 
             {/* Quick Actions in Header */}
-            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
+              <button
+                onClick={handleMarkComplete}
+                disabled={markingCompleted || completedState}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
+                  completedState
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default"
+                    : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300"
+                }`}
+              >
+                <span>{completedState ? "✓ Completed" : "Mark as Complete"}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("practice")}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-colors flex items-center gap-1.5 shadow-xs"
+              >
+                <span>📝 Practice This Topic</span>
+              </button>
+
               <button
                 onClick={handleAskTutor}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-colors flex items-center gap-1.5 shadow-2xs"
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors flex items-center gap-1.5 shadow-xs"
               >
                 <span>🤖 Ask AI Tutor</span>
               </button>
 
               <Link
                 to={`/learn/${subjectId}/${topicId}/quiz`}
-                className="btn-gradient px-4 py-2 rounded-xl text-xs font-black text-white flex items-center gap-1.5 shadow-xs"
+                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 flex items-center gap-1.5 shadow-xs"
               >
                 <span>⚡ Topic Quiz</span>
               </Link>
@@ -206,7 +226,7 @@ const TopicLearningPage = () => {
               {topic.subtopics.map((sub, i) => (
                 <span
                   key={i}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-700 border border-slate-200/80"
+                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-100"
                 >
                   {sub}
                 </span>
@@ -220,14 +240,14 @@ const TopicLearningPage = () => {
           {/* Main Content (3 cols) */}
           <div className="lg:col-span-3 space-y-6">
             {/* ─── TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-slate-200 shadow-xs">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-sky-100 shadow-xs">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex-shrink-0 flex items-center gap-2 ${
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex-shrink-0 flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
+                      ? "bg-sky-600 text-white shadow-md shadow-sky-600/20"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                   }`}
                 >
@@ -239,16 +259,68 @@ const TopicLearningPage = () => {
         {/* ─── TAB 1: CONTENT ──────────────────────────────────────────────────────── */}
         {activeTab === "content" && (
           <div className="space-y-6 animate-fade-in">
-            {/* Introduction Card */}
-            {content.introduction && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-3">
+            {/* Short Explanation / Overview Card */}
+            {(content.shortExplanation || content.introduction) && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
                 <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                   <span>📌</span>
-                  <span>Introduction & Overview</span>
+                  <span>Introduction & Short Summary</span>
                 </h3>
                 <p className="text-sm leading-relaxed text-slate-700 font-medium">
-                  {content.introduction}
+                  {content.shortExplanation || content.introduction}
                 </p>
+              </div>
+            )}
+
+            {/* Simple Explanation Card */}
+            {content.simpleExplanation && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>👶</span>
+                  <span>Explain Like I'm 5</span>
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-700 font-medium">
+                  {content.simpleExplanation}
+                </p>
+              </div>
+            )}
+
+            {/* Real World Example Card */}
+            {content.realWorldExample && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>🌍</span>
+                  <span>Real-World Application</span>
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-700 font-medium">
+                  {content.realWorldExample}
+                </p>
+              </div>
+            )}
+
+            {/* In-Depth Academic Theory Card */}
+            {(content.detailedExplanation || content.explanationMarkdown) && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>📖</span>
+                  <span>Detailed Academic Explanation</span>
+                </h3>
+                <div className="text-sm leading-relaxed text-slate-700 font-medium whitespace-pre-line space-y-2">
+                  {content.detailedExplanation || content.explanationMarkdown}
+                </div>
+              </div>
+            )}
+
+            {/* Visual Diagram Section */}
+            {content.visualDiagram && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
+                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>📐</span>
+                  <span>Visual Representation & System Diagram</span>
+                </h3>
+                <div className="p-4 rounded-2xl bg-slate-900 text-sky-300 font-mono text-xs overflow-x-auto whitespace-pre leading-relaxed shadow-inner">
+                  {content.visualDiagram}
+                </div>
               </div>
             )}
 
@@ -312,13 +384,37 @@ const TopicLearningPage = () => {
               </div>
             )}
 
+          </div>
+        )}
+
+        {/* ─── TAB: EXAM PREP ─────────────────────────────────────────────────── */}
+        {activeTab === "exam-prep" && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Exam Notes */}
+            {content.examNotes && content.examNotes.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-amber-200/80 shadow-xs space-y-4">
+                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>📝</span>
+                  <span>Quick Exam Notes</span>
+                </h3>
+                <ul className="space-y-2 text-sm text-slate-700 font-medium">
+                  {content.examNotes.map((note, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-amber-500 font-bold">•</span>
+                      <span>{note}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Key Takeaways & Common Mistakes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {content.keyTakeaways && content.keyTakeaways.length > 0 && (
                 <div className="bg-white p-6 rounded-3xl border border-emerald-200/80 shadow-2xs space-y-3">
                   <h4 className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
                     <span>✅</span>
-                    <span>Key Exam & Interview Takeaways</span>
+                    <span>Key Takeaways</span>
                   </h4>
                   <ul className="space-y-2 text-xs text-slate-700 font-medium">
                     {content.keyTakeaways.map((takeaway, tIdx) => (
@@ -348,19 +444,71 @@ const TopicLearningPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Important Questions */}
+            {content.importantQuestions && content.importantQuestions.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-indigo-100 shadow-xs space-y-4">
+                <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>⭐</span>
+                  <span>Important University Questions</span>
+                </h3>
+                <div className="space-y-3">
+                  {content.importantQuestions.map((iq, iIdx) => (
+                    <div key={iIdx} className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {iq.question}</h4>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-indigo-700 border border-indigo-200 flex-shrink-0">
+                          {iq.marks} Marks
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-indigo-100/60">
+                        <strong className="text-indigo-900">Answer:</strong> {iq.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* PYQs */}
+            {content.pyqs && content.pyqs.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-blue-100 shadow-xs space-y-4">
+                <h3 className="text-sm font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>📜</span>
+                  <span>Previous Year Questions (PYQs)</span>
+                </h3>
+                <div className="space-y-3">
+                  {content.pyqs.map((pyq, iIdx) => (
+                    <div key={iIdx} className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {pyq.question}</h4>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-blue-700 border border-blue-200">
+                            {pyq.year} - {pyq.exam}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-blue-100/60">
+                        <strong className="text-blue-900">Answer:</strong> {pyq.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ─── TAB 2: EXAMPLES ────────────────────────────────────────────────────── */}
+        {/* ─── TAB 2: EXAMPLES & DRY RUN ────────────────────────────────────────── */}
         {activeTab === "examples" && (
           <div className="space-y-6 animate-fade-in">
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
               <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                 <span>💡</span>
-                <span>Step-by-Step Practical Examples & Dry Run</span>
+                <span>Step-by-Step Practical Examples</span>
               </h3>
 
-              {content.examples && content.examples.length > 0 ? (
+              {content.examples && content.examples.length > 0 && (
                 <div className="space-y-4">
                   {content.examples.map((ex, eIdx) => (
                     <div key={eIdx} className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
@@ -369,16 +517,55 @@ const TopicLearningPage = () => {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
-                  <p className="font-bold text-slate-900">Sample Dry Run for {topic.title}:</p>
-                  <p>Given Array: [10, 7, 8, 9, 1, 5]</p>
-                  <p>1. Pivot chosen: 5</p>
-                  <p>2. Elements less than 5 moved left ([1]), elements greater moved right ([10, 7, 8, 9])</p>
-                  <p>3. Recursively partition left and right sub-arrays until sorted: [1, 5, 7, 8, 9, 10].</p>
-                </div>
               )}
             </div>
+
+            {content.dryRunSteps && content.dryRunSteps.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-4">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <span>👣</span>
+                  <span>Dry Run Steps</span>
+                </h3>
+                <div className="space-y-4">
+                  {content.dryRunSteps.map((step, sIdx) => (
+                    <div key={sIdx} className="p-3 rounded-xl bg-sky-50/50 border border-sky-100 text-sm text-slate-800">
+                      <strong>Step {sIdx + 1}:</strong> {step}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {content.dryRunTable && content.dryRunTable.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <span>📊</span>
+                  <span>Dry Run State Table</span>
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-left text-slate-700 border border-slate-200 rounded-xl overflow-hidden">
+                    <thead className="bg-slate-100 text-slate-900 font-bold">
+                      <tr>
+                        <th className="px-4 py-2 border-b border-slate-200">Step</th>
+                        <th className="px-4 py-2 border-b border-slate-200">Line</th>
+                        <th className="px-4 py-2 border-b border-slate-200">State / Variables</th>
+                        <th className="px-4 py-2 border-b border-slate-200">Explanation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {content.dryRunTable.map((row, rIdx) => (
+                        <tr key={rIdx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-2">{row.step}</td>
+                          <td className="px-4 py-2 font-mono text-xs">{row.line}</td>
+                          <td className="px-4 py-2 font-mono text-xs text-sky-700">{row.state}</td>
+                          <td className="px-4 py-2 text-xs">{row.explanation}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -396,9 +583,68 @@ const TopicLearningPage = () => {
           </div>
         )}
 
-        {/* ─── TAB 5: PRACTICE ────────────────────────────────────────────────────── */}
+        {/* ─── TAB 5: PRACTICE & INTERVIEW ──────────────────────────────────────── */}
         {activeTab === "practice" && (
           <div className="space-y-6 animate-fade-in">
+            {content.interviewQuestions && content.interviewQuestions.length > 0 && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-indigo-100 shadow-xs space-y-4">
+                <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>💼</span>
+                  <span>Top Tech & FAANG Interview Questions</span>
+                </h3>
+                <div className="space-y-3">
+                  {content.interviewQuestions.map((iq, iIdx) => (
+                    <div key={iIdx} className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {iq.question}</h4>
+                        <div className="flex gap-1 flex-shrink-0">
+                          {(iq.companyTags || ["Google", "Amazon"]).map((comp, cIdx) => (
+                            <span key={cIdx} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-indigo-700 border border-indigo-200">
+                              {comp}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-indigo-100/60">
+                        <strong className="text-indigo-900">Answer:</strong> {iq.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {content.codingPractice && content.codingPractice.title && (
+              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
+                <h3 className="text-sm font-black text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                  <span>💻</span>
+                  <span>Coding Practice: {content.codingPractice.title}</span>
+                </h3>
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <p className="text-sm font-bold text-slate-800">Problem Statement:</p>
+                  <p className="text-sm text-slate-700">{content.codingPractice.problemStatement}</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-slate-900 text-slate-300 font-mono text-xs overflow-x-auto">
+                    <p className="font-bold text-sky-400 mb-1">Input:</p>
+                    {content.codingPractice.sampleInput}
+                  </div>
+                  <div className="p-4 rounded-xl bg-slate-900 text-slate-300 font-mono text-xs overflow-x-auto">
+                    <p className="font-bold text-emerald-400 mb-1">Output:</p>
+                    {content.codingPractice.sampleOutput}
+                  </div>
+                </div>
+                {content.codingPractice.starterCode && (
+                  <div>
+                     <p className="text-xs font-bold text-slate-600 mb-2">Starter Code:</p>
+                     <div className="p-4 rounded-xl bg-slate-900 text-sky-300 font-mono text-xs overflow-x-auto whitespace-pre-wrap">
+                       {content.codingPractice.starterCode}
+                     </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <PracticePanel topicId={topicId} subjectId={subjectId} />
           </div>
         )}

@@ -26,12 +26,14 @@ const topicProgressSchema = new mongoose.Schema(
     completedAt: { type: Date },
 
     // Mastery status
-    // masteryStatus: 'not_attempted' | 'weak' (<60%) | 'needs_practice' (60-79%) | 'strong' (>=80%)
+    // masteryStatus: 'not_attempted' | 'weak' (<60%) | 'needs_practice' (60-79%) | 'strong' (>=80%) | 'mastered'
     masteryStatus: {
       type: String,
-      enum: ["not_attempted", "weak", "needs_practice", "strong"],
+      enum: ["not_attempted", "weak", "needs_practice", "strong", "mastered"],
       default: "not_attempted",
     },
+    isMastered: { type: Boolean, default: false },
+    masteredAt: { type: Date },
     masteryPercentage: { type: Number, default: 0 }, // 0 to 100
 
     // Quiz statistics

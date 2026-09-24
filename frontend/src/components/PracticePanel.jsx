@@ -1,164 +1,293 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import api from "../services/api.js";
+import MarkdownRenderer from "./MarkdownRenderer.jsx";
 
-export default function PracticePanel({ topicId, subjectId, questions = [] }) {
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [diffFilter, setDiffFilter] = useState("all");
+export default function PracticePanel({ topicId, subjectId }) {
+  const [session, setSession] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  
+  // States: 'start', 'generating', 'answering', 'feedback', 'summary'
+  const [phase, setPhase] = useState("start"); 
+  const [selectedOption, setSelectedOption] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [timer, setTimer] = useState(0);
 
-  const filterTypes = [
-    { id: "all", label: "All Questions" },
-    { id: "mcq", label: "MCQ" },
-    { id: "conceptual", label: "Conceptual" },
-    { id: "output", label: "Output Based" },
-    { id: "coding", label: "Coding" },
-  ];
+  useEffect(() => {
+    let interval;
+    if (phase === "answering") {
+      interval = setInterval(() => setTimer((t) => t + 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [phase]);
 
-  const filterDiffs = [
-    { id: "all", label: "All Difficulties" },
-    { id: "easy", label: "Easy" },
-    { id: "medium", label: "Medium" },
-    { id: "hard", label: "Hard" },
-  ];
+  const startPractice = async () => {
+    try {
+      setPhase("generating");
+      const { data } = await api.post("/adaptive/start", { subjectId, topicId });
+      setSession(data.session);
+      await fetchNextQuestion(data.session._id);
+    } catch (err) {
+      console.error(err);
+      setPhase("start");
+    }
+  };
 
-  const samplePractice = [
-    {
-      _id: "p1",
-      questionText: "What is the worst-case time complexity of Quick Sort, and when does it occur?",
-      type: "mcq",
-      difficulty: "medium",
-      options: ["O(n log n) when pivot is median", "O(n²) when array is already sorted and pivot is extreme", "O(n) always", "O(log n) worst case"],
-      explanation: "Quick sort degenerates to O(n²) when partition splits elements into 0 and n-1 elements each time, typical with sorted input and first/last element pivot.",
-    },
-    {
-      _id: "p2",
-      questionText: "Which partitioning scheme generally performs fewer swaps on average: Lomuto or Hoare?",
-      type: "conceptual",
-      difficulty: "easy",
-      options: ["Lomuto Partitioning", "Hoare Partitioning", "Both require identical swaps", "Neither uses swaps"],
-      explanation: "Hoare's scheme performs 3x fewer swaps on average than Lomuto's scheme because it works from both ends towards the center.",
-    },
-    {
-      _id: "p3",
-      questionText: "Given arr = [4, 1, 3, 9, 7], what is the array after first Lomuto partition with pivot = 7?",
-      type: "output",
-      difficulty: "hard",
-      options: ["[4, 1, 3, 7, 9]", "[1, 3, 4, 7, 9]", "[4, 1, 3, 9, 7]", "[7, 4, 1, 3, 9]"],
-      explanation: "Elements less than 7 ([4, 1, 3]) are placed left, pivot 7 is placed at index 3, and 9 stays at index 4.",
-    },
-  ];
+  const fetchNextQuestion = async (sid) => {
+    setPhase("generating");
+    setTimer(0);
+    try {
+      const { data } = await api.post("/adaptive/next", { sessionId: sid });
+      setCurrentQuestion(data);
+      setSelectedOption("");
+      setFeedback(null);
+      setPhase("answering");
+    } catch (err) {
+      console.error(err);
+      setPhase("summary");
+    }
+  };
 
-  const qList = questions.length > 0 ? questions : samplePractice;
+  const submitAnswer = async () => {
+    if (!selectedOption) return;
+    try {
+      const { data } = await api.post("/adaptive/submit", {
+        sessionId: session._id,
+        questionId: currentQuestion.questionId,
+        userAnswer: selectedOption,
+        timeTakenSeconds: timer
+      });
+      setFeedback(data);
+      setPhase("feedback");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const endPractice = async () => {
+    try {
+      setPhase("generating");
+      const { data } = await api.post("/adaptive/end", { sessionId: session._id });
+      setSummary(data.session);
+      setPhase("summary");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const getDifficultyColor = (diff) => {
+    if (diff === "easy") return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    if (diff === "hard") return "bg-rose-100 text-rose-800 border-rose-200";
+    if (diff === "interview") return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    return "bg-amber-100 text-amber-800 border-amber-200";
+  };
+
+  if (phase === "start") {
+    return (
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center space-y-4">
+        <div className="w-16 h-16 bg-violet-100 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+          🧠
+        </div>
+        <h3 className="text-xl font-black text-slate-900">Adaptive Practice Engine</h3>
+        <p className="text-sm text-slate-600 max-w-md mx-auto">
+          Not just random questions. The AI adapts to your skill level in real-time. Perform well, and it scales to interview level. Struggle, and it reinforces concepts.
+        </p>
+        <button
+          onClick={startPractice}
+          className="btn-gradient px-6 py-3 rounded-2xl text-sm font-black text-white shadow-md hover:scale-105 transition-all mt-4"
+        >
+          🚀 Start Adaptive Session
+        </button>
+      </div>
+    );
+  }
+
+  if (phase === "generating") {
+    return (
+      <div className="bg-white p-12 rounded-3xl border border-slate-200 shadow-sm text-center space-y-6">
+        <div className="w-12 h-12 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto"></div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">AI is analyzing your profile...</h3>
+          <p className="text-xs text-slate-500 mt-2">Generating the perfect question for your mastery level</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "summary" && summary) {
+    return (
+      <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6 animate-fade-in-up">
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+          <span className="text-3xl">📊</span>
+          <div>
+            <h3 className="text-xl font-black text-slate-900">Session Diagnostic Report</h3>
+            <p className="text-xs text-slate-500 font-bold tracking-wide uppercase">AI Adaptive Profiling</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+            <div className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Accuracy</div>
+            <div className="text-2xl font-black text-slate-900">{summary.accuracy}%</div>
+          </div>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+            <div className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Avg Speed</div>
+            <div className="text-2xl font-black text-slate-900">{summary.speedAvgSeconds}s</div>
+          </div>
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+            <div className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1">Questions</div>
+            <div className="text-2xl font-black text-slate-900">{summary.attempts.length}</div>
+          </div>
+          <div className="p-4 bg-violet-50 border border-violet-200 rounded-2xl text-center">
+            <div className="text-xs font-black text-violet-600 uppercase tracking-wider mb-1">Mastery</div>
+            <div className="text-2xl font-black text-violet-900">{summary.masteryPercentage}%</div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <span className="text-rose-500">⚠️</span> Weaknesses & Mistakes
+            </h4>
+            <div className="p-4 rounded-2xl bg-rose-50/50 border border-rose-100 space-y-2">
+              {summary.mistakePatterns?.map((m, i) => (
+                <div key={i} className="text-xs font-medium text-rose-900 flex gap-2">
+                  <span>•</span> {m}
+                </div>
+              ))}
+              {(!summary.mistakePatterns || summary.mistakePatterns.length === 0) && (
+                <div className="text-xs text-slate-500 italic">No major mistake patterns detected.</div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-sm font-black text-slate-900 flex items-center gap-2">
+              <span className="text-emerald-500">💡</span> AI Recommendations
+            </h4>
+            <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 space-y-2">
+              {summary.recommendations?.map((r, i) => (
+                <div key={i} className="text-xs font-bold text-emerald-900 flex gap-2">
+                  <span>→</span> {r}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+          <div className="text-xs font-bold text-slate-500">
+            Next optimal topic: <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{summary.recommendedNextTopic || "Continue down roadmap"}</span>
+          </div>
+          <button
+            onClick={() => setPhase("start")}
+            className="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 transition-colors"
+          >
+            Start New Session
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-      {/* Header & Launch Quiz CTA */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-        <div>
-          <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-            <span>📝</span>
-            <span>Practice & Diagnostic Assessment</span>
-          </h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Test your conceptual grasp with topic-specific questions mapped to diagnostic subtopics.
-          </p>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center text-xl shadow-inner border border-violet-200">
+            🧠
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900">Adaptive Engine</h3>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${getDifficultyColor(currentQuestion?.difficulty)}`}>
+                {currentQuestion?.difficulty}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400">Time: {timer}s</span>
+            </div>
+          </div>
         </div>
-
-        <Link
-          to={`/quiz/${subjectId}/${topicId}`}
-          className="btn-gradient px-5 py-2.5 rounded-2xl text-xs font-black text-white shadow-md hover:scale-105 transition-all text-center"
+        
+        <button 
+          onClick={endPractice}
+          className="px-4 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors"
         >
-          <span>🎯 Launch Full Diagnostic Quiz (10 Qs)</span>
-        </Link>
+          End Session
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-        {/* Question Type Filter */}
-        <div className="flex items-center gap-1.5 overflow-x-auto">
-          <span className="text-xs font-bold text-slate-400 mr-1">Type:</span>
-          {filterTypes.map((tf) => (
-            <button
-              key={tf.id}
-              onClick={() => setTypeFilter(tf.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                typeFilter === tf.id
-                  ? "bg-violet-600 text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              {tf.label}
-            </button>
-          ))}
-        </div>
+      {/* Question */}
+      <div className="space-y-5">
+        <h4 className="text-base sm:text-lg font-black text-slate-900 leading-relaxed">
+          <MarkdownRenderer content={currentQuestion?.questionText} />
+        </h4>
 
-        {/* Difficulty Filter */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-slate-400 mr-1">Difficulty:</span>
-          {filterDiffs.map((df) => (
-            <button
-              key={df.id}
-              onClick={() => setDiffFilter(df.id)}
-              className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all ${
-                diffFilter === df.id
-                  ? "bg-slate-900 text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              {df.label}
-            </button>
-          ))}
-        </div>
-      </div>
+        <div className="space-y-2">
+          {currentQuestion?.options.map((opt, idx) => {
+            const isSelected = selectedOption === opt;
+            const showCorrect = phase === "feedback" && feedback?.correctAnswer === opt;
+            const showWrong = phase === "feedback" && isSelected && !feedback?.isCorrect;
 
-      {/* Question Cards List */}
-      <div className="space-y-4">
-        {qList.map((q, idx) => (
-          <div key={q._id || idx} className="p-5 sm:p-6 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-100 text-violet-800 border border-violet-200">
-                  {q.type || "MCQ"}
+            let btnClass = "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300";
+            if (isSelected && phase !== "feedback") btnClass = "bg-violet-50 border-violet-400 text-violet-900 ring-2 ring-violet-200";
+            if (showCorrect) btnClass = "bg-emerald-50 border-emerald-400 text-emerald-900";
+            if (showWrong) btnClass = "bg-rose-50 border-rose-400 text-rose-900";
+
+            return (
+              <button
+                key={idx}
+                disabled={phase === "feedback"}
+                onClick={() => setSelectedOption(opt)}
+                className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 font-medium text-sm flex gap-3 ${btnClass}`}
+              >
+                <span className={`font-black ${showCorrect ? 'text-emerald-600' : showWrong ? 'text-rose-600' : isSelected ? 'text-violet-600' : 'text-slate-400'}`}>
+                  {String.fromCharCode(65 + idx)}.
                 </span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    q.difficulty === "easy"
-                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                      : q.difficulty === "hard"
-                      ? "bg-rose-100 text-rose-800 border border-rose-200"
-                      : "bg-amber-100 text-amber-800 border border-amber-200"
-                  }`}
-                >
-                  {q.difficulty || "medium"}
+                <span className="flex-1">{opt}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Action / Feedback Area */}
+      <div className="pt-4">
+        {phase === "answering" && (
+          <button
+            onClick={submitAnswer}
+            disabled={!selectedOption}
+            className="w-full btn-gradient px-6 py-3.5 rounded-2xl text-sm font-black text-white shadow-md disabled:opacity-50 transition-all"
+          >
+            Submit Answer
+          </button>
+        )}
+
+        {phase === "feedback" && feedback && (
+          <div className="space-y-4 animate-fade-in-up">
+            <div className={`p-4 rounded-2xl border ${feedback.isCorrect ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">{feedback.isCorrect ? "✅" : "❌"}</span>
+                <span className={`font-black ${feedback.isCorrect ? "text-emerald-800" : "text-rose-800"}`}>
+                  {feedback.isCorrect ? "Excellent!" : "Incorrect"}
                 </span>
               </div>
-              <span className="text-xs font-bold text-slate-400">Q{idx + 1}</span>
+              <p className="text-xs font-medium text-slate-700 leading-relaxed">
+                {feedback.explanation}
+              </p>
             </div>
 
-            <h4 className="text-sm sm:text-base font-black text-slate-900 leading-relaxed">
-              {q.questionText}
-            </h4>
-
-            {/* Options */}
-            {q.options && q.options.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
-                {q.options.map((opt, oIdx) => (
-                  <div key={oIdx} className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 font-medium text-slate-700">
-                    <span className="font-bold mr-1.5 text-violet-700">{String.fromCharCode(65 + oIdx)}.</span>
-                    <span>{opt}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Explanation Note */}
-            {q.explanation && (
-              <div className="p-3 rounded-xl bg-violet-50/60 border border-violet-100 text-xs text-slate-700 leading-relaxed">
-                <strong className="text-violet-800 block mb-0.5">💡 Conceptual Insight:</strong>
-                {q.explanation}
-              </div>
-            )}
+            <button
+              onClick={() => fetchNextQuestion(session._id)}
+              className="w-full px-6 py-3.5 rounded-2xl text-sm font-black text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>Next Question</span>
+              <span className={`px-2 py-0.5 rounded text-[10px] ${getDifficultyColor(feedback.nextDifficulty)}`}>
+                Adaptive Level: {feedback.nextDifficulty}
+              </span>
+            </button>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

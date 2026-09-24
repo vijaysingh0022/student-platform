@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams, useLocation, Link } from "react-router-dom";
-import api from "../services/api.js";
+import { useParams, useSearchParams, useLocation, Link } from "react-router-dom";
+import api, { generateStudyPlan, getStudyPlan, rescheduleStudyPlan } from "../services/api.js";
 import RoadmapVisualizer from "../components/RoadmapVisualizer.jsx";
 import { useAppState } from "../context/AppStateContext.jsx";
 
@@ -19,8 +19,7 @@ const RoadmapPage = () => {
   const { subject: routeSubject } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { testVersion, onRoadmapDayToggled, jobReadinessScore } = useAppState();
+  const { testVersion } = useAppState();
 
   const activeSubject =
     routeSubject ||
@@ -32,21 +31,32 @@ const RoadmapPage = () => {
   const [skillGap, setSkillGap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
   const [genError, setGenError] = useState(null);
 
-  // Fetch or auto-generate roadmap
+  // Setup Modal State for Inputting Exam / Goal Details
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [setupForm, setSetupForm] = useState({
+    examGoal: "Placement & GATE Preparation",
+    examDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    availableHoursPerDay: 2,
+    skillLevel: "Intermediate",
+    targetScore: "90%",
+    preferredStudyTime: "Evening",
+  });
+
+  // Fetch or auto-generate study plan
   useEffect(() => {
     let isMounted = true;
 
-    const fetchRoadmapData = async () => {
+    const fetchPlannerData = async () => {
       setLoading(true);
       setGenError(null);
 
       try {
-        // Fetch skill gap and existing roadmap in parallel
         const [skillGapRes, roadmapRes] = await Promise.all([
           api.get(`/tests/skill-gap/${activeSubject}`).catch(() => ({ data: null })),
-          api.get(`/roadmap/${activeSubject}`).catch(() => ({ data: null })),
+          getStudyPlan(activeSubject).catch(() => ({ data: null })),
         ]);
 
         if (!isMounted) return;
@@ -59,32 +69,21 @@ const RoadmapPage = () => {
 
         if (!shouldRegenerate && roadmapRes.data && roadmapRes.data.days && roadmapRes.data.days.length > 0) {
           setRoadmap(roadmapRes.data);
+          // Populate form with existing plan settings
+          setSetupForm((prev) => ({
+            ...prev,
+            examGoal: roadmapRes.data.examGoal || prev.examGoal,
+            examDate: roadmapRes.data.examDate
+              ? new Date(roadmapRes.data.examDate).toISOString().split("T")[0]
+              : prev.examDate,
+            availableHoursPerDay: roadmapRes.data.availableHoursPerDay || prev.availableHoursPerDay,
+            skillLevel: roadmapRes.data.skillLevel || prev.skillLevel,
+            targetScore: roadmapRes.data.targetScore || prev.targetScore,
+            preferredStudyTime: roadmapRes.data.preferredStudyTime || prev.preferredStudyTime,
+          }));
         } else {
-          // Auto-generate fresh roadmap tailored to test results / weak topics
-          const weakTopics =
-            location.state?.weakTopics?.length > 0
-              ? location.state.weakTopics
-              : skillGapRes.data?.weakTopics || [];
-
-          setGenerating(true);
-          try {
-            const { data } = await api.post("/roadmap/generate", {
-              subject: activeSubject,
-              weakTopics,
-            });
-            if (isMounted) setRoadmap(data);
-          } catch (genErr) {
-            console.error("Auto generate roadmap error:", genErr);
-            if (isMounted) {
-              if (roadmapRes.data?.days?.length > 0) {
-                setRoadmap(roadmapRes.data);
-              } else {
-                setGenError("Failed to auto-generate roadmap. Click Regenerate below.");
-              }
-            }
-          } finally {
-            if (isMounted) setGenerating(false);
-          }
+          // Trigger setup modal if no existing plan found or auto generate
+          handleGeneratePlanner();
         }
       } catch (err) {
         console.error("Error fetching roadmap:", err);
@@ -93,7 +92,7 @@ const RoadmapPage = () => {
       }
     };
 
-    fetchRoadmapData();
+    fetchPlannerData();
 
     return () => {
       isMounted = false;
@@ -104,21 +103,38 @@ const RoadmapPage = () => {
     setSearchParams({ subject: subjectId });
   };
 
-  const handleRegenerate = async () => {
+  const handleGeneratePlanner = async (customPayload = null) => {
     setGenerating(true);
     setGenError(null);
+    setShowSetupModal(false);
+
     try {
-      const weakTopics = skillGap?.weakTopics || [];
-      const { data } = await api.post("/roadmap/generate", {
+      const payload = customPayload || {
         subject: activeSubject,
-        weakTopics,
-      });
+        ...setupForm,
+      };
+
+      const { data } = await generateStudyPlan(payload);
       setRoadmap(data);
     } catch (err) {
-      console.error("Manual regenerate roadmap error:", err);
-      setGenError(err.response?.data?.message || "Failed to regenerate roadmap.");
+      console.error("Generate study planner error:", err);
+      setGenError(err.response?.data?.message || "Failed to generate dynamic study plan.");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!roadmap?._id) return;
+    setRescheduling(true);
+    try {
+      const { data } = await rescheduleStudyPlan(roadmap._id);
+      setRoadmap(data);
+    } catch (err) {
+      console.error("Reschedule error:", err);
+      setGenError("Failed to reschedule study plan.");
+    } finally {
+      setRescheduling(false);
     }
   };
 
@@ -130,35 +146,47 @@ const RoadmapPage = () => {
       color: "from-violet-600 to-indigo-600",
     };
 
-  const completedDays = roadmap?.days?.filter((d) => d.completed).length || 0;
-  const totalDays = roadmap?.days?.length || 7;
-  const progressPercent = Math.round((completedDays / totalDays) * 100);
+  // Calculate Time Remaining until Exam Date
+  const calculateDaysRemaining = () => {
+    if (!roadmap?.examDate) return null;
+    const diffTime = new Date(roadmap.examDate).getTime() - new Date().getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  const daysRemaining = calculateDaysRemaining();
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-          {/* Subtle background glow */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-violet-200/40 via-sky-200/30 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
           <div className="space-y-3 z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-800 text-xs font-black tracking-wide uppercase border border-violet-200 shadow-xs">
-              <span>🗺️ 7-Day AI Remediation Blueprint</span>
+              <span>⚡ Dynamic AI Study Planner</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              7-Day Personalized Learning Roadmap
+              {activeSubject} Adaptive Study Planner
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl font-medium leading-relaxed">
-              Engineered by AI from your diagnostic test performance. Each day targets your diagnosed conceptual blindspots with micro-actions, pro tips, and interactive AI tutoring.
+              AI-analyzed study blueprint matching your exam date, mastery level, and daily availability. Automatically reschedules missed days, accelerates mastered topics, and reinforces weak concepts.
             </p>
           </div>
 
-          {/* Quick CTA Actions */}
+          {/* Quick Header CTA Buttons */}
           <div className="flex flex-wrap items-center gap-3 z-10 flex-shrink-0">
             <button
+              onClick={() => setShowSetupModal(true)}
+              className="px-4 py-2.5 rounded-2xl text-xs font-black bg-slate-900 text-white hover:bg-slate-800 border border-slate-900 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+            >
+              <span>⚙️ Plan Setup & Goals</span>
+            </button>
+
+            <button
               id="roadmap-regenerate-btn"
-              onClick={handleRegenerate}
+              onClick={() => handleGeneratePlanner()}
               disabled={generating || loading}
               className="btn-gradient px-4 py-2.5 rounded-2xl text-xs font-black text-white flex items-center gap-2 shadow-sm disabled:opacity-50 active:scale-95 transition-all"
             >
@@ -169,17 +197,10 @@ const RoadmapPage = () => {
                 </>
               ) : (
                 <>
-                  <span>✨ Regenerate with AI</span>
+                  <span>✨ Re-Generate Plan</span>
                 </>
               )}
             </button>
-
-            <Link
-              to={`/test/${activeSubject}`}
-              className="px-4 py-2.5 rounded-2xl text-xs font-black bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 flex items-center gap-2 active:scale-95 transition-all shadow-xs"
-            >
-              <span>📝 Take {activeSubject} Test</span>
-            </Link>
           </div>
         </div>
 
@@ -216,29 +237,29 @@ const RoadmapPage = () => {
               <span className="text-xl">⚠️</span>
               <div>
                 <h4 className="text-xs font-extrabold text-amber-900 uppercase tracking-wide">
-                  Diagnosed Weak Areas for {activeSubject}:
+                  Diagnosed Critical Weak Areas ({activeSubject}):
                 </h4>
                 <p className="text-xs text-amber-800 font-medium mt-0.5">
-                  The AI has structured your 7-day roadmap specifically around:{" "}
+                  The AI study planner is dynamically adjusting your practice sessions around:{" "}
                   <strong>{skillGap.weakTopics.join(", ")}</strong>.
                 </p>
               </div>
             </div>
             <Link
-              to="/dashboard"
+              to="/skill-graph"
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 flex-shrink-0 text-center transition-colors"
             >
-              View Skill Gap Analysis →
+              View Skill Graph →
             </Link>
           </div>
         )}
 
-        {/* Error Banner if any */}
+        {/* Error Banner */}
         {genError && (
           <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center justify-between gap-2">
             <span>{genError}</span>
             <button
-              onClick={handleRegenerate}
+              onClick={() => handleGeneratePlanner()}
               className="px-3 py-1 rounded-lg bg-rose-600 text-white font-bold"
             >
               Retry
@@ -246,77 +267,193 @@ const RoadmapPage = () => {
           </div>
         )}
 
-        {/* Main Roadmap Visualizer */}
+        {/* Main Roadmap Visualizer Component */}
         {loading ? (
-          <div className="min-h-[300px] flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
+          <div className="min-h-[350px] flex flex-col items-center justify-center bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
             <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-bold text-slate-700">Loading your 7-Day Learning Roadmap...</p>
+            <p className="text-sm font-bold text-slate-700">Analyzing mastery, remaining syllabus & generating study plan...</p>
           </div>
         ) : roadmap ? (
           <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm">
             <RoadmapVisualizer
               roadmap={roadmap}
               onRoadmapUpdated={(updated) => setRoadmap(updated)}
-              onRegenerate={handleRegenerate}
+              onRegenerate={() => handleGeneratePlanner()}
+              onReschedule={handleReschedule}
+              onOpenSetup={() => setShowSetupModal(true)}
               generating={generating}
+              rescheduling={rescheduling}
+              daysRemaining={daysRemaining}
             />
           </div>
         ) : (
           <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-4">
-            <div className="text-4xl">🗺️</div>
-            <h3 className="text-lg font-bold text-slate-800">No Roadmap Found for {activeSubject}</h3>
+            <div className="text-4xl">🎯</div>
+            <h3 className="text-lg font-bold text-slate-800">Create Your Dynamic AI Study Plan</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Generate a tailored 7-day blueprint targeting your specific strengths and weaknesses.
+              Set your target exam date, daily hours, and current skill level to generate an adaptive day-by-day plan.
             </p>
             <button
-              onClick={handleRegenerate}
+              onClick={() => setShowSetupModal(true)}
               disabled={generating}
               className="btn-gradient px-6 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm"
             >
-              {generating ? "Generating..." : "⚡ Generate 7-Day Roadmap"}
+              🚀 Setup Study Plan
             </button>
           </div>
         )}
+      </div>
 
-        {/* Study Tips & Best Practice Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm">
-              1
+      {/* Setup & Goal Configuration Modal */}
+      {showSetupModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  ⚙️ Dynamic AI Planner Setup
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Configure your exam goals and daily availability for {activeSubject}.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSetupModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+              >
+                ✕
+              </button>
             </div>
-            <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">
-              Complete 1 Day at a Time
-            </h4>
-            <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              Dedicate 45 minutes daily. Don't rush multiple days at once; spaced repetition locks concepts into long-term memory.
-            </p>
-          </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 font-bold text-sm">
-              2
-            </div>
-            <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">
-              Ask AI Tutor Anytime
-            </h4>
-            <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              Hit the <strong>"Ask AI Tutor"</strong> button on any day card to get customized explanations, code snippets, and viva questions.
-            </p>
-          </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleGeneratePlanner();
+              }}
+              className="space-y-4"
+            >
+              {/* Exam Goal / Target */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Exam / Target Goal
+                </label>
+                <input
+                  type="text"
+                  value={setupForm.examGoal}
+                  onChange={(e) => setSetupForm({ ...setupForm, examGoal: e.target.value })}
+                  placeholder="e.g. GATE CSE, Technical Interview, Semester Exams"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:border-violet-500"
+                  required
+                />
+              </div>
 
-          <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-xs">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
-              3
-            </div>
-            <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">
-              Verify with Fresh Tests
-            </h4>
-            <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              After finishing Day 7, retake the diagnostic test to see your score improvement and unlock higher placement readiness.
-            </p>
+              {/* Exam Date & Available Hours per Day */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Exam Date
+                  </label>
+                  <input
+                    type="date"
+                    value={setupForm.examDate}
+                    onChange={(e) => setSetupForm({ ...setupForm, examDate: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:border-violet-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Available Hours / Day
+                  </label>
+                  <select
+                    value={setupForm.availableHoursPerDay}
+                    onChange={(e) => setSetupForm({ ...setupForm, availableHoursPerDay: Number(e.target.value) })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:border-violet-500"
+                  >
+                    <option value={1}>1 Hour / Day</option>
+                    <option value={2}>2 Hours / Day</option>
+                    <option value={3}>3 Hours / Day</option>
+                    <option value={4}>4 Hours / Day</option>
+                    <option value={6}>6 Hours / Day</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Skill Level & Target Score */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Current Skill Level
+                  </label>
+                  <select
+                    value={setupForm.skillLevel}
+                    onChange={(e) => setSetupForm({ ...setupForm, skillLevel: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:border-violet-500"
+                  >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                    Target Score / Goal
+                  </label>
+                  <input
+                    type="text"
+                    value={setupForm.targetScore}
+                    onChange={(e) => setSetupForm({ ...setupForm, targetScore: e.target.value })}
+                    placeholder="e.g. 90%, A+ Grade, Top 1%"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:border-violet-500"
+                  />
+                </div>
+              </div>
+
+              {/* Preferred Study Time */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Preferred Study Time
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {["Morning", "Afternoon", "Evening", "Night"].map((timeSlot) => (
+                    <button
+                      type="button"
+                      key={timeSlot}
+                      onClick={() => setSetupForm({ ...setupForm, preferredStudyTime: timeSlot })}
+                      className={`py-2 rounded-xl text-xs font-bold transition-all border ${
+                        setupForm.preferredStudyTime === timeSlot
+                          ? "bg-violet-600 text-white border-violet-600 shadow-xs"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {timeSlot}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowSetupModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={generating}
+                  className="btn-gradient px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-2"
+                >
+                  {generating ? "Generating..." : "⚡ Generate AI Study Plan"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

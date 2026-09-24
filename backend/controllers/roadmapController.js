@@ -1,209 +1,302 @@
 import { getAIClient, getAIModel } from "../config/ai.js";
 import Roadmap from "../models/Roadmap.js";
 import TestResult from "../models/TestResult.js";
+import TopicProgress from "../models/TopicProgress.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
-// Helper to safely extract and parse JSON study plan from LLM response
-const parseRoadmapResponse = (content, subject, weakTopics) => {
+// Standard syllabus curriculum map per subject to ensure comprehensive coverage
+const SUBJECT_CURRICULA = {
+  DSA: [
+    "Array Operations & Memory Layout",
+    "Two Pointers & Sliding Window",
+    "Linked Lists & Memory Pointers",
+    "Stacks & Queues Applications",
+    "Binary Trees & Traversal Strategies",
+    "BST & Balanced Search Trees",
+    "Graph Representation & BFS/DFS",
+    "Dijkstra & Shortest Path Algorithms",
+    "Heaps & Priority Queues",
+    "Dynamic Programming & Memoization",
+  ],
+  DBMS: [
+    "Relational Model & ER Diagrams",
+    "SQL Queries & Joins",
+    "Functional Dependencies & Normalization (1NF to BCNF)",
+    "Indexing & B/B+ Trees",
+    "Transaction Processing & ACID Properties",
+    "Concurrency Control & Lock-based Protocols",
+    "Database Recovery & Crash Log Techniques",
+    "NoSQL Databases & Distributed Systems",
+  ],
+  OS: [
+    "Process Management & Control Blocks (PCB)",
+    "CPU Scheduling Algorithms (FCFS, SJF, RR)",
+    "Process Synchronization & Semaphores",
+    "Deadlocks Handling (Banker's Algorithm)",
+    "Memory Management & Paging",
+    "Virtual Memory & Page Replacement",
+    "File Systems Structure & Allocation",
+    "I/O Hardware & Disk Scheduling",
+  ],
+  CN: [
+    "OSI & TCP/IP Reference Models",
+    "Physical & Data Link Layer (Framing, Error Control)",
+    "MAC Protocols & Ethernet CSMA/CD",
+    "Network Layer & IP Addressing (IPv4/IPv6, CIDR)",
+    "Routing Algorithms (Distance Vector, Link State)",
+    "Transport Layer: TCP vs UDP & Congestion Control",
+    "Application Layer Protocols (HTTP, DNS, DHCP, FTP)",
+    "Network Security & Cryptography Basics",
+  ],
+  Java: [
+    "OOP Principles: Inheritance, Polymorphism, Abstraction",
+    "Java Memory Model: Heap, Stack & Garbage Collection",
+    "Exception Handling & Custom Exceptions",
+    "Java Collections Framework (List, Set, Map)",
+    "Multithreading, Concurrency & Synchronization",
+    "Java Streams API & Functional Interface Basics",
+    "JVM Architecture & Bytecode Execution",
+  ],
+  Python: [
+    "Python Data Structures (Lists, Dicts, Sets, Tuples)",
+    "Functional Programming, Lambdas & List Comprehensions",
+    "Decorators, Generators & Iterators",
+    "OOP in Python & Magic Methods",
+    "File I/O, Exception Handling & Context Managers",
+    "NumPy & Pandas Data Manipulation Basics",
+    "Multiprocessing & AsyncIO in Python",
+  ],
+  "Web Dev": [
+    "HTML5 Semantic Elements & Accessibility (a11y)",
+    "CSS Flexbox, Grid & Modern Responsive Layouts",
+    "JavaScript ES6+, Promises & Async/Await",
+    "DOM Manipulation & Browser Event Loop",
+    "React Hooks, Component Lifecycle & State Management",
+    "RESTful API Design & Express Server Fundamentals",
+    "MongoDB Schema Design & Mongoose ORM",
+    "Web Security: CORS, XSS, CSRF & JWT Auth",
+  ],
+  "System Design": [
+    "Client-Server Architecture & Load Balancing",
+    "Database Scaling: Sharding, Replication & Federation",
+    "Caching Strategies (Redis, Memcached, CDN)",
+    "Message Queues & Microservice Decoupling (Kafka, RabbitMQ)",
+    "API Gateway & Rate Limiting Algorithms",
+    "Consistent Hashing & Distributed Storage",
+    "High Availability, Disaster Recovery & SLA Design",
+  ],
+};
+
+// Format date into YYYY-MM-DD
+const formatDate = (dateObj) => {
+  const d = new Date(dateObj);
+  return d.toISOString().split("T")[0];
+};
+
+// Helper to safely parse LLM JSON study plan response
+const parseRoadmapResponse = (content, subject, weakTopics, daysRemaining, hoursPerDay) => {
+  const defaultDurationMin = Math.min(Math.max(hoursPerDay * 30, 30), 120);
+
   if (content && typeof content === "string" && content.trim()) {
     try {
-      // 1. Try to extract JSON between outermost curly braces
       const jsonMatch = content.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? jsonMatch[0] : content.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      const jsonStr = jsonMatch
+        ? jsonMatch[0]
+        : content.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
       const parsed = JSON.parse(jsonStr);
 
-      const daysArray = parsed.days || parsed.studyPlan || parsed.roadmap?.days || (Array.isArray(parsed) ? parsed : null);
+      const daysArray =
+        parsed.days || parsed.studyPlan || parsed.roadmap?.days || (Array.isArray(parsed) ? parsed : null);
 
       if (daysArray && Array.isArray(daysArray) && daysArray.length > 0) {
         return {
-          overview: parsed.overview || parsed.roadmap?.overview || `Tailored 7-day study path for ${subject} targeting: ${weakTopics.join(", ")}`,
-          days: daysArray.map((d, index) => ({
-            day: Number(d.day) || index + 1,
-            title: d.title || `Day ${index + 1}: ${d.topic || weakTopics[index % weakTopics.length] || subject}`,
-            topic: d.topic || weakTopics[index % weakTopics.length] || subject,
-            difficulty: d.difficulty || (index < 2 ? "Beginner" : index < 5 ? "Intermediate" : "Advanced"),
-            duration: d.duration || "45 mins",
-            keyConcepts: Array.isArray(d.keyConcepts) && d.keyConcepts.length > 0 ? d.keyConcepts : [d.topic || `${subject} Core Principles`],
-            actionItem: d.actionItem || "Solve 3 targeted conceptual problems and review notes.",
-            proTip: d.proTip || "Draw memory diagrams or trace test cases to build intuition.",
-            completed: false,
-          })),
+          overview:
+            parsed.overview ||
+            parsed.roadmap?.overview ||
+            `Personalized AI Study Planner for ${subject} tailored to your goal & target schedule.`,
+          aiRecommendation:
+            parsed.aiRecommendation ||
+            `AI Recommendation: Complete each daily pipeline (Learn → Practice → Quiz) systematically to boost mastery in weak areas: ${weakTopics.slice(0, 3).join(", ")}.`,
+          days: daysArray.map((d, index) => {
+            const dateOffset = new Date();
+            dateOffset.setDate(dateOffset.getDate() + index);
+
+            return {
+              day: Number(d.day) || index + 1,
+              date: d.date || formatDate(dateOffset),
+              title: d.title || `Day ${index + 1}: ${d.topic || weakTopics[index % weakTopics.length] || subject}`,
+              topic: d.topic || weakTopics[index % weakTopics.length] || subject,
+              difficulty: d.difficulty || (index < 2 ? "Beginner" : index < 5 ? "Intermediate" : "Advanced"),
+              duration: d.duration || `${defaultDurationMin} min`,
+              durationMinutes: Number(d.durationMinutes) || parseInt(d.duration) || defaultDurationMin,
+              pipeline: Array.isArray(d.pipeline) && d.pipeline.length > 0 ? d.pipeline : ["Learn", "Practice", "Quiz"],
+              keyConcepts: Array.isArray(d.keyConcepts) && d.keyConcepts.length > 0 ? d.keyConcepts : [d.topic || `${subject} Core Principles`],
+              actionItem: d.actionItem || "Solve 3 targeted conceptual problems and review notes.",
+              proTip: d.proTip || "Draw memory diagrams or trace test cases to build intuition.",
+              status: d.status || "not-started",
+              completed: !!d.completed,
+              performanceRating: d.performanceRating || "good",
+            };
+          }),
           planText: content,
         };
       }
     } catch (err) {
-      console.warn("Could not parse direct JSON from LLM content, using dynamic curriculum engine:", err.message);
+      console.warn("Could not parse direct JSON from LLM content, using dynamic engine:", err.message);
     }
   }
 
   // Fallback intelligent curriculum generation tailored to subject and weak topics
-  const t0 = weakTopics[0] || `${subject} Core Fundamentals`;
-  const t1 = weakTopics[1] || weakTopics[0] || `${subject} Architecture`;
-  const t2 = weakTopics[2] || weakTopics[0] || `${subject} Problem Solving`;
+  const curriculum = SUBJECT_CURRICULA[subject] || SUBJECT_CURRICULA["DSA"];
+  const totalDaysToSchedule = Math.min(Math.max(daysRemaining, 5), 14);
 
-  const fallbackDays = [
-    {
-      day: 1,
-      title: `Day 1: Foundations of ${t0}`,
-      topic: t0,
-      difficulty: "Beginner",
-      duration: "45 mins",
-      keyConcepts: ["Core Definitions & Axioms", "Underlying Architecture", "Common Misconceptions"],
-      actionItem: `Read foundational concepts of ${t0} and solve 3 baseline diagnostic problems.`,
-      proTip: "Take concise handwritten notes on key definitions; active writing boosts retention by 40%.",
+  const fallbackDays = [];
+  for (let i = 0; i < totalDaysToSchedule; i++) {
+    const dateOffset = new Date();
+    dateOffset.setDate(dateOffset.getDate() + i);
+
+    let topicName = "";
+    if (i < weakTopics.length) {
+      topicName = weakTopics[i];
+    } else {
+      topicName = curriculum[i % curriculum.length];
+    }
+
+    const durationMin = Math.min(30 + (i % 3) * 15, hoursPerDay * 60);
+
+    fallbackDays.push({
+      day: i + 1,
+      date: formatDate(dateOffset),
+      title: `Day ${i + 1}: ${topicName}`,
+      topic: topicName,
+      difficulty: i < 2 ? "Beginner" : i < 5 ? "Intermediate" : "Advanced",
+      duration: `${durationMin} min`,
+      durationMinutes: durationMin,
+      pipeline: ["Learn", "Practice", "Quiz"],
+      keyConcepts: [
+        `${topicName} Fundamentals & Definitions`,
+        "Step-by-step Execution & Complexity",
+        "Common Pitfalls & Edge Cases",
+      ],
+      actionItem: `Read foundational concepts of ${topicName}, complete 3 interactive exercises, and take the mini quiz.`,
+      proTip: "Time yourself during practice to simulate exam conditions and build speed under pressure.",
+      status: "not-started",
       completed: false,
-    },
-    {
-      day: 2,
-      title: `Day 2: Deep Dive into ${t0} Mechanics`,
-      topic: t0,
-      difficulty: "Intermediate",
-      duration: "50 mins",
-      keyConcepts: ["Step-by-step Execution", "Time/Space Trade-offs", "Edge Cases"],
-      actionItem: `Work through 4 practical examples of ${t0} and trace algorithmic state changes step-by-step.`,
-      proTip: "Always dry-run with boundary inputs (empty, single-element, duplicates) before checking solutions.",
-      completed: false,
-    },
-    {
-      day: 3,
-      title: `Day 3: Hands-on Practice & Edge Cases on ${t0}`,
-      topic: t0,
-      difficulty: "Intermediate",
-      duration: "45 mins",
-      keyConcepts: ["Exam Patterns", "Pitfall Avoidance", "Optimal Implementations"],
-      actionItem: `Solve 5 past technical interview questions specifically covering ${t0}.`,
-      proTip: "Time your problem-solving to simulate exam and interview pressure (under 10 mins per question).",
-      completed: false,
-    },
-    {
-      day: 4,
-      title: `Day 4: Core Principles of ${t1}`,
-      topic: t1,
-      difficulty: "Beginner",
-      duration: "45 mins",
-      keyConcepts: ["Key Mechanics", "Terminology", "Structural Models"],
-      actionItem: `Draw structural diagrams and mind-maps explaining ${t1} without looking at reference material.`,
-      proTip: "Visual diagrams accelerate spatial recall and make complex technical explanations intuitive.",
-      completed: false,
-    },
-    {
-      day: 5,
-      title: `Day 5: Advanced Problem Solving & Optimization in ${t1}`,
-      topic: t1,
-      difficulty: "Advanced",
-      duration: "50 mins",
-      keyConcepts: ["Performance Optimization", "Comparative Trade-offs", "Real-world Engineering Use"],
-      actionItem: `Analyze trade-offs and build a sample implementation comparing optimal vs sub-optimal designs.`,
-      proTip: "Interviewers look for 'why' over 'how'—focus on why a particular design or algorithm was chosen.",
-      completed: false,
-    },
-    {
-      day: 6,
-      title: `Day 6: Integrated Synthesis & Problem Solving (${t2})`,
-      topic: t2,
-      difficulty: "Advanced",
-      duration: "60 mins",
-      keyConcepts: ["Cross-topic Integration", "Scenario-based Questions", "System Constraints"],
-      actionItem: `Complete a 10-question mixed topic challenge integrating ${weakTopics.join(", ")}.`,
-      proTip: "Identify remaining friction points and bookmark questions you spent more than 3 minutes on.",
-      completed: false,
-    },
-    {
-      day: 7,
-      title: `Day 7: Speed Revision & Final Diagnostic Assessment`,
-      topic: `${subject} Mastery`,
-      difficulty: "Intermediate",
-      duration: "30 mins",
-      keyConcepts: ["Formula & Rules Cheat Sheet", "Rapid Recall", "Final Assessment Retake"],
-      actionItem: `Retake the ${subject} diagnostic test on LearnX to verify your score improvement!`,
-      proTip: "Review your mistake logs from Day 1–6 before starting the final assessment test.",
-      completed: false,
-    },
-  ];
+      performanceRating: "good",
+    });
+  }
 
   return {
-    overview: `Rigorous 7-day remediation blueprint for ${subject} engineered to turn weak areas (${weakTopics.join(", ")}) into core strengths.`,
+    overview: `Algorithmic ${totalDaysToSchedule}-Day Study Planner for ${subject} targeting high-yield exam performance and eliminating core weak areas (${weakTopics.join(", ")}).`,
+    aiRecommendation: `AI Recommendation: Allocate ${hoursPerDay} hours daily. Focus on completing all 3 stages (Learn → Practice → Quiz) for each day to lock in concept retention.`,
     days: fallbackDays,
-    planText: content || "Algorithmic study plan generated based on diagnostic test weaknesses.",
+    planText: content || "Algorithmic study plan generated from student diagnostic context.",
   };
 };
 
-// @desc Generate an AI personalized study roadmap based on weak topics
+// @desc Generate or update dynamic AI study planner
 // @route POST /api/roadmap/generate
-// body: { subject, weakTopics: ["Normalization", "Indexing"] }
+// body: { subject, examGoal, examDate, availableHoursPerDay, skillLevel, targetScore, preferredStudyTime }
 export const generateRoadmap = async (req, res) => {
   try {
-    const { subject, weakTopics: inputWeakTopics } = req.body;
-    const effectiveSubject = subject || "DBMS";
+    const {
+      subject = "DSA",
+      examGoal = "Placement & GATE Preparation",
+      examDate,
+      availableHoursPerDay = 2,
+      skillLevel = "Intermediate",
+      targetScore = "90%",
+      preferredStudyTime = "Evening",
+    } = req.body;
 
-    // 1. Fetch student's latest test result for this subject
-    let latestTest = null;
-    try {
-      if (req.user?._id) {
-        latestTest = await TestResult.findOne({
-          user: req.user._id,
-          subject: effectiveSubject,
-        }).sort({ createdAt: -1 });
+    const userId = req.user._id;
+
+    // 1. Fetch real student mastery profile from TopicProgress and TestResult
+    const [topicProgresses, testResults] = await Promise.all([
+      TopicProgress.find({ user: userId, subjectId: subject }).lean(),
+      TestResult.find({ user: userId, subject }).sort({ createdAt: -1 }).limit(3).lean(),
+    ]);
+
+    const weakTopics = [];
+    const masteredTopics = [];
+
+    topicProgresses.forEach((tp) => {
+      if (tp.masteryPercentage < 60 || tp.masteryStatus === "weak") {
+        weakTopics.push(tp.topicId || tp.unitId);
+      } else if (tp.masteryPercentage >= 80 || tp.masteryStatus === "mastered" || tp.masteryStatus === "strong") {
+        masteredTopics.push(tp.topicId || tp.unitId);
       }
-    } catch (testErr) {
-      console.warn("Could not query latest test for roadmap:", testErr.message);
+    });
+
+    // Also extract weak topics from latest test result if topicProgresses is sparse
+    if (testResults.length > 0 && testResults[0].topicBreakdown) {
+      Object.entries(testResults[0].topicBreakdown).forEach(([tName, data]) => {
+        const pct = data.total > 0 ? (data.correct / data.total) * 100 : 0;
+        if (pct < 60 && !weakTopics.includes(tName)) {
+          weakTopics.push(tName);
+        } else if (pct >= 80 && !masteredTopics.includes(tName)) {
+          masteredTopics.push(tName);
+        }
+      });
     }
 
-    let calculatedWeakTopics = [];
-    let calculatedStrongTopics = [];
-    let scorePercent = latestTest?.scorePercent ?? 65;
+    // Default weak topics fallback if no diagnostic history yet
+    const effectiveWeakTopics =
+      weakTopics.length > 0
+        ? weakTopics
+        : (SUBJECT_CURRICULA[subject] || SUBJECT_CURRICULA["DSA"]).slice(0, 3);
 
-    if (latestTest && latestTest.topicBreakdown) {
-      const topicScores = Object.entries(latestTest.topicBreakdown).map(
-        ([topic, data]) => ({
-          topic,
-          percent: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
-        })
-      );
-      calculatedWeakTopics = topicScores.filter((t) => t.percent < 60).map((t) => t.topic);
-      calculatedStrongTopics = topicScores.filter((t) => t.percent >= 60).map((t) => t.topic);
-    }
-
-    // Determine final weak topics
-    let finalWeakTopics = [];
-    if (Array.isArray(inputWeakTopics) && inputWeakTopics.length > 0) {
-      finalWeakTopics = inputWeakTopics;
-    } else if (calculatedWeakTopics.length > 0) {
-      finalWeakTopics = calculatedWeakTopics;
+    // Calculate days remaining until exam
+    let daysRemaining = 14;
+    let parsedExamDate = null;
+    if (examDate) {
+      parsedExamDate = new Date(examDate);
+      const diffTime = parsedExamDate.getTime() - new Date().getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (!isNaN(diffDays) && diffDays > 0) {
+        daysRemaining = diffDays;
+      }
     } else {
-      finalWeakTopics = [
-        `${effectiveSubject} Core Fundamentals`,
-        `${effectiveSubject} Advanced Concepts`,
-        "Problem Solving & Edge Cases",
-      ];
+      // Default to 14 days from now
+      parsedExamDate = new Date();
+      parsedExamDate.setDate(parsedExamDate.getDate() + 14);
     }
 
-    const prompt = `You are an elite academic advisor and tutor for a B.Tech Computer Science student.
-Subject: ${effectiveSubject}
-Student's Recent Test Score: ${scorePercent}%
-Diagnosed Critical Weak Topics: ${finalWeakTopics.join(", ")}
-${calculatedStrongTopics.length > 0 ? `Mastered Topics: ${calculatedStrongTopics.join(", ")}` : ""}
-${latestTest?.aiEvaluation?.aiSummary ? `Examiner Diagnostic Note: ${latestTest.aiEvaluation.aiSummary}` : ""}
+    const prompt = `You are LearnX's Lead AI Academic Counselor & Dynamic Study Planner.
+Target Subject: ${subject}
+Exam / Career Goal: ${examGoal}
+Target Exam Date: ${parsedExamDate ? parsedExamDate.toISOString().split("T")[0] : "In 2 weeks"} (${daysRemaining} days remaining)
+Available Daily Study Time: ${availableHoursPerDay} Hours/day (Preferred Time: ${preferredStudyTime})
+Current Skill Level: ${skillLevel}
+Target Goal/Score: ${targetScore}
 
-Generate a tailored, rigorous, and highly actionable 7-Day Study Roadmap specifically engineered to eliminate the student's weaknesses in ${finalWeakTopics.join(", ")}.
+Student Mastery Context:
+- Diagnosed Weak Topics: ${effectiveWeakTopics.join(", ")}
+- Already Mastered Topics: ${masteredTopics.join(", ") || "None recorded yet"}
+
+Generate a personalized dynamic daily study plan for ${Math.min(daysRemaining, 10)} days.
+Each day must contain a learning pipeline: "Learn", "Practice", "Quiz".
 
 Respond ONLY with a valid JSON object matching this schema:
 {
-  "overview": "Clear 1-2 sentence high-level learning strategy for the week directly referencing the student's test score and focus areas.",
+  "overview": "Clear 2-sentence executive summary of the dynamic study plan.",
+  "aiRecommendation": "Actionable AI recommendation for pacing, exam preparation, and weak topic reinforcement.",
   "days": [
     {
       "day": 1,
-      "title": "Inspiring, specific topic title",
+      "date": "YYYY-MM-DD",
+      "title": "Specific focus topic title",
       "topic": "Topic Name",
       "difficulty": "Beginner | Intermediate | Advanced",
-      "duration": "45 mins",
+      "duration": "45 min",
+      "durationMinutes": 45,
+      "pipeline": ["Learn", "Practice", "Quiz"],
       "keyConcepts": ["Concept 1", "Concept 2", "Concept 3"],
-      "actionItem": "Specific practical task (e.g. solve 3 specific problems or dry-run a scenario)",
-      "proTip": "Actionable insight, common exam pitfall, or memory mnemonic"
+      "actionItem": "Practical mission (e.g. Learn → Practice 3 problems → Take mini quiz)",
+      "proTip": "Actionable exam/interview tip"
     }
   ]
-}
-Ensure there are exactly 7 distinct, sequential days (day 1 to 7).`;
+}`;
 
     const openai = getAIClient();
     const candidateModels = [
@@ -214,20 +307,23 @@ Ensure there are exactly 7 distinct, sequential days (day 1 to 7).`;
       "gpt-4o-mini",
     ];
 
-    // Remove duplicates
     const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
-
     let rawContent = "";
+
     if (openai && process.env.OPENAI_API_KEY) {
       for (const modelToTry of uniqueModels) {
         try {
           const completion = await openai.chat.completions.create({
             model: modelToTry,
             messages: [
-              { role: "system", content: "You are a JSON-only API that outputs structured study plans for engineering students. Always reply with valid JSON only." },
-              { role: "user", content: prompt }
+              {
+                role: "system",
+                content:
+                  "You are a JSON-only API that outputs structured dynamic AI study plans for engineering students. Reply with valid JSON only.",
+              },
+              { role: "user", content: prompt },
             ],
-            max_tokens: 1200,
+            max_tokens: 1500,
           });
           const content = completion.choices[0]?.message?.content || "";
           if (content.trim()) {
@@ -235,37 +331,66 @@ Ensure there are exactly 7 distinct, sequential days (day 1 to 7).`;
             break;
           }
         } catch (modelErr) {
-          console.warn(`Roadmap generation with model ${modelToTry} failed:`, modelErr.message);
+          console.warn(`Roadmap model ${modelToTry} error:`, modelErr.message);
         }
       }
     }
 
-    const { overview, days, planText } = parseRoadmapResponse(rawContent, effectiveSubject, finalWeakTopics);
+    const parsedPlan = parseRoadmapResponse(
+      rawContent,
+      subject,
+      effectiveWeakTopics,
+      daysRemaining,
+      Number(availableHoursPerDay) || 2
+    );
 
-    // Clean up existing roadmap for this subject
-    if (req.user?._id) {
-      await Roadmap.deleteMany({ user: req.user._id, subject: effectiveSubject }).catch(() => {});
+    // Save or update existing roadmap for this subject
+    let existingRoadmap = await Roadmap.findOne({ user: userId, subject }).sort({ createdAt: -1 });
+
+    if (existingRoadmap) {
+      existingRoadmap.examGoal = examGoal;
+      existingRoadmap.examDate = parsedExamDate;
+      existingRoadmap.availableHoursPerDay = Number(availableHoursPerDay) || 2;
+      existingRoadmap.skillLevel = skillLevel;
+      existingRoadmap.targetScore = targetScore;
+      existingRoadmap.preferredStudyTime = preferredStudyTime;
+      existingRoadmap.weakTopics = effectiveWeakTopics;
+      existingRoadmap.masteredTopics = masteredTopics;
+      existingRoadmap.overview = parsedPlan.overview;
+      existingRoadmap.aiRecommendation = parsedPlan.aiRecommendation;
+      existingRoadmap.days = parsedPlan.days;
+      existingRoadmap.planText = rawContent || parsedPlan.planText;
+      existingRoadmap.lastUpdated = new Date();
+
+      await existingRoadmap.save();
+      return res.json(existingRoadmap);
     }
 
-    const roadmap = await Roadmap.create({
-      user: req.user._id,
-      subject: effectiveSubject,
-      weakTopics: finalWeakTopics,
-      overview,
-      days,
-      planText: rawContent || planText,
+    const newRoadmap = await Roadmap.create({
+      user: userId,
+      subject,
+      examGoal,
+      examDate: parsedExamDate,
+      availableHoursPerDay: Number(availableHoursPerDay) || 2,
+      skillLevel,
+      targetScore,
+      preferredStudyTime,
+      weakTopics: effectiveWeakTopics,
+      masteredTopics,
+      overview: parsedPlan.overview,
+      aiRecommendation: parsedPlan.aiRecommendation,
+      days: parsedPlan.days,
+      planText: rawContent || parsedPlan.planText,
     });
 
-    res.status(201).json(roadmap);
+    res.status(201).json(newRoadmap);
   } catch (error) {
     console.error("Roadmap Generation Error:", error.message || error);
-    res.status(500).json({ 
-      message: error.message || "Failed to generate roadmap." 
-    });
+    res.status(500).json({ message: error.message || "Failed to generate dynamic study planner." });
   }
 };
 
-// @desc Get latest roadmap for a subject
+// @desc Get active roadmap/study plan for a subject
 // @route GET /api/roadmap/:subject
 export const getRoadmap = async (req, res) => {
   try {
@@ -275,13 +400,20 @@ export const getRoadmap = async (req, res) => {
     });
 
     if (!roadmap) {
-      return res.status(404).json({ message: "No roadmap generated yet" });
+      return res.status(404).json({ message: "No study plan found for this subject." });
     }
 
-    // Auto-migrate legacy roadmaps that don't have structured days
-    if (!roadmap.days || roadmap.days.length === 0) {
-      const parsed = parseRoadmapResponse(roadmap.planText || "", roadmap.subject, roadmap.weakTopics || []);
+    // Auto-migrate legacy roadmaps
+    if (!roadmap.days || roadmap.days.length === 0 || !roadmap.days[0].status) {
+      const parsed = parseRoadmapResponse(
+        roadmap.planText || "",
+        roadmap.subject,
+        roadmap.weakTopics || [],
+        14,
+        roadmap.availableHoursPerDay || 2
+      );
       roadmap.overview = parsed.overview;
+      roadmap.aiRecommendation = parsed.aiRecommendation;
       roadmap.days = parsed.days;
       await roadmap.save();
     }
@@ -292,9 +424,151 @@ export const getRoadmap = async (req, res) => {
   }
 };
 
-// @desc Toggle a day completion status
-// @route PATCH /api/roadmap/:id/toggle-day
-// body: { dayNumber: 1 }
+// @desc Update status of a specific study plan day (Start, Pause, Complete, Skip) & dynamically adapt plan
+// @route PATCH /api/roadmap/:id/day-status
+// body: { dayNumber: 1, status: 'completed' | 'in-progress' | 'paused' | 'skipped', performanceRating: 'poor' | 'good' | 'mastered' }
+export const updateDayStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dayNumber, status, performanceRating = "good" } = req.body;
+
+    const roadmap = await Roadmap.findOne({ _id: id, user: req.user._id });
+    if (!roadmap) {
+      return res.status(404).json({ message: "Study plan not found" });
+    }
+
+    const dayIndex = roadmap.days.findIndex((d) => d.day === dayNumber);
+    if (dayIndex === -1) {
+      return res.status(404).json({ message: "Day not found in study plan" });
+    }
+
+    const targetDay = roadmap.days[dayIndex];
+    targetDay.status = status;
+    targetDay.performanceRating = performanceRating;
+
+    if (status === "completed") {
+      targetDay.completed = true;
+      targetDay.completedAt = new Date();
+
+      // Update student topic progress in DB
+      try {
+        const topicIdNormalized = targetDay.topic.toLowerCase().replace(/\s+/g, "-");
+        await TopicProgress.findOneAndUpdate(
+          { user: req.user._id, topicId: topicIdNormalized },
+          {
+            $set: {
+              subjectId: roadmap.subject,
+              isCompleted: true,
+              completedAt: new Date(),
+              masteryStatus: performanceRating === "mastered" ? "mastered" : performanceRating === "poor" ? "weak" : "strong",
+              masteryPercentage: performanceRating === "mastered" ? 95 : performanceRating === "poor" ? 45 : 80,
+            },
+          },
+          { upsert: true }
+        );
+      } catch (tpErr) {
+        console.warn("TopicProgress update warning:", tpErr.message);
+      }
+
+      // Dynamic AI Rebalancing Rules:
+      // 1. If student performed poorly -> Add a targeted revision day for this weak topic
+      if (performanceRating === "poor") {
+        const revisionDayNum = roadmap.days.length + 1;
+        const revisionDate = new Date();
+        revisionDate.setDate(revisionDate.getDate() + (revisionDayNum - 1));
+
+        roadmap.days.push({
+          day: revisionDayNum,
+          date: formatDate(revisionDate),
+          title: `Day ${revisionDayNum}: Deep Revision — ${targetDay.topic}`,
+          topic: targetDay.topic,
+          difficulty: "Intermediate",
+          duration: "30 min",
+          durationMinutes: 30,
+          pipeline: ["Learn", "Practice", "Quiz"],
+          keyConcepts: [`Targeted Review: ${targetDay.topic}`, "Step-by-step Dry Run", "Pitfall Elimination"],
+          actionItem: `Focus review on ${targetDay.topic} due to recent performance score. Solve 3 easy + 2 medium problems.`,
+          proTip: "Review your specific mistake patterns before re-attempting the quiz.",
+          status: "not-started",
+          completed: false,
+          performanceRating: "good",
+        });
+
+        roadmap.aiRecommendation = `AI Recommendation: Performance on "${targetDay.topic}" indicated need for revision. Automatically appended a 30-min targeted revision day to your study plan.`;
+      } 
+      // 2. If student mastered topic early -> Update AI recommendation & auto-advance
+      else if (performanceRating === "mastered") {
+        roadmap.aiRecommendation = `AI Recommendation: 🔥 Excellent mastery on "${targetDay.topic}"! Repetition reduced for this topic; advancing focus to remaining high-yield goals.`;
+      } else {
+        const remainingCount = roadmap.days.filter((d) => !d.completed && d.status !== "skipped").length;
+        roadmap.aiRecommendation = `AI Recommendation: Great progress! Completed Day ${dayNumber} (${targetDay.topic}). ${remainingCount} day(s) remaining in your roadmap.`;
+      }
+    } else if (status === "skipped") {
+      targetDay.completed = false;
+      roadmap.aiRecommendation = `AI Recommendation: Skipped Day ${dayNumber} (${targetDay.topic}). Focus allocated to upcoming critical topics.`;
+    } else if (status === "in-progress") {
+      targetDay.completed = false;
+      roadmap.aiRecommendation = `AI Recommendation: Currently focusing on Day ${dayNumber}: ${targetDay.topic} (${targetDay.duration}). Complete all 3 pipeline steps!`;
+    } else if (status === "paused") {
+      targetDay.completed = false;
+      roadmap.aiRecommendation = `AI Recommendation: Day ${dayNumber} study session paused. Resume whenever you're ready to complete your daily goal.`;
+    }
+
+    roadmap.lastUpdated = new Date();
+    await roadmap.save();
+
+    recordAuditLog({
+      req,
+      action: "ROADMAP_DAY_STATUS_UPDATED",
+      details: {
+        subject: roadmap.subject,
+        dayNumber,
+        status,
+        performanceRating,
+      },
+    }).catch((aErr) => console.warn("Roadmap audit warning:", aErr.message));
+
+    res.json(roadmap);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Dynamically reschedule study plan based on missed days / updated exam date
+// @route POST /api/roadmap/:id/reschedule
+export const rescheduleRoadmap = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const roadmap = await Roadmap.findOne({ _id: id, user: req.user._id });
+
+    if (!roadmap) {
+      return res.status(404).json({ message: "Study plan not found" });
+    }
+
+    const today = new Date();
+    let uncompletedIndex = 0;
+
+    roadmap.days.forEach((day) => {
+      if (!day.completed && day.status !== "skipped") {
+        const newDate = new Date(today);
+        newDate.setDate(today.getDate() + uncompletedIndex);
+        day.date = formatDate(newDate);
+        day.status = "not-started";
+        uncompletedIndex++;
+      }
+    });
+
+    roadmap.aiRecommendation = `AI Recommendation: 🗓️ Study Plan successfully rescheduled! Remaining ${uncompletedIndex} goals re-indexed starting from today (${formatDate(today)}).`;
+    roadmap.lastUpdated = new Date();
+
+    await roadmap.save();
+    res.json(roadmap);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc Legacy toggle handler for backward compatibility
 export const toggleRoadmapDay = async (req, res) => {
   try {
     const { id } = req.params;
@@ -310,19 +584,12 @@ export const toggleRoadmapDay = async (req, res) => {
       return res.status(404).json({ message: "Day not found in roadmap" });
     }
 
-    day.completed = !day.completed;
+    const newCompleted = !day.completed;
+    day.completed = newCompleted;
+    day.status = newCompleted ? "completed" : "not-started";
+    if (newCompleted) day.completedAt = new Date();
+
     await roadmap.save();
-
-    recordAuditLog({
-      req,
-      action: "ROADMAP_DAY_TOGGLED",
-      details: {
-        subject: roadmap.subject,
-        dayNumber,
-        completed: day.completed,
-      },
-    }).catch((aErr) => console.warn("Roadmap audit warning:", aErr.message));
-
     res.json(roadmap);
   } catch (error) {
     res.status(500).json({ message: error.message });
