@@ -54,17 +54,17 @@ export default function LandingPage() {
   // Active state for feature exploration preview
   const [activeFeatureIdx, setActiveFeatureIdx] = useState(0);
 
-  // 3D Background Three.js Effect for Hero (Subtle Nodes & Blue/Cyan Net on Warm Ivory)
+  // 3D Background Three.js Effect (Multi-Shape 3D Depth Landscape & Dynamic Scroll Reactive Motion)
   useEffect(() => {
     const container = canvasContainerRef.current;
     if (!container) return;
 
     let width = container.clientWidth || window.innerWidth;
-    let height = container.clientHeight || 650;
+    let height = container.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.z = 220;
+    camera.position.z = 210;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(width, height);
@@ -73,20 +73,20 @@ export default function LandingPage() {
     container.appendChild(renderer.domElement);
 
     // Particle nodes network
-    const particleCount = 80;
+    const particleCount = 100;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities = [];
 
     for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 320;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 120;
+      positions[i * 3] = (Math.random() - 0.5) * 360;
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 600; // Spread vertically across full landing page
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 160;
 
       velocities.push({
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.15,
-        vz: (Math.random() - 0.5) * 0.1
+        vx: (Math.random() - 0.5) * 0.12,
+        vy: (Math.random() - 0.5) * 0.12,
+        vz: (Math.random() - 0.5) * 0.08
       });
     }
 
@@ -94,15 +94,15 @@ export default function LandingPage() {
 
     const pMaterial = new THREE.PointsMaterial({
       color: 0x2563eb, // Electric Blue
-      size: 3.8,
+      size: 3.6,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.7
     });
     const pointCloud = new THREE.Points(geometry, pMaterial);
     scene.add(pointCloud);
 
     // Proximity dynamic lines
-    const maxConnections = 260;
+    const maxConnections = 300;
     const linePositions = new Float32Array(maxConnections * 6);
     const lineColors = new Float32Array(maxConnections * 6);
     const lineGeometry = new THREE.BufferGeometry();
@@ -112,22 +112,22 @@ export default function LandingPage() {
     const lineMaterial = new THREE.LineBasicMaterial({
       vertexColors: true,
       transparent: true,
-      opacity: 0.3
+      opacity: 0.28
     });
 
     const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
     scene.add(lines);
 
-    // 3D Geometric Floating Crystal Core Mesh
+    // Main 3D Geometric Crystal Core Group
     const coreGroup = new THREE.Group();
 
     // Outer wireframe icosahedron
-    const icoGeo = new THREE.IcosahedronGeometry(34, 1);
+    const icoGeo = new THREE.IcosahedronGeometry(36, 1);
     const icoMat = new THREE.MeshBasicMaterial({
       color: 0x2563eb,
       wireframe: true,
       transparent: true,
-      opacity: 0.4
+      opacity: 0.45
     });
     const icoMesh = new THREE.Mesh(icoGeo, icoMat);
     coreGroup.add(icoMesh);
@@ -138,13 +138,13 @@ export default function LandingPage() {
       color: 0x7c3aed,
       wireframe: true,
       transparent: true,
-      opacity: 0.55
+      opacity: 0.6
     });
     const dodecaMesh = new THREE.Mesh(dodecaGeo, dodecaMat);
     coreGroup.add(dodecaMesh);
 
     // Orbital Ring Torus
-    const ringGeo = new THREE.TorusGeometry(48, 0.8, 16, 80);
+    const ringGeo = new THREE.TorusGeometry(50, 0.8, 16, 80);
     const ringMat = new THREE.MeshBasicMaterial({
       color: 0x0284c7,
       wireframe: true,
@@ -155,33 +155,77 @@ export default function LandingPage() {
     ringMesh.rotation.x = Math.PI / 3;
     coreGroup.add(ringMesh);
 
-    coreGroup.position.set(100, 15, 0);
+    coreGroup.position.set(70, 15, 0);
     scene.add(coreGroup);
+
+    // Secondary Floating 3D Polyhedra Group (Spread vertically across the canvas)
+    const floatingPolyGroup = new THREE.Group();
+    const polyGeometries = [
+      new THREE.OctahedronGeometry(12, 0),
+      new THREE.TetrahedronGeometry(10, 0),
+      new THREE.IcosahedronGeometry(14, 0),
+      new THREE.DodecahedronGeometry(11, 0)
+    ];
+
+    const polyColors = [0x2563eb, 0x7c3aed, 0x0284c7, 0x059669];
+    const floatingPolys = [];
+
+    for (let i = 0; i < 12; i++) {
+      const geo = polyGeometries[i % polyGeometries.length];
+      const mat = new THREE.MeshBasicMaterial({
+        color: polyColors[i % polyColors.length],
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35 + (i % 3) * 0.1
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+
+      const posX = (Math.random() - 0.5) * 320;
+      const posY = (Math.random() - 0.5) * 500;
+      const posZ = (Math.random() - 0.5) * 120;
+
+      mesh.position.set(posX, posY, posZ);
+      floatingPolyGroup.add(mesh);
+
+      floatingPolys.push({
+        mesh,
+        rotX: (Math.random() - 0.5) * 0.02,
+        rotY: (Math.random() - 0.5) * 0.02,
+        baseY: posY
+      });
+    }
+    scene.add(floatingPolyGroup);
 
     let animationFrameId;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Rotate 3D Core Mesh
+      // Rotate Main 3D Core
       coreGroup.rotation.x += 0.004;
-      coreGroup.rotation.y += 0.007;
-      coreGroup.rotation.z += 0.002;
+      coreGroup.rotation.y += 0.006;
       icoMesh.rotation.y -= 0.003;
       dodecaMesh.rotation.x += 0.005;
-      ringMesh.rotation.z += 0.006;
+      ringMesh.rotation.z += 0.005;
 
+      // Rotate Floating Polyhedra
+      floatingPolys.forEach((p) => {
+        p.mesh.rotation.x += p.rotX;
+        p.mesh.rotation.y += p.rotY;
+      });
+
+      // Update Particle Positions
       const posArray = geometry.attributes.position.array;
       for (let i = 0; i < particleCount; i++) {
         posArray[i * 3] += velocities[i].vx;
         posArray[i * 3 + 1] += velocities[i].vy;
 
-        if (Math.abs(posArray[i * 3]) > 160) velocities[i].vx *= -1;
-        if (Math.abs(posArray[i * 3 + 1]) > 110) velocities[i].vy *= -1;
+        if (Math.abs(posArray[i * 3]) > 180) velocities[i].vx *= -1;
+        if (Math.abs(posArray[i * 3 + 1]) > 300) velocities[i].vy *= -1;
       }
       geometry.attributes.position.needsUpdate = true;
 
-      // Update lines
+      // Update Proximity Lines
       let connectionCount = 0;
       for (let i = 0; i < particleCount; i++) {
         for (let j = i + 1; j < particleCount; j++) {
@@ -190,7 +234,7 @@ export default function LandingPage() {
           const dz = posArray[i * 3 + 2] - posArray[j * 3 + 2];
           const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-          if (dist < 46 && connectionCount < maxConnections) {
+          if (dist < 48 && connectionCount < maxConnections) {
             linePositions[connectionCount * 6] = posArray[i * 3];
             linePositions[connectionCount * 6 + 1] = posArray[i * 3 + 1];
             linePositions[connectionCount * 6 + 2] = posArray[i * 3 + 2];
@@ -199,7 +243,6 @@ export default function LandingPage() {
             linePositions[connectionCount * 6 + 4] = posArray[j * 3 + 1];
             linePositions[connectionCount * 6 + 5] = posArray[j * 3 + 2];
 
-            // Blue to purple color gradient
             lineColors[connectionCount * 6] = 0.14;
             lineColors[connectionCount * 6 + 1] = 0.38;
             lineColors[connectionCount * 6 + 2] = 0.92;
@@ -217,28 +260,61 @@ export default function LandingPage() {
       lineGeometry.attributes.position.needsUpdate = true;
       lineGeometry.attributes.color.needsUpdate = true;
 
-      pointCloud.rotation.y += 0.0008;
-      lines.rotation.y += 0.0008;
+      pointCloud.rotation.y += 0.0006;
+      lines.rotation.y += 0.0006;
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // Scroll-driven 3D Scene Motion
+    // Continuous 3D Scroll Reactive Engine
     const handleScroll = () => {
       const scrollY = window.scrollY || 0;
+      const docHeight = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+        1
+      ) - window.innerHeight;
+
+      const progress = Math.min(Math.max(scrollY / (docHeight || 1), 0), 1);
+
+      // Core group transforms dynamically as user scrolls down the landing page
       if (coreGroup) {
-        coreGroup.rotation.y = scrollY * 0.003;
-        coreGroup.rotation.x = scrollY * 0.0015;
-        coreGroup.position.y = 15 - Math.min(scrollY * 0.04, 300);
+        coreGroup.rotation.y = scrollY * 0.0035;
+        coreGroup.rotation.x = scrollY * 0.0018;
+        coreGroup.rotation.z = scrollY * 0.001;
+
+        // Orbit back & forth smoothly down the page
+        const xPos = 70 + Math.sin(progress * Math.PI * 3) * 60;
+        const yPos = 15 - (scrollY * 0.04) % 250;
+        coreGroup.position.set(xPos, yPos, Math.cos(progress * Math.PI * 2) * 30);
+
+        // Morph orbital ring angle on scroll
+        ringMesh.rotation.x = (Math.PI / 3) + progress * Math.PI * 4;
+        ringMesh.scale.setScalar(1 + Math.sin(progress * Math.PI * 6) * 0.2);
       }
+
+      // Floating polyhedra move in 3D parallax space relative to scroll
+      if (floatingPolyGroup) {
+        floatingPolyGroup.rotation.y = scrollY * 0.001;
+        floatingPolys.forEach((p, idx) => {
+          p.mesh.position.y = p.baseY + Math.sin(scrollY * 0.002 + idx) * 15;
+        });
+      }
+
+      // Particle net scroll movement
       if (pointCloud && lines) {
-        pointCloud.rotation.x = scrollY * 0.0004;
-        lines.rotation.x = scrollY * 0.0004;
+        pointCloud.rotation.x = scrollY * 0.0005;
+        lines.rotation.x = scrollY * 0.0005;
+        pointCloud.position.y = -(scrollY * 0.02);
+        lines.position.y = -(scrollY * 0.02);
       }
+
+      // Camera perspective depth changes on scroll
       if (camera) {
-        camera.position.z = 220 + Math.sin(scrollY * 0.0015) * 25;
+        camera.position.z = 210 + Math.sin(progress * Math.PI * 4) * 30;
+        camera.position.x = Math.sin(progress * Math.PI * 2) * 15;
       }
     };
 
@@ -247,7 +323,7 @@ export default function LandingPage() {
     const handleResize = () => {
       if (!container) return;
       width = container.clientWidth || window.innerWidth;
-      height = container.clientHeight || 650;
+      height = container.clientHeight || window.innerHeight;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);
