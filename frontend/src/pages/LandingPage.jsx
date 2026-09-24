@@ -225,6 +225,25 @@ export default function LandingPage() {
 
     animate();
 
+    // Scroll-driven 3D Scene Motion
+    const handleScroll = () => {
+      const scrollY = window.scrollY || 0;
+      if (coreGroup) {
+        coreGroup.rotation.y = scrollY * 0.003;
+        coreGroup.rotation.x = scrollY * 0.0015;
+        coreGroup.position.y = 15 - Math.min(scrollY * 0.04, 300);
+      }
+      if (pointCloud && lines) {
+        pointCloud.rotation.x = scrollY * 0.0004;
+        lines.rotation.x = scrollY * 0.0004;
+      }
+      if (camera) {
+        camera.position.z = 220 + Math.sin(scrollY * 0.0015) * 25;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
     const handleResize = () => {
       if (!container) return;
       width = container.clientWidth || window.innerWidth;
@@ -239,6 +258,7 @@ export default function LandingPage() {
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
       if (container) container.innerHTML = "";
     };
   }, []);
@@ -376,8 +396,8 @@ export default function LandingPage() {
 
       {/* ─── SECTION 1: HERO SECTION (WARM IVORY + THREE.JS ANIMATION) ─────── */}
       <section className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden bg-gradient-to-b from-[#FAF8F5] via-[#F6F3EC] to-[#F2EDE4]/60 border-b border-[#EBE5DA]">
-        {/* Three.js Background Canvas (ANIMATION PRESERVED!) */}
-        <div ref={canvasContainerRef} className="absolute inset-0 pointer-events-none z-0" />
+        {/* Three.js Background Canvas (FIXED FULLSCREEN 3D SCROLL ANIMATION!) */}
+        <div ref={canvasContainerRef} className="fixed inset-0 pointer-events-none z-0" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
