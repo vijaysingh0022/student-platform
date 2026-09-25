@@ -32,7 +32,7 @@ function App() {
   const location = useLocation();
 
   // Pages that have their own built-in navbar — suppress the global one
-  const pagesWithOwnNavbar = ["/", "/sign-in", "/sign-up", "/login", "/register", "/admin-login"];
+  const pagesWithOwnNavbar = ["/", "/sign-in", "/sign-up", "/login", "/register", "/admin-login", "/dashboard"];
   const showGlobalNavbar = !pagesWithOwnNavbar.some(
     (path) => location.pathname === path || location.pathname.startsWith("/sign-in") || location.pathname.startsWith("/sign-up")
   );

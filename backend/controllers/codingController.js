@@ -5,54 +5,7 @@ import os from "os";
 import { getAIClient, getAIModel } from "../config/ai.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
-// Problem Bank for LearnX Coding Lab
-const SAMPLE_PROBLEMS = [
-  {
-    id: "two-sum",
-    title: "Two Sum",
-    difficulty: "Easy",
-    category: "Arrays & Hashing",
-    description:
-      "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
-    examples: [
-      { input: "nums = [2,7,11,15], target = 9", output: "[0, 1]" },
-      { input: "nums = [3,2,4], target = 6", output: "[1, 2]" },
-    ],
-    testCases: [
-      { input: "[2,7,11,15]\n9", expectedOutput: "[0,1]" },
-      { input: "[3,2,4]\n6", expectedOutput: "[1,2]" },
-      { input: "[3,3]\n6", expectedOutput: "[0,1]" },
-    ],
-    starterCode: {
-      python: `def twoSum(nums, target):\n    # Write your solution here\n    hash_map = {}\n    for i, num in enumerate(nums):\n        diff = target - num\n        if diff in hash_map:\n            return [hash_map[diff], i]\n        hash_map[num] = i\n    return []\n\n# Test execution\nimport json, sys\ninput_data = sys.stdin.read().splitlines()\nif len(input_data) >= 2:\n    nums = json.loads(input_data[0])\n    target = int(input_data[1])\n    print(json.dumps(twoSum(nums, target)))\n`,
-      javascript: `function twoSum(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const diff = target - nums[i];\n        if (map.has(diff)) {\n            return [map.get(diff), i];\n        }\n        map.set(nums[i], i);\n    }\n    return [];\n}\n\n// Read stdin input\nconst fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim().split('\\n');\nif (input.length >= 2) {\n    const nums = JSON.parse(input[0]);\n    const target = parseInt(input[1]);\n    console.log(JSON.stringify(twoSum(nums, target)));\n}\n`,
-      cpp: `#include <iostream>\n#include <vector>\n#include <unordered_map>\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    unordered_map<int, int> mp;\n    for (int i = 0; i < nums.size(); i++) {\n        int complement = target - nums[i];\n        if (mp.count(complement)) {\n            return {mp[complement], i};\n        }\n        mp[nums[i]] = i;\n    }\n    return {};\n}\n\nint main() {\n    cout << "[0, 1]" << endl;\n    return 0;\n}\n`,
-      c: `#include <stdio.h>\n\nint main() {\n    printf("[0, 1]\\n");\n    return 0;\n}\n`,
-      java: `import java.util.*;\n\npublic class Solution {\n    public static void main(String[] args) {\n        System.out.println("[0, 1]");\n    }\n}\n`,
-      sql: `SELECT id, name, salary FROM employees WHERE salary > 50000 ORDER BY salary DESC;`,
-    },
-  },
-  {
-    id: "reverse-string",
-    title: "Reverse String",
-    difficulty: "Easy",
-    category: "Strings",
-    description: "Write a function that reverses a string.",
-    examples: [{ input: 's = "hello"', output: '"olleh"' }],
-    testCases: [
-      { input: "hello", expectedOutput: "olleh" },
-      { input: "LearnX", expectedOutput: "XnraeL" },
-    ],
-    starterCode: {
-      python: `import sys\n\ndef reverseString(s):\n    return s[::-1]\n\ninput_str = sys.stdin.read().strip()\nif input_str:\n    print(reverseString(input_str))\n`,
-      javascript: `const fs = require('fs');\nconst input = fs.readFileSync(0, 'utf-8').trim();\nconsole.log(input.split('').reverse().join(''));\n`,
-      cpp: `#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\nint main() {\n    string s = "hello";\n    reverse(s.begin(), s.end());\n    cout << s << endl;\n    return 0;\n}\n`,
-      c: `#include <stdio.h>\n#include <string.h>\nint main() {\n    printf("olleh\\n");\n    return 0;\n}\n`,
-      java: `public class Solution {\n    public static void main(String[] args) {\n        System.out.println("olleh");\n    }\n}\n`,
-      sql: `SELECT REVERSE(name) FROM users;`,
-    },
-  },
-];
+import { CODING_PROBLEMS } from "../data/codingProblems.js";
 
 // Helper to execute code locally safely in temporary file sandbox
 const executeLocally = (language, code, stdinInput = "") => {
@@ -150,7 +103,7 @@ const executeLocally = (language, code, stdinInput = "") => {
 // @route GET /api/coding/problems
 export const getProblems = async (req, res) => {
   try {
-    res.json(SAMPLE_PROBLEMS);
+    res.json(CODING_PROBLEMS);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -187,7 +140,7 @@ export const submitCode = async (req, res) => {
   try {
     const { problemId = "two-sum", language = "python", code = "" } = req.body;
 
-    const problem = SAMPLE_PROBLEMS.find((p) => p.id === problemId) || SAMPLE_PROBLEMS[0];
+    const problem = CODING_PROBLEMS.find((p) => p.id === problemId) || CODING_PROBLEMS[0];
     const testCases = problem.testCases || [];
 
     // Run execution against test cases
