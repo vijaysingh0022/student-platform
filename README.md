@@ -72,9 +72,12 @@ The platform is production-deployed on **Vercel** with a serverless Node.js + Ex
 - At-risk student alert system based on performance velocity
 - Student-wise progress and exportable institutional reports
 
-### 6. 💼 Placement Prediction & Career Readiness Engine
-- Predictive placement readiness score calibrated against Tier-1 Product Giants, FinTech Unicorns, Startups, and IT Services
-- Learning velocity tracking across longitudinal assessment attempts
+### 6. 💼 ML Placement Readiness & Competency Engine
+- **Predictive Placement Readiness Score (0–100)** evaluated via a trained supervised Scikit-Learn model (`v1.0`)
+- **14-Feature Extraction Pipeline** spanning 8 core CSE domains (DSA, DBMS, OS, CN, OOPs, System Design, Aptitude, Web Dev), attempt volume, score velocity, consistency index, and weak topic count
+- **Explainable Attribution** detailing specific positive competencies and critical deficit deltas
+- **Ethical & Transparent**: Quantifies student mastery and learning readiness; explicitly documented as not an employment guarantee
+- **Connected Pipeline**: Feeds diagnosed strengths and weak areas directly into the AI Tutor and personalized 7-Day Roadmap generators
 
 ### 7. 🔒 Security & Governance
 - **RBAC** — Role-based access control (student / teacher / admin)
@@ -94,11 +97,12 @@ The platform is production-deployed on **Vercel** with a serverless Node.js + Ex
 | Layer | Technologies |
 |---|---|
 | **Frontend** | React 18, Vite 5, Tailwind CSS, Recharts, React Router DOM |
-| **Backend** | Node.js, Express.js, JWT Authentication, CORS, Dotenv |
+| **Backend** | Node.js, Express.js, JWT Authentication, CORS, Dotenv, Mongoose |
+| **Machine Learning** | Python 3, Scikit-Learn 1.9, Gradient Boosting Regressor, Ridge Regression, Pandas, NumPy, Joblib |
 | **Database** | MongoDB Atlas (persistent cloud DB) **+** Auto-embedded fallback for local dev |
 | **AI Integration** | OpenRouter API (`openai/gpt-4o-mini`, `google/gemini-2.0-flash-001`) |
 | **Security** | RBAC, SSO (SAML/OAuth2), Audit Logs, Rate Limiting (150 req/min), CSP, HSTS |
-| **Deployment** | Vercel (Serverless Functions + CDN Edge) |
+| **Deployment** | Render / Vercel (Serverless Functions + CDN Edge) |
 | **DevOps** | GitHub Codespaces, Concurrently, Nodemon, GitHub Actions ready |
 
 ---
@@ -107,41 +111,35 @@ The platform is production-deployed on **Vercel** with a serverless Node.js + Ex
 
 ```text
 student-platform/
-├── .devcontainer/
-│   └── devcontainer.json        # GitHub Codespaces 1-click launch config
-├── api/
-│   └── index.js                 # ✅ Vercel Serverless Function entry point
+├── docs/
+│   └── PLACEMENT_READINESS_VIVA.md # Comprehensive 18-question Viva & technical defense guide
+├── ml/
+│   ├── data/                    # Dataset generator & synthetic prototype data (seed=42)
+│   ├── models/                  # Serialized ML models & weights (.joblib, model_weights.json)
+│   ├── scripts/                 # Training pipeline, cross-validation & CLI prediction runner
+│   ├── reports/                 # Genuine empirical evaluation metrics (model_metrics.json)
+│   └── README.md                # ML architecture, training guide & ethics disclaimer
 ├── backend/
 │   ├── config/
-│   │   ├── db.js                # MongoDB Atlas + embedded fallback (connection caching)
+│   │   ├── db.js                # MongoDB Atlas + embedded fallback
 │   │   └── ai.js                # OpenRouter/OpenAI client factory
-│   ├── controllers/             # Auth, Quiz, Security, Privacy, Career, Tutor, Roadmap…
+│   ├── controllers/             # Auth, Prediction, Career, Tutor, Roadmap, Coding, Quiz…
 │   ├── middleware/              # JWT auth, RBAC, security headers, rate limiter
-│   ├── models/                  # User, Question, Quiz, AuditLog, TestResult, CareerProfile…
-│   ├── routes/                  # Express REST API endpoints
+│   ├── models/                  # User, PlacementPrediction, TestResult, Curriculum…
+│   ├── routes/                  # Express REST API endpoints (/api/career/readiness, etc.)
+│   ├── services/                # featureExtractor.js, mlReadinessService.js
 │   ├── seed/                    # 92 calibrated placement MCQs (all 8 tracks)
-│   ├── utils/                   # generateToken, auditLogger
-│   ├── .env                     # Environment config (not committed — see .env.example)
-│   ├── .env.example             # Template for all required environment variables
-│   ├── package.json
-│   └── server.js                # Express app (exported for serverless + standalone)
+│   ├── .env                     # Environment config (not committed)
+│   └── server.js                # Express app entry point
 ├── frontend/
-│   ├── public/
 │   ├── src/
-│   │   ├── components/          # Navbar, Logo, RoadmapVisualizer, MarkdownRenderer
-│   │   ├── context/             # AuthContext, OfflineContext
-│   │   ├── pages/               # Dashboard, TestPage, Tutor, QuizGenerator, OfflineLearning…
-│   │   ├── services/            # Axios API client (auto JWT injection)
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── index.html
-│   ├── package.json
+│   │   ├── components/          # Sidebar, TopHeader, AppLayout, GlobalSearchModal…
+│   │   ├── pages/               # Dashboard, PlacementPrediction, CodingLabPage, Tutor…
+│   │   ├── services/            # Axios API client
+│   │   └── App.jsx
 │   └── vite.config.js
-├── vercel.json                  # ✅ Vercel deployment config (rewrites + function settings)
-├── .gitignore
-├── CONTRIBUTING.md
-├── LICENSE
-├── package.json                 # Root: `npm run dev` starts everything concurrently
+├── vercel.json                  # Vercel deployment config
+├── render.yaml                  # Render deployment config
 └── README.md
 ```
 
@@ -277,7 +275,31 @@ Then set the environment variables (`MONGO_URI`, `JWT_SECRET`, `OPENAI_API_KEY`)
 - **`develop`**: Active development branch
 - **`feature/*`**: Feature branches (e.g. `feature/quiz-generator`)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+---
+
+## 🤖 ML Placement Readiness Engine (`/ml`)
+
+The system includes a fully reproducible, supervised Machine Learning engine evaluated on 14 diagnostic assessment features:
+
+```bash
+# 1. Activate Python virtual environment
+source ml/venv/bin/activate
+
+# 2. Generate synthetic prototype dataset (clearly labeled seed=42)
+python ml/data/generate_dataset.py
+
+# 3. Train, evaluate & compare Scikit-Learn models (Gradient Boosting, Ridge, Random Forest)
+python ml/scripts/train_model.py
+
+# 4. Run CLI prediction test
+python ml/scripts/predict.py '{"dsa":84, "dbms":76, "os":72, "cn":68, "oops":82, "system_design":61, "aptitude":88, "web_dev":75, "overall_accuracy":76, "attempts":3, "improvement_rate":12, "learning_velocity":8.2, "consistency_score":74, "weak_topic_count":2}'
+
+# 5. Run backend end-to-end integration tests
+node backend/scripts/testMLPipeline.js
+```
+
+### 🎓 Viva & Technical Defense
+See [`docs/PLACEMENT_READINESS_VIVA.md`](docs/PLACEMENT_READINESS_VIVA.md) for 18 detailed technical defense questions with mathematical formulations, evaluation metrics ($R^2=0.9892$, $\text{MAE}=1.6509$), model comparisons, and ethical AI/ML disclaimers.
 
 ---
 

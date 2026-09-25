@@ -2,6 +2,7 @@ import { getAIClient, getAIModel } from "../config/ai.js";
 import Roadmap from "../models/Roadmap.js";
 import TestResult from "../models/TestResult.js";
 import TopicProgress from "../models/TopicProgress.js";
+import PlacementPrediction from "../models/PlacementPrediction.js";
 import { recordAuditLog } from "../utils/auditLogger.js";
 
 // Standard syllabus curriculum map per subject to ensure comprehensive coverage
@@ -211,10 +212,11 @@ export const generateRoadmap = async (req, res) => {
 
     const userId = req.user._id;
 
-    // 1. Fetch real student mastery profile from TopicProgress and TestResult
-    const [topicProgresses, testResults] = await Promise.all([
+    // 1. Fetch real student mastery profile from TopicProgress, TestResult, and ML Placement Prediction
+    const [topicProgresses, testResults, placementDoc] = await Promise.all([
       TopicProgress.find({ user: userId, subjectId: subject }).lean(),
       TestResult.find({ user: userId, subject }).sort({ createdAt: -1 }).limit(3).lean(),
+      PlacementPrediction.findOne({ user: userId }).lean(),
     ]);
 
     const weakTopics = [];
@@ -238,6 +240,15 @@ export const generateRoadmap = async (req, res) => {
           masteredTopics.push(tName);
         }
       });
+    }
+
+    // Incorporate ML diagnosed weak topics if available
+    if (placementDoc?.weakTopics) {
+      placementDoc.weakTopics
+        .filter((w) => w.subject === subject || subject === "DSA")
+        .forEach((w) => {
+          if (!weakTopics.includes(w.topic)) weakTopics.push(w.topic);
+        });
     }
 
     // Default weak topics fallback if no diagnostic history yet
@@ -270,12 +281,15 @@ Available Daily Study Time: ${availableHoursPerDay} Hours/day (Preferred Time: $
 Current Skill Level: ${skillLevel}
 Target Goal/Score: ${targetScore}
 
-Student Mastery Context:
-- Diagnosed Weak Topics: ${effectiveWeakTopics.join(", ")}
+Student ML Placement Readiness & Mastery Profile:
+- Current ML Placement Readiness Score: ${placementDoc?.readinessScore ?? 65}/100 (${placementDoc?.readinessTier ?? "Evaluating"})
+- Key Competency Strengths: ${placementDoc?.strengths?.map(s => s.name).join(", ") || "General Foundations"}
+- Priority Improvement Topics: ${effectiveWeakTopics.join(", ")}
 - Already Mastered Topics: ${masteredTopics.join(", ") || "None recorded yet"}
 
 Generate a personalized dynamic daily study plan for ${Math.min(daysRemaining, 10)} days.
 Each day must contain a learning pipeline: "Learn", "Practice", "Quiz".
+Prioritize the diagnosed weak topics in the first half of the schedule.
 
 Respond ONLY with a valid JSON object matching this schema:
 {
