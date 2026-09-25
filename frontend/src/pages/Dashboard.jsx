@@ -306,26 +306,11 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex">
+    <div className="space-y-6">
       {/* ═══════════════════════════════════════════════════════
-          1. PERMANENT LEFT SIDEBAR (~240px)
+          1. MAIN HERO SECTION (Dark Navy + Purple/Blue Gradient)
       ═══════════════════════════════════════════════════════ */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* ═══════════════════════════════════════════════════════
-          MAIN CONTENT AREA (Offset by sidebar width on desktop)
-      ═══════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-[240px]">
-        {/* 2. MINIMAL TOP HEADER */}
-        <TopHeader onMenuClick={() => setSidebarOpen(true)} />
-
-        {/* Inner Container */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-          {/* ═══════════════════════════════════════════════════════
-              3. MAIN HERO SECTION (Dark Navy + Purple/Blue Gradient)
-          ═══════════════════════════════════════════════════════ */}
-          <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-white shadow-xl p-6 sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 text-white shadow-xl p-6 sm:p-8">
             {/* Ambient Background Gradient Lighting */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-600/25 to-violet-600/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-sky-600/20 to-indigo-600/15 rounded-full blur-2xl -ml-20 -mb-20 pointer-events-none" />
@@ -984,9 +969,6 @@ const Dashboard = () => {
               9. GAMIFICATION WIDGET
           ═══════════════════════════════════════════════════════ */}
           <GamificationWidget xp={studentXP} streak={streakDays} />
-
-        </main>
-      </div>
     </div>
   );
 };

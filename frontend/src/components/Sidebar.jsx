@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useClerk } from "@clerk/clerk-react";
 import { LearnXLogo } from "./LearnXLogo.jsx";
 
-const NAV_ITEMS = [
+const PRIMARY_NAV = [
   {
     label: "Dashboard",
     to: "/dashboard",
@@ -43,7 +43,7 @@ const NAV_ITEMS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
       </svg>
     ),
-    badge: null,
+    badge: "MCQs",
   },
   {
     label: "AI Quiz",
@@ -63,7 +63,7 @@ const NAV_ITEMS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
     ),
-    badge: "24/7",
+    badge: "24/7 AI",
   },
   {
     label: "7-Day Roadmap",
@@ -83,29 +83,29 @@ const NAV_ITEMS = [
         <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
       </svg>
     ),
-    badge: "Placement",
+    badge: "Career",
   },
 ];
 
-const MORE_ITEMS = [
-  { label: "AI Coding Lab", to: "/coding-lab", icon: "💻", desc: "159+ DSA Problems & Compiler" },
-  { label: "Algorithm Visualizer", to: "/algorithm-visualizer", icon: "🎬", desc: "15 Sorting & Graph Visualizers" },
-  { label: "AI Mock Interview", to: "/mock-interview", icon: "🎤", desc: "5-Round AI Interview Sim" },
-  { label: "Skill Graph Radar", to: "/skill-graph", icon: "🧠", desc: "12-Domain CSE Competency Map" },
-  { label: "Offline Learning", to: "/offline-learning", icon: "📥", desc: "Cached Packs & Sync Queue" },
-  { label: "Career Hub & ATS", to: "/career-readiness", icon: "💼", desc: "Resume Scorer & Interview Qs" },
+const SECONDARY_TOOLS = [
+  { label: "AI Coding Lab", to: "/coding-lab", icon: "💻", badge: "159+ Algos" },
+  { label: "Algorithm Visualizer", to: "/algorithm-visualizer", icon: "🎬", badge: "15 Algos" },
+  { label: "AI Mock Interview", to: "/mock-interview", icon: "🎤", badge: "5 Rounds" },
+  { label: "Skill Graph Radar", to: "/skill-graph", icon: "🧠", badge: "12 Maps" },
+  { label: "Offline Learning", to: "/offline-learning", icon: "📥", badge: "Cached" },
+  { label: "Career Hub & ATS", to: "/career-readiness", icon: "💼", badge: "Resume" },
 ];
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user } = useAuth();
   const { signOut } = useClerk();
-  const [moreExpanded, setMoreExpanded] = useState(false);
+  const [toolsExpanded, setToolsExpanded] = useState(true);
 
   const isCurrentActive = (path) => {
     if (path === "/dashboard") return location.pathname === "/dashboard";
     if (path === "/learn") return location.pathname.startsWith("/learn");
-    if (path === "/exam-prep") return location.pathname.startsWith("/exam-prep");
+    if (path === "/exam-prep") return location.pathname.startsWith("/exam-prep") || location.pathname.startsWith("/exam");
     if (path === "/test/DSA") return location.pathname.startsWith("/test") || location.pathname === "/assessment";
     if (path === "/quiz-generator") return location.pathname === "/quiz-generator";
     if (path === "/tutor") return location.pathname.startsWith("/tutor");
@@ -114,25 +114,26 @@ export const Sidebar = ({ isOpen, onClose }) => {
     return location.pathname === path;
   };
 
-  const isMoreItemActive = MORE_ITEMS.some((item) => location.pathname.startsWith(item.to));
+  const isSecondaryActive = (path) => location.pathname.startsWith(path);
 
   return (
     <>
-      {/* Mobile Backdrop */}
+      {/* Mobile / Tablet Backdrop Overlay */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-xs lg:hidden transition-opacity duration-300"
+          aria-hidden="true"
         />
       )}
 
-      {/* Main Sidebar Shell */}
+      {/* Fixed Full-Height Left Sidebar Shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-[240px] bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-[240px] bg-white border-r border-slate-200/90 flex flex-col justify-between select-none transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
-        {/* Top: Logo + Brand */}
+        {/* Top Header: LearnX Logo */}
         <div className="flex flex-col">
           <div className="h-16 px-5 border-b border-slate-100 flex items-center justify-between">
             <Link to="/dashboard" onClick={onClose} className="flex items-center gap-2 group">
@@ -141,7 +142,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             {/* Mobile close button */}
             <button
               onClick={onClose}
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               aria-label="Close sidebar"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -150,37 +151,37 @@ export const Sidebar = ({ isOpen, onClose }) => {
             </button>
           </div>
 
-          {/* Navigation Section */}
-          <div className="px-3 py-4 overflow-y-auto max-h-[calc(100vh-190px)] space-y-1">
-            <p className="px-3 pb-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-              Main Menu
+          {/* Navigation Items (Scrollable if screen is short) */}
+          <div className="px-3 py-3 overflow-y-auto max-h-[calc(100vh-160px)] space-y-1">
+            <p className="px-3 pb-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+              Navigation
             </p>
 
-            {NAV_ITEMS.map((item) => {
+            {PRIMARY_NAV.map((item) => {
               const active = isCurrentActive(item.to);
               return (
                 <Link
                   key={item.label}
                   to={item.to}
                   onClick={onClose}
-                  className={`group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 ${
                     active
                       ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/20"
                       : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <span className={`${active ? "text-white" : "text-slate-500 group-hover:text-indigo-600"} transition-colors`}>
                       {item.icon}
                     </span>
-                    <span className="tracking-tight">{item.label}</span>
+                    <span className="truncate tracking-tight">{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0 ${
                         active
                           ? "bg-white/20 text-white"
-                          : "bg-indigo-50 text-indigo-700 border border-indigo-100/80"
+                          : "bg-slate-100 text-slate-600 border border-slate-200/60"
                       }`}
                     >
                       {item.badge}
@@ -190,28 +191,17 @@ export const Sidebar = ({ isOpen, onClose }) => {
               );
             })}
 
-            {/* More Menu Dropdown Item */}
+            {/* More Learning Tools Accordion */}
             <div className="pt-2">
               <button
                 type="button"
-                onClick={() => setMoreExpanded((prev) => !prev)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 ${
-                  isMoreItemActive
-                    ? "bg-indigo-50 text-indigo-900 border border-indigo-200/80"
-                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
-                }`}
+                onClick={() => setToolsExpanded((prev) => !prev)}
+                className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 hover:text-slate-700 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-500">
-                    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                  </span>
-                  <span className="tracking-tight">More Tools</span>
-                </div>
+                <span>More Tools</span>
                 <svg
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                    moreExpanded ? "rotate-180" : ""
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                    toolsExpanded ? "rotate-180" : ""
                   }`}
                   fill="none"
                   viewBox="0 0 24 24"
@@ -222,24 +212,30 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 </svg>
               </button>
 
-              {/* Expanded Sublinks */}
-              {moreExpanded && (
-                <div className="mt-1.5 ml-4 pl-3 border-l-2 border-slate-100 space-y-1 py-1">
-                  {MORE_ITEMS.map((sub) => {
-                    const activeSub = location.pathname.startsWith(sub.to);
+              {toolsExpanded && (
+                <div className="space-y-0.5 pt-1">
+                  {SECONDARY_TOOLS.map((sub) => {
+                    const activeSub = isSecondaryActive(sub.to);
                     return (
                       <Link
                         key={sub.label}
                         to={sub.to}
                         onClick={onClose}
-                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                        className={`group flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
                           activeSub
-                            ? "bg-indigo-100 text-indigo-950 font-bold"
+                            ? "bg-indigo-50 text-indigo-900 font-bold border border-indigo-200/60"
                             : "text-slate-600 hover:text-indigo-600 hover:bg-slate-50"
                         }`}
                       >
-                        <span className="text-sm">{sub.icon}</span>
-                        <span className="truncate">{sub.label}</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="text-sm shrink-0">{sub.icon}</span>
+                          <span className="truncate">{sub.label}</span>
+                        </div>
+                        {sub.badge && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">
+                            {sub.badge}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -249,25 +245,28 @@ export const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Bottom Profile / Status Section */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-white border border-slate-200/80 shadow-xs">
+        {/* Bottom Profile / Account Footer */}
+        <div className="p-3 border-t border-slate-100 bg-slate-50/60">
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-xs">
-              {user?.name?.[0]?.toUpperCase() || "S"}
+              {user?.name?.[0]?.toUpperCase() || "V"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-900 truncate">
+              <p className="text-xs font-bold text-slate-900 truncate leading-none">
                 {user?.name || "Vijay Singh"}
               </p>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                <p className="text-[10px] font-semibold text-slate-500 truncate">Online • Scholar</p>
+                <p className="text-[10px] font-semibold text-slate-500 truncate leading-none">
+                  Online • Scholar
+                </p>
               </div>
             </div>
             <button
               onClick={() => signOut()}
               title="Sign Out"
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
+              aria-label="Sign Out"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

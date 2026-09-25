@@ -1,7 +1,6 @@
 import React from "react";
-import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
-import Navbar from "./components/Navbar.jsx";
+import { Routes, Route, Navigate } from "react-router-dom";
+import AppLayout from "./components/AppLayout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AdminRoute from "./components/AdminRoute.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
@@ -29,14 +28,6 @@ import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
 function App() {
-  const location = useLocation();
-
-  // Pages that have their own built-in navbar — suppress the global one
-  const pagesWithOwnNavbar = ["/", "/sign-in", "/sign-up", "/login", "/register", "/admin-login", "/dashboard"];
-  const showGlobalNavbar = !pagesWithOwnNavbar.some(
-    (path) => location.pathname === path || location.pathname.startsWith("/sign-in") || location.pathname.startsWith("/sign-up")
-  );
-
   return (
     <OfflineProvider>
       <div className="relative min-h-screen">
@@ -44,214 +35,36 @@ function App() {
         <div className="orb orb-1" />
         <div className="orb orb-2" />
 
-        {/* Main content */}
+        {/* Main Routes */}
         <div className="relative z-10">
-          {/* Global Navbar — hidden on pages that have their own built-in header */}
-          {showGlobalNavbar && <Navbar />}
           <Routes>
-            {/* Public routes */}
+            {/* Public standalone pages (landing & auth) */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/sign-in/*" element={<ClerkSignInPage />} />
             <Route path="/sign-up/*" element={<ClerkSignUpPage />} />
-
-            {/* Legacy /login and /register redirect to Clerk pages */}
             <Route path="/login" element={<Navigate to="/sign-in" replace />} />
             <Route path="/register" element={<Navigate to="/sign-up" replace />} />
-
-            {/* Public (no auth needed) */}
-            <Route path="/quiz-generator" element={<QuizGenerator />} />
-
-            {/* Admin Portal — separate credentials required */}
             <Route path="/admin-login" element={<AdminLogin />} />
 
-            {/* Admin-guarded routes */}
-            <Route
-              path="/teacher-dashboard"
-              element={
-                <AdminRoute>
-                  <TeacherDashboard />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/institution-dashboard"
-              element={
-                <AdminRoute>
-                  <TeacherDashboard />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/security"
-              element={
-                <AdminRoute>
-                  <SecurityGovernance />
-                </AdminRoute>
-              }
-            />
-
-            {/* Protected routes */}
+            {/* Platform Application Pages (Fixed Left Sidebar + Minimal Top Header Layout) */}
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/offline-learning"
-              element={
-                <ProtectedRoute>
-                  <OfflineLearning />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/career-readiness"
-              element={
-                <ProtectedRoute>
-                  <CareerReadiness />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/placement-readiness"
-              element={
-                <ProtectedRoute>
-                  <PlacementPrediction />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/test"
-              element={
-                <ProtectedRoute>
-                  <TestPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/assessment"
-              element={
-                <ProtectedRoute>
-                  <TestPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/test/:subject"
-              element={
-                <ProtectedRoute>
-                  <TestPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tutor"
-              element={
-                <ProtectedRoute>
-                  <Tutor />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/roadmap"
-              element={
-                <ProtectedRoute>
-                  <RoadmapPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/roadmap/:subject"
-              element={
-                <ProtectedRoute>
-                  <RoadmapPage />
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
 
-            {/* Skill Graph */}
-            <Route
-              path="/skill-graph"
-              element={
-                <ProtectedRoute>
-                  <SkillGraphPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/visualizer"
-              element={
-                <ProtectedRoute>
-                  <AlgorithmVisualizerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/algorithm-visualizer"
-              element={
-                <ProtectedRoute>
-                  <AlgorithmVisualizerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/coding-lab"
-              element={
-                <ProtectedRoute>
-                  <CodingLabPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/coding"
-              element={
-                <ProtectedRoute>
-                  <CodingLabPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/mock-interview"
-              element={
-                <ProtectedRoute>
-                  <MockInterviewPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/interview"
-              element={
-                <ProtectedRoute>
-                  <MockInterviewPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/exam-prep"
-              element={
-                <ProtectedRoute>
-                  <ExamPrepPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/exam"
-              element={
-                <ProtectedRoute>
-                  <ExamPrepPage />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Core Learning System Routes */}
             <Route
               path="/learn"
               element={
                 <ProtectedRoute>
-                  <CurriculumSubjectsPage />
+                  <AppLayout>
+                    <CurriculumSubjectsPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -259,7 +72,9 @@ function App() {
               path="/learn/:subjectId"
               element={
                 <ProtectedRoute>
-                  <SubjectCurriculumPage />
+                  <AppLayout>
+                    <SubjectCurriculumPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -267,7 +82,9 @@ function App() {
               path="/learn/:subjectId/:topicId"
               element={
                 <ProtectedRoute>
-                  <TopicLearningPage />
+                  <AppLayout>
+                    <TopicLearningPage />
+                  </AppLayout>
                 </ProtectedRoute>
               }
             />
@@ -275,8 +92,241 @@ function App() {
               path="/learn/:subjectId/:topicId/quiz"
               element={
                 <ProtectedRoute>
-                  <TopicQuizPage />
+                  <AppLayout>
+                    <TopicQuizPage />
+                  </AppLayout>
                 </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/exam-prep"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ExamPrepPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/exam"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ExamPrepPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/test"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TestPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assessment"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TestPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test/:subject"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <TestPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/quiz-generator"
+              element={
+                <AppLayout>
+                  <QuizGenerator />
+                </AppLayout>
+              }
+            />
+
+            <Route
+              path="/tutor"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Tutor />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/roadmap"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RoadmapPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/roadmap/:subject"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RoadmapPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/placement-readiness"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PlacementPrediction />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/career-readiness"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CareerReadiness />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/coding-lab"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CodingLabPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/coding"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CodingLabPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/algorithm-visualizer"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AlgorithmVisualizerPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visualizer"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <AlgorithmVisualizerPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/mock-interview"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MockInterviewPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interview"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MockInterviewPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/skill-graph"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <SkillGraphPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/offline-learning"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <OfflineLearning />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Portal Protected Routes */}
+            <Route
+              path="/teacher-dashboard"
+              element={
+                <AdminRoute>
+                  <AppLayout>
+                    <TeacherDashboard />
+                  </AppLayout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/institution-dashboard"
+              element={
+                <AdminRoute>
+                  <AppLayout>
+                    <TeacherDashboard />
+                  </AppLayout>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/security"
+              element={
+                <AdminRoute>
+                  <AppLayout>
+                    <SecurityGovernance />
+                  </AppLayout>
+                </AdminRoute>
               }
             />
 
