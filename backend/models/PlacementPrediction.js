@@ -5,31 +5,76 @@ const placementPredictionSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     readinessScore: { type: Number, required: true },
     readinessTier: { type: String, required: true },
+    tierLevel: { type: String, default: "Level 2 (Competent)" },
     targetTier: { type: String, default: "Product Companies (Tier 1 & 2)" },
     weeklyHours: { type: Number, default: 12 },
-    estimatedWeeksToReady: { type: Number, required: true },
-    estimatedHoursTotal: { type: Number, required: true },
+    estimatedWeeksToReady: { type: Number, default: 4 },
+    estimatedHoursTotal: { type: Number, default: 24 },
     learningVelocity: { type: String, default: "Moderate (+12% per 2 tests)" },
     testsAnalyzed: { type: Number, default: 0 },
     overallAccuracy: { type: Number, default: 0 },
+    modelVersion: { type: String, default: "v1.0" },
+    featureSnapshot: {
+      dsa: { type: Number, default: 50 },
+      dbms: { type: Number, default: 50 },
+      os: { type: Number, default: 50 },
+      cn: { type: Number, default: 50 },
+      oops: { type: Number, default: 50 },
+      system_design: { type: Number, default: 50 },
+      aptitude: { type: Number, default: 50 },
+      web_dev: { type: Number, default: 50 },
+      overall_accuracy: { type: Number, default: 50 },
+      attempts: { type: Number, default: 1 },
+      improvement_rate: { type: Number, default: 0 },
+      learning_velocity: { type: Number, default: 5.0 },
+      consistency_score: { type: Number, default: 70 },
+      weak_topic_count: { type: Number, default: 0 },
+    },
+    strengths: [
+      {
+        name: { type: String },
+        score: { type: Number },
+        status: { type: String },
+      }
+    ],
+    improvementAreas: [
+      {
+        name: { type: String },
+        score: { type: Number },
+        status: { type: String },
+        subject: { type: String },
+        topic: { type: String },
+        currentScore: { type: Number },
+        targetScore: { type: Number },
+        delta: { type: Number },
+        priority: { type: String, enum: ["Critical", "High", "Medium", "Low"], default: "Medium" },
+        estimatedHoursToFix: { type: Number },
+        recommendedAction: { type: String },
+      }
+    ],
+    weakTopics: [
+      {
+        subject: { type: String },
+        topic: { type: String },
+        score: { type: Number },
+        targetScore: { type: Number },
+        delta: { type: Number },
+      }
+    ],
+    featureContributions: [
+      {
+        feature: { type: String },
+        rawValue: { type: Number },
+        contribution: { type: Number },
+      }
+    ],
+    explanations: [{ type: String }],
     subjectBreakdown: [
       {
         subject: { type: String },
         score: { type: Number },
         weight: { type: Number },
         status: { type: String },
-      }
-    ],
-    improvementAreas: [
-      {
-        subject: { type: String, required: true },
-        topic: { type: String, required: true },
-        currentScore: { type: Number, required: true },
-        targetScore: { type: Number, required: true },
-        delta: { type: Number, required: true },
-        priority: { type: String, enum: ["Critical", "High", "Medium", "Low"], default: "Medium" },
-        estimatedHoursToFix: { type: Number, required: true },
-        recommendedAction: { type: String },
       }
     ],
     companyTierFits: [
@@ -48,15 +93,14 @@ const placementPredictionSchema = new mongoose.Schema(
         milestone: { type: String },
       }
     ],
-    // Always stored as plain text strings — never objects
     aiExecutiveSummary: { type: String, default: "" },
     aiStrategicPlan: { type: String, default: "" },
     dangerZones: [{ type: String }],
+    generatedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
-// Belt-and-suspenders: ensure AI text fields are always plain strings before save
 function coerceToString(val) {
   if (typeof val === "string") return val;
   if (val && typeof val === "object") {
@@ -85,7 +129,6 @@ placementPredictionSchema.pre("save", function (next) {
   next();
 });
 
-// Also handle findOneAndUpdate (upsert path)
 placementPredictionSchema.pre("findOneAndUpdate", function (next) {
   const update = this.getUpdate();
   if (update?.aiExecutiveSummary !== undefined) {
@@ -97,6 +140,6 @@ placementPredictionSchema.pre("findOneAndUpdate", function (next) {
   next();
 });
 
-const PlacementPrediction = mongoose.model("PlacementPrediction", placementPredictionSchema);
+export const PlacementPrediction = mongoose.model("PlacementPrediction", placementPredictionSchema);
+export const CareerReadiness = PlacementPrediction;
 export default PlacementPrediction;
-

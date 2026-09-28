@@ -10,6 +10,10 @@ import {
   evaluateMockAnswer,
   generateMockQuestion
 } from "../controllers/careerController.js";
+import {
+  getPlacementReadiness,
+  evaluatePlacementReadiness,
+} from "../controllers/predictionController.js";
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -19,6 +23,8 @@ const upload = multer({
 });
 
 router.get("/dashboard", protect, getCareerDashboard);
+router.get("/readiness", protect, getPlacementReadiness);
+router.post("/readiness", protect, evaluatePlacementReadiness);
 router.post("/update-role", protect, updateTargetRole);
 router.post("/analyze-resume", protect, analyzeResume);
 router.post("/upload-resume", protect, upload.single("resumeFile"), uploadAndAnalyzeResume);

@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 */node_modules/
+ml/venv/
+__pycache__/
+*.pyc
 
 # Environment Variables & Secrets
 .env
@@ -14,6 +17,7 @@ dist/
 build/
 */dist/
 */build/
+.vercel/
 
 # Logs & Runtime
 npm-debug.log*
@@ -39,8 +43,7 @@ Thumbs.db
 coverage/
 .nyc_output/
 
-# Temporary / Scratch files
+# Temporary / Cache
+.cache/
+.tmp/
 scratch/
-tmp/
-temp/
-.vercel

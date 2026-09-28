@@ -1,6 +1,7 @@
 import TestResult from "../models/TestResult.js";
 import PlacementPrediction from "../models/PlacementPrediction.js";
 import { getAIClient, getAIModel } from "../config/ai.js";
+import { predictStudentReadiness } from "../services/mlReadinessService.js";
 
 // Standard CSE placement benchmark topics
 const BENCHMARK_CURRICULUM = {
@@ -52,12 +53,6 @@ const BENCHMARK_CURRICULUM = {
     { topic: "Authentication & Security (JWT)", target: 85, weight: 1.1, complexity: "Medium", baseHours: 4 },
     { topic: "DevOps & Containers (Docker/Git)", target: 80, weight: 1.0, complexity: "Medium", baseHours: 4 },
   ],
-  MACHINE_LEARNING: [
-    { topic: "Supervised Learning & Regression", target: 85, weight: 1.2, complexity: "High", baseHours: 6 },
-    { topic: "Neural Networks & Deep Learning", target: 85, weight: 1.3, complexity: "High", baseHours: 8 },
-    { topic: "Model Evaluation & Metrics", target: 90, weight: 1.1, complexity: "Medium", baseHours: 4 },
-    { topic: "CNN, RNN & Transformer Architectures", target: 80, weight: 1.3, complexity: "High", baseHours: 8 },
-  ],
 };
 
 const COMPANY_TIERS = [
@@ -83,30 +78,33 @@ const COMPANY_TIERS = [
   },
 ];
 
-export const calculatePrediction = async (userId, userPreferences = {}) => {
+export const calculatePrediction = async (userId, userPreferences = {}, assessmentId = null) => {
   const weeklyHours = userPreferences.weeklyHours ? Math.max(4, Math.min(40, Number(userPreferences.weeklyHours))) : 12;
   const targetTier = userPreferences.targetTier || "Product Companies (Tier 1 & 2)";
 
-  // Fetch all historical test results for user
-  const results = await TestResult.find({ user: userId }).sort({ createdAt: 1 });
+  // 1. Run ML Model Inference & Feature Extraction Layer
+  const mlOutput = await predictStudentReadiness(userId, assessmentId);
+  const {
+    readinessScore,
+    readinessTier,
+    tierLevel,
+    modelVersion,
+    featureSnapshot,
+    subjectBreakdown,
+    strengths,
+    improvementAreas,
+    weakTopics,
+    featureContributions,
+    explanations,
+    historyTrend,
+    testsAnalyzed,
+  } = mlOutput;
 
-  // Map to store latest topic scores: { "DBMS:Normalization": { correct, total, percent } }
+  // 2. Fetch raw test results for topic-level gap analysis
+  const results = await TestResult.find({ user: userId }).sort({ createdAt: 1 });
   const topicStats = {};
-  const subjectScores = {
-    DSA: [],
-    DBMS: [],
-    OS: [],
-    CN: [],
-    OOPS: [],
-    SYSTEM_DESIGN: [],
-    APTITUDE: [],
-    WEB_DEV: [],
-  };
 
   for (const r of results) {
-    if (subjectScores[r.subject]) {
-      subjectScores[r.subject].push(r.scorePercent);
-    }
     if (r.topicBreakdown) {
       for (const [tName, data] of Object.entries(r.topicBreakdown)) {
         const key = `${r.subject}:${tName}`;
@@ -123,70 +121,23 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
     }
   }
 
-  // Calculate learning velocity if user took multiple tests
-  let velocityText = "Baseline diagnostic established";
-  let velocityScore = 0;
-  if (results.length >= 2) {
-    const firstScore = results[0].scorePercent;
-    const latestScore = results[results.length - 1].scorePercent;
-    const diff = latestScore - firstScore;
-    velocityScore = diff;
-    if (diff > 0) {
-      velocityText = `Accelerating (+${diff}% growth across ${results.length} assessments)`;
-    } else if (diff === 0) {
-      velocityText = `Steady performance across ${results.length} assessments`;
-    } else {
-      velocityText = `Fluctuating (${diff}% delta across ${results.length} assessments)`;
-    }
-  } else if (results.length === 1) {
-    velocityText = `Initial assessment recorded (${results[0].scorePercent}% score)`;
-  } else {
-    velocityText = `Diagnostic pending (Default engineering benchmarks applied)`;
-  }
-
-  // Evaluate Subject Breakdowns & Topic Deltas ("What to improve and How much")
-  const improvementAreas = [];
-  const subjectBreakdown = [];
-  let totalWeightedScore = 0;
-  let totalWeight = 0;
+  // Calculate detailed improvement areas with estimated study hours
+  const detailedImprovements = [];
   let totalHoursNeeded = 0;
 
-  const subjectWeights = { DSA: 0.45, DBMS: 0.30, OS: 0.25 };
-
   for (const [subj, defaultTopics] of Object.entries(BENCHMARK_CURRICULUM)) {
-    const scores = subjectScores[subj] || [];
-    let avgSubjectScore = 0;
-    let subjectStatus = "Unassessed";
+    const sObj = subjectBreakdown.find((s) => s.subject === subj);
+    const avgSubjectScore = sObj ? sObj.score : 40;
 
-    if (scores.length > 0) {
-      avgSubjectScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      subjectStatus = avgSubjectScore >= 75 ? "Strong" : avgSubjectScore >= 55 ? "Moderate" : "Needs Attention";
-    } else {
-      avgSubjectScore = 40; // baseline unassessed default
-      subjectStatus = "Diagnostic Recommended";
-    }
-
-    const sWeight = subjectWeights[subj] || 0.33;
-    totalWeightedScore += avgSubjectScore * sWeight;
-    totalWeight += sWeight;
-
-    subjectBreakdown.push({
-      subject: subj,
-      score: avgSubjectScore,
-      weight: Math.round(sWeight * 100),
-      status: subjectStatus,
-    });
-
-    // Check each benchmark topic
     for (const bTopic of defaultTopics) {
       const recorded = topicStats[`${subj}:${bTopic.topic}`];
       let currentScore = 0;
       if (recorded) {
         currentScore = recorded.percent;
-      } else if (scores.length > 0) {
+      } else if (sObj && sObj.assessed) {
         currentScore = Math.max(30, avgSubjectScore - 15);
       } else {
-        currentScore = 35; // unassessed estimate
+        currentScore = 35;
       }
 
       const targetScore = bTopic.target;
@@ -197,7 +148,6 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
       else if (delta >= 20) priority = "High";
       else if (delta > 0) priority = "Medium";
 
-      // Calculate hours needed based on delta and topic complexity
       const hoursToFix = delta > 0 ? Math.max(2, Math.round((delta / 100) * bTopic.baseHours * 1.5)) : 0;
       totalHoursNeeded += hoursToFix;
 
@@ -212,7 +162,7 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
         recAction = `Quick review and 3-5 practice questions to reach interview mastery.`;
       }
 
-      improvementAreas.push({
+      detailedImprovements.push({
         subject: subj,
         topic: bTopic.topic,
         currentScore,
@@ -225,24 +175,24 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
     }
   }
 
-  // Calculate overall readiness score (0-100)
-  let baseReadiness = totalWeight > 0 ? Math.round(totalWeightedScore / totalWeight) : 50;
-  // Boost slightly if positive velocity, dampen if high gap
-  if (velocityScore > 0) baseReadiness = Math.min(99, baseReadiness + Math.round(velocityScore * 0.15));
+  // Learning Velocity Text
+  let velocityText = "Baseline diagnostic established";
+  if (results.length >= 2) {
+    const diff = featureSnapshot.improvement_rate || 0;
+    if (diff > 0) velocityText = `Accelerating (+${diff}% growth across ${results.length} assessments)`;
+    else if (diff === 0) velocityText = `Steady performance across ${results.length} assessments`;
+    else velocityText = `Fluctuating (${diff}% delta across ${results.length} assessments)`;
+  } else if (results.length === 1) {
+    velocityText = `Initial assessment recorded (${results[0].scorePercent}% score)`;
+  } else {
+    velocityText = "Diagnostic pending (Default engineering benchmarks applied)";
+  }
 
-  // Determine Readiness Tier
-  let readinessTier = "Foundational Stage (<50%)";
-  if (baseReadiness >= 85) readinessTier = "Tier-1 Product Company Ready (85%+)";
-  else if (baseReadiness >= 72) readinessTier = "Product & FinTech Ready (72-84%)";
-  else if (baseReadiness >= 58) readinessTier = "IT Services & Digital Tier Ready (58-71%)";
-  else readinessTier = "Foundational Stage (<58%)";
-
-  // Calculate estimated weeks to placement ready
   const estimatedWeeksToReady = Math.max(1, Math.ceil(totalHoursNeeded / weeklyHours));
 
-  // Company Tier Fits
+  // Company Tier Fits based on real score
   const companyTierFits = COMPANY_TIERS.map((tier) => {
-    const fit = Math.min(100, Math.round((baseReadiness / tier.benchmarkScore) * 100));
+    const fit = Math.min(100, Math.round((readinessScore / tier.benchmarkScore) * 100));
     let status = "Not Ready";
     if (fit >= 95) status = "Highly Ready";
     else if (fit >= 80) status = "Competitive";
@@ -260,25 +210,24 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
 
   // Projected Trajectory over 8 weeks
   const projectedTrajectory = [
-    { week: "Current", score: baseReadiness, milestone: "Diagnostic Baseline" },
-    { week: "Week 2", score: Math.min(95, baseReadiness + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 8)), milestone: "Core Weak Topics Fixed" },
-    { week: "Week 4", score: Math.min(96, baseReadiness + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 16)), milestone: "Advanced Problem Sets" },
-    { week: "Week 6", score: Math.min(98, baseReadiness + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 22)), milestone: "Mock Interview Simulation" },
-    { week: "Week 8", score: Math.min(99, Math.max(88, baseReadiness + 26)), milestone: "Placement-Ready Benchmark" },
+    { week: "Current", score: readinessScore, milestone: "Diagnostic Baseline" },
+    { week: "Week 2", score: Math.min(95, readinessScore + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 8)), milestone: "Core Weak Topics Fixed" },
+    { week: "Week 4", score: Math.min(96, readinessScore + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 16)), milestone: "Advanced Problem Sets" },
+    { week: "Week 6", score: Math.min(98, readinessScore + Math.round((totalHoursNeeded > 0 ? 1 : 0) * 22)), milestone: "Mock Interview Simulation" },
+    { week: "Week 8", score: Math.min(99, Math.max(88, readinessScore + 26)), milestone: "Placement-Ready Benchmark" },
   ];
 
-  // Critical interview danger zones
-  const criticalWeakAreas = improvementAreas.filter((a) => a.priority === "Critical" || a.priority === "High");
+  // Critical danger zones
+  const criticalWeakAreas = detailedImprovements.filter((a) => a.priority === "Critical" || a.priority === "High");
   const dangerZones = criticalWeakAreas.map(
     (a) => `${a.subject}: ${a.topic} (Current accuracy is ${a.currentScore}%, required ${a.targetScore}%)`
   );
-
   if (dangerZones.length === 0) {
     dangerZones.push("Concurrency and Concurrency Control edge-cases in DBMS");
     dangerZones.push("Dynamic Programming state-transition proofs in DSA");
   }
 
-  // Build AI qualitative synthesis (or fallback)
+  // Qualitative AI synthesis (or fallback)
   let aiExecutiveSummary = "";
   let aiStrategicPlan = "";
 
@@ -289,96 +238,81 @@ export const calculatePrediction = async (userId, userPreferences = {}) => {
     if (process.env.OPENAI_API_KEY) {
       const prompt = `You are a Principal Tech Hiring Manager & Career Coach evaluating a Computer Science student's placement readiness.
       
-STUDENT PROFILE:
+STUDENT PROFILE (From ML Feature Extractor):
 - Tests Taken: ${results.length}
-- Overall Readiness Score: ${baseReadiness}% (${readinessTier})
+- ML Placement Readiness Score: ${readinessScore}/100 (${readinessTier})
+- Model Version: ${modelVersion}
 - Weekly Prep Commitment: ${weeklyHours} hours/week
 - Estimated Time to Ready: ${estimatedWeeksToReady} weeks (${totalHoursNeeded} total study hours needed)
 - Velocity: ${velocityText}
-- Subject Performance: ${JSON.stringify(subjectBreakdown)}
-- Weak Topics requiring improvement: ${JSON.stringify(criticalWeakAreas.map(c => ({ topic: c.topic, current: c.currentScore, target: c.targetScore, delta: c.delta })))}
+- Strengths: ${JSON.stringify(strengths)}
+- Top Weak Areas: ${JSON.stringify(criticalWeakAreas.slice(0, 4).map(c => ({ topic: c.topic, current: c.currentScore, target: c.targetScore, delta: c.delta })))}
 
 CRITICAL INSTRUCTIONS:
-- Both "executiveSummary" and "strategicPlan" MUST be plain strings (NOT objects, NOT arrays, NOT nested JSON).
-- "strategicPlan" must be a single plain-text string with bullet points using "•" and newlines, like:
-  "• Week 1: Focus on Normalization and BCNF\n• Week 2: Practice Dynamic Programming problems\n• Week 3: Run mock tests\n• Week 4: Final revision and speed drills"
+- Both "executiveSummary" and "strategicPlan" MUST be plain strings.
+- "strategicPlan" must be a single plain-text string with bullet points using "•" and newlines.
+- Do NOT make unrealistic guarantees of employment.
 
-Respond ONLY with valid JSON matching exactly:
+Respond ONLY with valid JSON:
 {
-  "executiveSummary": "<2-3 sentence plain text summary>",
-  "strategicPlan": "<4-week bullet-point plan as a SINGLE plain text string>"
-}
-Do NOT nest objects inside strategicPlan. Only plain text strings.`;
+  "executiveSummary": "<2-3 sentence plain text summary of student's current competency and primary focus>",
+  "strategicPlan": "<4-week bullet-point plan as a plain text string>"
+}`;
 
       const aiRes = await openai.chat.completions.create({
         model,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 600,
+        temperature: 0.6,
+        max_tokens: 500,
       });
 
       const raw = aiRes.choices[0]?.message?.content || "";
       const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
       const parsed = JSON.parse(clean);
 
-      aiExecutiveSummary = typeof parsed.executiveSummary === "string"
-        ? parsed.executiveSummary
-        : "";
-
-      // strategicPlan can sometimes be returned as a { week1, week2, ... } object by the LLM.
-      // Always normalise to a plain string before storing.
-      const rawPlan = parsed.strategicPlan;
-      if (typeof rawPlan === "string") {
-        aiStrategicPlan = rawPlan;
-      } else if (rawPlan && typeof rawPlan === "object") {
-        // Convert { week1: { focusTopics, activities }, ... } → readable bullet text
-        aiStrategicPlan = Object.entries(rawPlan)
-          .map(([weekKey, val]) => {
-            const label = weekKey.replace(/([a-z])(\d)/i, "$1 $2").toUpperCase();
-            const topics = Array.isArray(val?.focusTopics) ? val.focusTopics.join(", ") : "";
-            const activities = Array.isArray(val?.activities)
-              ? val.activities.map((a) => `  • ${a}`).join("\n")
-              : "";
-            return `${label}${topics ? ` — ${topics}` : ""}:\n${activities}`;
-          })
-          .join("\n\n");
-      } else {
-        aiStrategicPlan = "";
-      }
+      aiExecutiveSummary = typeof parsed.executiveSummary === "string" ? parsed.executiveSummary : "";
+      aiStrategicPlan = typeof parsed.strategicPlan === "string" ? parsed.strategicPlan : "";
     }
   } catch (err) {
     console.warn("AI generation note for prediction:", err.message);
   }
 
-  // Fallback AI content if API was skipped or failed
   if (!aiExecutiveSummary) {
-    aiExecutiveSummary = `Student has established a readiness rating of ${baseReadiness}% (${readinessTier}). Core competencies are developing steadily, with ${totalHoursNeeded} targeted hours needed to bridge the remaining conceptual gaps across ${criticalWeakAreas.length} high-priority topics.`;
+    aiExecutiveSummary = `Student has achieved a Placement Readiness Score of ${readinessScore}/100 (${readinessTier}) evaluated by ML model ${modelVersion}. Foundational competencies are developing steadily, with ~${totalHoursNeeded} targeted hours recommended to bridge the remaining conceptual gaps across ${criticalWeakAreas.length} high-priority topics.`;
   }
   if (!aiStrategicPlan) {
     aiStrategicPlan = `• Week 1-2: Eliminate critical blockers in ${criticalWeakAreas.slice(0, 2).map(a => a.topic).join(" & ") || "Core Fundamentals"}.\n• Week 3: Practice mixed problem sets and dry-run code implementations.\n• Week 4: Complete full-length mock assessments and optimize speed under timed constraints.`;
   }
 
-  // Save/Update prediction record in DB
+  // Save/Update in DB with complete feature snapshot
   const predictionDoc = await PlacementPrediction.findOneAndUpdate(
     { user: userId },
     {
       user: userId,
-      readinessScore: baseReadiness,
+      readinessScore,
       readinessTier,
+      tierLevel,
       targetTier,
       weeklyHours,
       estimatedWeeksToReady,
       estimatedHoursTotal: totalHoursNeeded,
       learningVelocity: velocityText,
       testsAnalyzed: results.length,
-      overallAccuracy: baseReadiness,
+      overallAccuracy: featureSnapshot.overall_accuracy || readinessScore,
+      modelVersion,
+      featureSnapshot,
+      strengths,
+      improvementAreas: detailedImprovements,
+      weakTopics,
+      featureContributions,
+      explanations,
       subjectBreakdown,
-      improvementAreas,
       companyTierFits,
       projectedTrajectory,
       aiExecutiveSummary,
       aiStrategicPlan,
       dangerZones,
+      generatedAt: new Date(),
     },
     { upsert: true, new: true }
   );
@@ -388,23 +322,40 @@ Do NOT nest objects inside strategicPlan. Only plain text strings.`;
 
 // @desc Get placement readiness prediction for authenticated student
 // @route GET /api/prediction/readiness
+// @route GET /api/career/readiness
 export const getPlacementReadiness = async (req, res) => {
   try {
-    const prediction = await calculatePrediction(req.user._id);
+    const studentId = req.user._id;
+    const prediction = await calculatePrediction(studentId);
     res.json(prediction);
   } catch (error) {
-    console.error("Prediction error:", error);
-    res.status(500).json({ message: error.message || "Failed to generate prediction" });
+    console.error("Placement Readiness Prediction error:", error);
+    res.status(500).json({ message: error.message || "Failed to generate placement readiness score" });
+  }
+};
+
+// @desc POST endpoint to evaluate readiness with custom parameters or assessment ID
+// @route POST /api/career/readiness
+// @route POST /api/prediction/readiness
+export const evaluatePlacementReadiness = async (req, res) => {
+  try {
+    // Authenticated user ID is authoritative — never trust arbitrary client scores
+    const studentId = req.user._id;
+    const { assessmentId, weeklyHours, targetTier } = req.body || {};
+    const prediction = await calculatePrediction(studentId, { weeklyHours, targetTier }, assessmentId);
+    res.json(prediction);
+  } catch (error) {
+    console.error("Evaluate Placement Readiness error:", error);
+    res.status(500).json({ message: error.message || "Failed to evaluate placement readiness" });
   }
 };
 
 // @desc Recalculate prediction with modified weekly hours or target tier
 // @route POST /api/prediction/recalculate
-// body: { weeklyHours, targetTier }
 export const recalculatePlacementReadiness = async (req, res) => {
   try {
-    const { weeklyHours, targetTier } = req.body;
-    const prediction = await calculatePrediction(req.user._id, { weeklyHours, targetTier });
+    const { weeklyHours, targetTier, assessmentId } = req.body;
+    const prediction = await calculatePrediction(req.user._id, { weeklyHours, targetTier }, assessmentId);
     res.json(prediction);
   } catch (error) {
     console.error("Recalculate prediction error:", error);

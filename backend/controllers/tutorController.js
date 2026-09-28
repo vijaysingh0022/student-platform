@@ -2,6 +2,7 @@ import { getAIClient, getAIModel } from "../config/ai.js";
 import TopicProgress from "../models/TopicProgress.js";
 import User from "../models/User.js";
 import { Topic, Subject } from "../models/Curriculum.js";
+import PlacementPrediction from "../models/PlacementPrediction.js";
 
 // @desc AI Tutor - answer a student's doubt/question with context
 // @route POST /api/tutor/ask
@@ -32,9 +33,10 @@ export const askTutor = async (req, res) => {
     // 1. Fetch Student Context if logged in
     let studentContextStr = "Student Context: Anonymous Student.";
     if (userId) {
-      const [user, progressList] = await Promise.all([
+      const [user, progressList, placementDoc] = await Promise.all([
         User.findById(userId).lean(),
-        TopicProgress.find({ user: userId }).lean()
+        TopicProgress.find({ user: userId }).lean(),
+        PlacementPrediction.findOne({ user: userId }).lean(),
       ]);
 
       if (user) {
@@ -43,6 +45,8 @@ export const askTutor = async (req, res) => {
         
         studentContextStr = `Student Context:
 - Target Role/Goal: ${user.targetRole || "Software Engineer"}
+- ML Placement Readiness Score: ${placementDoc?.readinessScore ?? 65}/100 (${placementDoc?.readinessTier ?? "Evaluating"})
+- Key Strengths: ${placementDoc?.strengths?.map(s => s.name).join(", ") || "General"}
 - Completed Topics: ${completedCount}
 - Weak Topics/Concepts: ${weakTopics.length > 0 ? weakTopics.slice(0, 5).join(", ") : "None detected"}
 - Current Focus: Subject: ${subject || "General"}, Topic: ${topic || "General"}

@@ -1,0 +1,105 @@
+{
+  "evaluationTimestamp": "2026-09-25T17:17:00.270026",
+  "dataset": {
+    "totalSamples": 2500,
+    "trainingSamples": 2000,
+    "testingSamples": 500,
+    "featureCount": 14,
+    "features": [
+      "dsa",
+      "dbms",
+      "os",
+      "cn",
+      "oops",
+      "system_design",
+      "aptitude",
+      "web_dev",
+      "overall_accuracy",
+      "attempts",
+      "improvement_rate",
+      "learning_velocity",
+      "consistency_score",
+      "weak_topic_count"
+    ],
+    "type": "Synthetic prototype data clearly labeled (Reproducible seed=42)"
+  },
+  "modelsEvaluated": {
+    "RidgeRegression_Baseline": {
+      "r2Score": 0.9901,
+      "mae": 1.5898,
+      "rmse": 1.9648
+    },
+    "RandomForestRegressor": {
+      "r2Score": 0.9864,
+      "mae": 1.8259,
+      "rmse": 2.3099
+    },
+    "GradientBoostingRegressor_Champion": {
+      "r2Score": 0.9892,
+      "mae": 1.6509,
+      "rmse": 2.057,
+      "5FoldCrossValidationR2": {
+        "folds": [
+          0.9854,
+          0.9874,
+          0.9875,
+          0.9888,
+          0.9889
+        ],
+        "mean": 0.9876,
+        "std": 0.0013
+      }
+    },
+    "RandomForestClassifier_ReadinessTiers": {
+      "accuracy": 0.94,
+      "precision": 0.9397,
+      "recall": 0.94,
+      "f1Score": 0.9397,
+      "confusionMatrix": [
+        [
+          274,
+          6,
+          0
+        ],
+        [
+          12,
+          108,
+          4
+        ],
+        [
+          0,
+          8,
+          88
+        ]
+      ],
+      "tierLabels": [
+        "0: Foundational (<60%)",
+        "1: Developing (60-77.9%)",
+        "2: Placement Ready (>=78%)"
+      ]
+    }
+  },
+  "championModel": {
+    "name": "GradientBoostingRegressor (v1.0)",
+    "version": "v1.0",
+    "testR2": 0.9892,
+    "testMAE": 1.6509,
+    "testRMSE": 2.057,
+    "featureImportanceRanking": {
+      "overall_accuracy": 0.9239,
+      "weak_topic_count": 0.0508,
+      "dsa": 0.0127,
+      "system_design": 0.003,
+      "improvement_rate": 0.0026,
+      "dbms": 0.0022,
+      "web_dev": 0.0013,
+      "consistency_score": 0.0008,
+      "learning_velocity": 0.0007,
+      "attempts": 0.0005,
+      "cn": 0.0004,
+      "aptitude": 0.0004,
+      "os": 0.0003,
+      "oops": 0.0003
+    }
+  }
+}
