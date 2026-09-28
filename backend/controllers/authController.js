@@ -49,45 +49,29 @@ export const syncUser = async (req, res) => {
       email?.split("@")[0] ||
       "LearnX User";
 
-    // Upsert: find by clerkId or email (handles migration of pre-Clerk accounts)
-    let user = await User.findOne({ $or: [{ clerkId }, { email }] });
-
-    if (!user) {
-      user = await User.create({
-        clerkId,
-        name,
-        email,
-        course: "B.Tech CSE",
-        department: "Computer Science & Engineering",
-        batch: "2022-2026",
-        role: "student",
-      });
-
-      await recordAuditLog({
-        req,
-        userId: user._id,
-        userEmail: user.email,
-        userRole: user.role,
-        action: "AUTH_CLERK_PROVISION",
-        status: "SUCCESS",
-        statusCode: 201,
-        details: { clerkId, source: "clerk_sync" },
-      });
-    } else if (!user.clerkId) {
-      // Link existing account (pre-Clerk user signing in with same email)
-      user.clerkId = clerkId;
-      await user.save();
-
-      await recordAuditLog({
-        req,
-        userId: user._id,
-        userEmail: user.email,
-        userRole: user.role,
-        action: "AUTH_CLERK_LINK",
-        status: "SUCCESS",
-        statusCode: 200,
-        details: { clerkId, source: "clerk_link_existing" },
-      });
+    // Atomic Upsert: find by clerkId or email and link/create cleanly without race conditions
+    let user;
+    try {
+      user = await User.findOneAndUpdate(
+        { $or: [{ clerkId }, { email }] },
+        {
+          $setOnInsert: {
+            name,
+            email,
+            course: "B.Tech CSE",
+            department: "Computer Science & Engineering",
+            batch: "2022-2026",
+            role: "student",
+          },
+          $set: {
+            clerkId,
+          },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    } catch (upsertErr) {
+      // If concurrent request won the upsert race, fetch the existing record
+      user = await User.findOne({ $or: [{ clerkId }, { email }] });
     }
 
     return res.json({
