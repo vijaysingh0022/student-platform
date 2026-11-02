@@ -656,3 +656,4 @@ export const LearnXCertificateTemplate = ({ certificate, onDownloadComplete }) =
 };
 
 export default LearnXCertificateTemplate;
+

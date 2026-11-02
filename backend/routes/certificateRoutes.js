@@ -29,3 +29,4 @@ router.post("/admin/:id/revoke", protect, requireAdmin, adminRevokeCertificate);
 router.post("/admin/:id/reissue", protect, requireAdmin, adminReissueCertificate);
 
 export default router;
+
