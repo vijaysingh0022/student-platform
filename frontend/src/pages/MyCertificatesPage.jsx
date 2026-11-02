@@ -552,38 +552,51 @@ export const MyCertificatesPage = () => {
           - Full-screen overlay with blur backdrop
           - Click outside → close
           - ESC → close (via useEffect above)
-          - Sticky top bar with ← Back + circular X button
+          - Floating prominent circular Close (✕) button at top-right
+          - Sticky top bar with ← Back + actions + prominent Close button
       ─────────────────────────────────────────────────────────────── */}
       {isCertificatePreviewOpen && selectedCert && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-start justify-center overflow-y-auto p-4 sm:p-6"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-start justify-center overflow-y-auto p-3 sm:p-6"
           onClick={handleCloseCertPreview}
           aria-modal="true"
           role="dialog"
           aria-label="Certificate Preview"
         >
+          {/* Floating Close Button at top-right of screen/viewport for guaranteed accessibility */}
+          <button
+            type="button"
+            onClick={handleCloseCertPreview}
+            title="Close Certificate"
+            aria-label="Close Certificate"
+            className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[60] w-12 h-12 rounded-full bg-slate-900/90 hover:bg-rose-600 text-white flex items-center justify-center transition-all duration-200 shadow-2xl border-2 border-white/20 hover:scale-110 cursor-pointer group"
+          >
+            <span className="text-2xl font-black leading-none group-hover:rotate-90 transition-transform">✕</span>
+          </button>
+
           <div
-            className="relative my-4 mx-auto w-full max-w-5xl"
+            className="relative my-4 sm:my-8 mx-auto w-full max-w-5xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Sticky top control bar */}
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-white/95 backdrop-blur-sm border-b border-slate-200 px-4 py-3 rounded-t-2xl shadow-sm">
-              {/* ← Back button */}
+            {/* Top Control Bar */}
+            <div className="sticky top-0 z-20 flex items-center justify-between bg-white border-b border-slate-200 px-4 sm:px-6 py-3.5 rounded-t-3xl shadow-md">
+              {/* ← Back to Certificates button */}
               <button
                 type="button"
                 onClick={handleCloseCertPreview}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:text-slate-900 transition-all border border-slate-200 cursor-pointer shadow-xs"
                 title="Back to Certificates"
               >
-                ← Back to Certificates
+                <span>←</span>
+                <span>Back to Certificates</span>
               </button>
 
               {/* Right-side actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => handleCopyShareLink(selectedCert)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs border border-slate-200"
                   title="Copy share link"
                 >
                   <span>🔗</span>
@@ -594,52 +607,55 @@ export const MyCertificatesPage = () => {
                   to={`/verify/${selectedCert.verificationToken || selectedCert.certificateId}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
                   title="Open public verification page"
                 >
                   <span>🛡️</span>
                   <span className="hidden sm:inline">Public Verify</span>
                 </Link>
 
-                {/* Prominent circular × close button */}
+                {/* Top-Right Modal Close (✕) Button */}
                 <button
                   type="button"
                   onClick={handleCloseCertPreview}
                   title="Close Certificate"
-                  aria-label="Close Certificate Preview"
-                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-500 flex items-center justify-center transition-all font-black text-xl leading-none shadow-sm"
+                  aria-label="Close Certificate"
+                  className="w-10 h-10 rounded-full bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-700 flex items-center justify-center transition-all font-black text-xl leading-none shadow-sm border border-slate-300 cursor-pointer ml-1"
                 >
-                  ×
+                  ✕
                 </button>
               </div>
             </div>
 
-            {/* Certificate content */}
-            <div className="bg-white rounded-b-2xl p-4 sm:p-6 overflow-x-auto shadow-2xl">
+            {/* Certificate modal body */}
+            <div className="bg-white rounded-b-3xl p-4 sm:p-6 overflow-x-auto shadow-2xl border-x border-b border-slate-200">
               {/* Cert ID / title strip */}
-              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2 pb-3 border-b border-slate-100">
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900">{selectedCert.courseName}</h3>
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900">{selectedCert.courseName}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Issued to <strong>{selectedCert.studentName}</strong> •{" "}
                     <code className="text-indigo-600 font-bold font-mono">{selectedCert.certificateId}</code>
                   </p>
                 </div>
-                <span
-                  className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg ${
-                    selectedCert.status === "Revoked"
-                      ? "bg-rose-100 text-rose-800"
-                      : "bg-emerald-100 text-emerald-800"
-                  }`}
-                >
-                  {selectedCert.status === "Valid" ? "✓ Valid & Verified" : selectedCert.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg ${
+                      selectedCert.status === "Revoked"
+                        ? "bg-rose-100 text-rose-800"
+                        : "bg-emerald-100 text-emerald-800"
+                    }`}
+                  >
+                    {selectedCert.status === "Valid" ? "✓ Valid & Verified" : selectedCert.status}
+                  </span>
+                </div>
               </div>
 
-              {/* The actual certificate template (unchanged) */}
+              {/* The certificate template with onClose prop wired */}
               <div className="w-full flex justify-center">
                 <LearnXCertificateTemplate
                   certificate={selectedCert}
+                  onClose={handleCloseCertPreview}
                   onDownloadComplete={() => showToast("✅ High-Quality PDF downloaded successfully!")}
                 />
               </div>

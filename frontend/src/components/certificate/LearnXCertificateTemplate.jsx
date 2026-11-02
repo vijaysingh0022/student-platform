@@ -20,7 +20,7 @@ import jsPDF from "jspdf";
  * - "LEARN • PRACTICE • GROW • SUCCEED" core ethos tagline
  * - Official "Team LearnX" handwritten cursive signature and "Authorized Signatory"
  */
-export const LearnXCertificateTemplate = ({ certificate, onDownloadComplete }) => {
+export const LearnXCertificateTemplate = ({ certificate, onDownloadComplete, onClose }) => {
   const certRef = useRef(null);
   const [qrSrc, setQrSrc] = useState(certificate?.qrCodeDataUrl || "");
   const [downloading, setDownloading] = useState(false);
@@ -144,6 +144,19 @@ export const LearnXCertificateTemplate = ({ certificate, onDownloadComplete }) =
               </>
             )}
           </button>
+
+          {/* Close button if inside a modal/preview with onClose handler */}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              title="Close Certificate"
+              aria-label="Close Certificate"
+              className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-700 flex items-center justify-center font-bold text-lg transition-all ml-1 border border-slate-300"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
