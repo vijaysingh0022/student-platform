@@ -145,6 +145,15 @@ export const login = async (req, res) => {
         department: "Computer Science & Engineering",
         role: "teacher",
       });
+    } else if (!user && (email.toLowerCase().trim() === "admin@learnx.ai" || email.toLowerCase().trim() === "admin@example.com")) {
+      // Auto-seed admin user on first login so it persists in MongoDB
+      user = await User.create({
+        name: "LearnX Admin",
+        email: email.toLowerCase().trim(),
+        password: "LearnX@Admin2024",
+        department: "Administration",
+        role: "admin",
+      });
     }
 
     if (!user) {

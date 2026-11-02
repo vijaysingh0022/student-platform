@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { LearnXLogo } from "../components/LearnXLogo.jsx";
+import api from "../services/api.js";
 
 // Admin credentials — change these as needed
 const ADMIN_EMAIL = "admin@learnx.ai";
@@ -28,52 +29,83 @@ const AdminLogin = () => {
 
   const handleSignOutAdmin = () => {
     sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem("learnx_token");
+    localStorage.removeItem("learnx_admin_user");
     setAlreadyLoggedIn(false);
     setEmail("");
     setPassword("");
     setError("");
   };
 
-  const handleQuickLogin = (role = "faculty") => {
-    setError("");
-    setLoading(true);
-    setTimeout(() => {
-      sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
-      sessionStorage.setItem("learnx_admin_role", role);
-      navigate("/teacher-dashboard", { replace: true });
-    }, 300);
+  // Core login — calls backend API, saves JWT token to localStorage so
+  // all subsequent /institution/* requests are authenticated
+  const doBackendLogin = async (loginEmail, loginPassword, role) => {
+    try {
+      const { data } = await api.post("/auth/login", {
+        email: loginEmail,
+        password: loginPassword,
+      });
+      if (data?.token) {
+        localStorage.setItem("learnx_token", data.token);
+        localStorage.setItem("learnx_admin_user", JSON.stringify({
+          _id: data._id,
+          name: data.name,
+          email: data.email,
+          role: data.role || role,
+        }));
+      }
+    } catch (err) {
+      // Backend unreachable or returned error — proceed with session-only login
+      console.warn("Admin backend login failed (session-only fallback):", err?.response?.data?.message || err.message);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleQuickLogin = async (role = "faculty") => {
+    setError("");
+    setLoading(true);
+    const quickEmail = role === "admin" ? ADMIN_EMAIL : "teacher@example.com";
+    const quickPass = role === "admin" ? ADMIN_PASSWORD : "password123";
+    await doBackendLogin(quickEmail, quickPass, role);
+    sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
+    sessionStorage.setItem("learnx_admin_role", role);
+    navigate("/teacher-dashboard", { replace: true });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      const eLow = email.trim().toLowerCase();
-      const p = password.trim();
+    const eLow = email.trim().toLowerCase();
+    const p = password.trim();
 
-      const isValidAdmin = (
-        (eLow === ADMIN_EMAIL || eLow === "admin" || eLow === "admin@example.com") &&
-        (p === ADMIN_PASSWORD || p === "password123" || p === "admin123")
-      );
+    const isValidAdmin = (
+      (eLow === ADMIN_EMAIL || eLow === "admin" || eLow === "admin@example.com") &&
+      (p === ADMIN_PASSWORD || p === "password123" || p === "admin123")
+    );
 
-      const isValidFaculty = (
-        (eLow === "teacher@example.com" || eLow === "faculty@learnx.ai" || eLow === "faculty@example.com" || eLow === "teacher" || eLow === "faculty") &&
-        (p === "password123" || p === ADMIN_PASSWORD || p === "teacher123")
-      );
+    const isValidFaculty = (
+      (eLow === "teacher@example.com" || eLow === "faculty@learnx.ai" || eLow === "faculty@example.com" || eLow === "teacher" || eLow === "faculty") &&
+      (p === "password123" || p === ADMIN_PASSWORD || p === "teacher123")
+    );
 
-      if (isValidAdmin || isValidFaculty) {
-        sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
-        sessionStorage.setItem("learnx_admin_role", isValidFaculty ? "faculty" : "admin");
-        navigate("/teacher-dashboard", { replace: true });
-      } else {
-        setError("Invalid credentials. Use teacher@example.com / password123 or admin@learnx.ai / LearnX@Admin2024");
-        setLoading(false);
-        setShake(true);
-        setTimeout(() => setShake(false), 600);
-      }
-    }, 400);
+    if (isValidAdmin || isValidFaculty) {
+      // Determine canonical email for backend call
+      const canonicalEmail = isValidFaculty
+        ? (eLow === "faculty" ? "faculty@learnx.ai" : eLow === "teacher" ? "teacher@example.com" : eLow)
+        : (eLow === "admin" ? ADMIN_EMAIL : eLow === "admin@example.com" ? ADMIN_EMAIL : eLow);
+      const role = isValidFaculty ? "faculty" : "admin";
+
+      await doBackendLogin(canonicalEmail, p === "admin123" ? ADMIN_PASSWORD : p, role);
+      sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
+      sessionStorage.setItem("learnx_admin_role", role);
+      navigate("/teacher-dashboard", { replace: true });
+    } else {
+      setError("Invalid credentials. Use teacher@example.com / password123 or admin@learnx.ai / LearnX@Admin2024");
+      setLoading(false);
+      setShake(true);
+      setTimeout(() => setShake(false), 600);
+    }
   };
 
   return (
