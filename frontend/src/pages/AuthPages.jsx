@@ -218,16 +218,49 @@ export const ClerkSignInPage = () => {
   const { isSignedIn } = useUser();
   const { user, login } = useAuth();
   const [demoLoading, setDemoLoading] = React.useState(false);
+  const [authMode, setAuthMode] = React.useState("form"); // "form" | "clerk"
+  
+  // Direct MongoDB login state
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [formLoading, setFormLoading] = React.useState(false);
+  const [formError, setFormError] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
 
   if (isSignedIn || user) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const handleDirectLogin = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setFormLoading(true);
+
+    try {
+      const { data } = await api.post("/auth/login", {
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (data && (data.token || data.user)) {
+        login(data.user || data);
+      } else {
+        throw new Error(data?.message || "Login failed");
+      }
+    } catch (err) {
+      setFormError(
+        err.response?.data?.message || err.message || "Invalid email or password"
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
       const { data } = await api.post("/auth/demo");
-      login(data);
+      login(data.user || data);
     } catch {
       login({
         _id: "demo-student-id",
@@ -244,16 +277,100 @@ export const ClerkSignInPage = () => {
 
   return (
     <AuthLayout title="Sign In" subtitle="Welcome back">
-      <SignIn
-        routing="path"
-        path="/sign-in"
-        fallbackRedirectUrl="/dashboard"
-        forceRedirectUrl="/dashboard"
-        signUpUrl="/sign-up"
-        appearance={clerkAppearance}
-      />
+      <div className="bg-white/95 backdrop-blur-xl border border-sky-100 shadow-xl shadow-sky-950/5 rounded-3xl p-6 sm:p-8 w-full">
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight font-space">
+              Sign In
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Access your LearnX learning portal
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAuthMode(authMode === "form" ? "clerk" : "form")}
+            className="text-[11px] font-bold text-sky-600 hover:text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+          >
+            {authMode === "form" ? "Use Clerk SSO" : "Use Email & Password"}
+          </button>
+        </div>
+
+        {authMode === "form" ? (
+          <form onSubmit={handleDirectLogin} className="space-y-4">
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{formError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@example.com"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl py-2.5 px-3.5 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[11px] text-sky-600 font-semibold"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl py-2.5 px-3.5 transition-all outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="w-full py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 shadow-lg shadow-sky-500/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {formLoading ? "Signing In..." : "Sign In to Account →"}
+            </button>
+
+            <div className="pt-2 text-center text-xs text-slate-500">
+              Don&apos;t have an account?{" "}
+              <Link to="/sign-up" className="text-sky-600 font-bold hover:underline">
+                Sign Up
+              </Link>
+            </div>
+          </form>
+        ) : (
+          <SignIn
+            routing="path"
+            path="/sign-in"
+            fallbackRedirectUrl="/dashboard"
+            forceRedirectUrl="/dashboard"
+            signUpUrl="/sign-up"
+            appearance={clerkAppearance}
+          />
+        )}
+      </div>
+
       {/* 1-Click Instant Demo Login Option */}
-      <div className="mt-3 w-full">
+      <div className="mt-3 w-full max-w-md">
         <button
           type="button"
           onClick={handleDemoLogin}
@@ -270,21 +387,201 @@ export const ClerkSignInPage = () => {
 
 export const ClerkSignUpPage = () => {
   const { isSignedIn } = useUser();
+  const { user, login } = useAuth();
+  const [authMode, setAuthMode] = React.useState("form"); // "form" | "clerk"
 
-  if (isSignedIn) {
+  // Direct MongoDB registration state
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [college, setCollege] = React.useState("LearnX Institute of Technology");
+  const [course, setCourse] = React.useState("B.Tech CSE");
+  const [formLoading, setFormLoading] = React.useState(false);
+  const [formError, setFormError] = React.useState("");
+  const [formSuccess, setFormSuccess] = React.useState("");
+
+  if (isSignedIn || user) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const handleDirectRegister = async (e) => {
+    e.preventDefault();
+    setFormError("");
+    setFormSuccess("");
+
+    if (!name.trim()) {
+      setFormError("Please enter your full name.");
+      return;
+    }
+    if (!email.trim()) {
+      setFormError("Please enter your email address.");
+      return;
+    }
+    if (password.length < 6) {
+      setFormError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setFormLoading(true);
+
+    try {
+      const { data } = await api.post("/auth/register", {
+        name: name.trim(),
+        email: email.trim(),
+        password: password.trim(),
+        college: college.trim(),
+        course: course.trim(),
+      });
+
+      if (data && data.success) {
+        setFormSuccess("Account created successfully! Logging you in...");
+        setTimeout(() => {
+          login(data.user || data);
+        }, 800);
+      } else {
+        throw new Error(data?.message || "Registration failed");
+      }
+    } catch (err) {
+      setFormError(
+        err.response?.data?.message || err.message || "Failed to create account. Please try again."
+      );
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   return (
     <AuthLayout title="Sign Up" subtitle="Get started today">
-      <SignUp
-        routing="path"
-        path="/sign-up"
-        fallbackRedirectUrl="/dashboard"
-        forceRedirectUrl="/dashboard"
-        signInUrl="/sign-in"
-        appearance={clerkAppearance}
-      />
+      <div className="bg-white/95 backdrop-blur-xl border border-sky-100 shadow-xl shadow-sky-950/5 rounded-3xl p-6 sm:p-8 w-full">
+        <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight font-space">
+              Create Account
+            </h2>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Join thousands of CSE engineering students
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setAuthMode(authMode === "form" ? "clerk" : "form")}
+            className="text-[11px] font-bold text-sky-600 hover:text-sky-700 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-200 transition-colors"
+          >
+            {authMode === "form" ? "Use Clerk SSO" : "Use Standard Form"}
+          </button>
+        </div>
+
+        {authMode === "form" ? (
+          <form onSubmit={handleDirectRegister} className="space-y-3.5">
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{formError}</span>
+              </div>
+            )}
+            {formSuccess && (
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+                <span>✅</span>
+                <span>{formSuccess}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Rahul Sharma"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl py-2 px-3.5 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="student@example.com"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl py-2 px-3.5 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimum 6 characters"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 text-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 rounded-xl py-2 px-3.5 transition-all outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  College / Univ
+                </label>
+                <input
+                  type="text"
+                  value={college}
+                  onChange={(e) => setCollege(e.target.value)}
+                  placeholder="College Name"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl py-2 px-3 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Course
+                </label>
+                <input
+                  type="text"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  placeholder="e.g. B.Tech CSE"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 text-xs rounded-xl py-2 px-3 outline-none"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="w-full py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 shadow-lg shadow-sky-500/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+            >
+              {formLoading ? "Creating Account..." : "Create Free Account →"}
+            </button>
+
+            <div className="pt-2 text-center text-xs text-slate-500">
+              Already have an account?{" "}
+              <Link to="/sign-in" className="text-sky-600 font-bold hover:underline">
+                Sign In
+              </Link>
+            </div>
+          </form>
+        ) : (
+          <SignUp
+            routing="path"
+            path="/sign-up"
+            fallbackRedirectUrl="/dashboard"
+            forceRedirectUrl="/dashboard"
+            signInUrl="/sign-in"
+            appearance={clerkAppearance}
+          />
+        )}
+      </div>
     </AuthLayout>
   );
 };

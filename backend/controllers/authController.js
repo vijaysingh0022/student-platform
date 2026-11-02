@@ -121,75 +121,117 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: "Please provide email and password" });
+      return res.status(400).json({ success: false, message: "Please provide email and password" });
     }
 
-    let user = await User.findOne({ email: email.toLowerCase().trim() });
+    const trimmedEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: trimmedEmail });
 
     // Handle demo account login
-    if (!user && email.toLowerCase().trim() === "demo@example.com") {
+    if (!user && trimmedEmail === "demo@example.com") {
       user = await User.create({
         name: "Demo Student",
         email: "demo@example.com",
         password: "password123",
+        college: "LearnX Institute of Technology",
         course: "B.Tech CSE",
         department: "Computer Science & Engineering",
+        year: "3rd Year",
+        semester: "6th Semester",
         batch: "2022-2026",
+        rollNo: "CSE-2201",
+        attendanceRate: 85,
         role: "student",
+        isActive: true,
       });
-    } else if (!user && (email.toLowerCase().trim() === "teacher@example.com" || email.toLowerCase().trim() === "faculty@learnx.ai")) {
+    } else if (!user && (trimmedEmail === "teacher@example.com" || trimmedEmail === "faculty@learnx.ai")) {
       user = await User.create({
         name: "Prof. Priya Sharma",
-        email: email.toLowerCase().trim(),
+        email: trimmedEmail,
         password: "password123",
         department: "Computer Science & Engineering",
         role: "teacher",
+        isActive: true,
       });
-    } else if (!user && (email.toLowerCase().trim() === "admin@learnx.ai" || email.toLowerCase().trim() === "admin@example.com")) {
+    } else if (!user && (trimmedEmail === "admin@learnx.ai" || trimmedEmail === "admin@example.com")) {
       // Auto-seed admin user on first login so it persists in MongoDB
       user = await User.create({
         name: "LearnX Admin",
-        email: email.toLowerCase().trim(),
+        email: trimmedEmail,
         password: "LearnX@Admin2024",
         department: "Administration",
         role: "admin",
+        isActive: true,
       });
     }
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
     const isDemoEmail =
-      email.toLowerCase().trim() === "demo@example.com" ||
-      email.toLowerCase().trim() === "teacher@example.com" ||
-      email.toLowerCase().trim() === "faculty@learnx.ai";
+      trimmedEmail === "demo@example.com" ||
+      trimmedEmail === "teacher@example.com" ||
+      trimmedEmail === "faculty@learnx.ai";
 
     // Verify password if user has password set
-    if (user.password) {
-      const isMatch = await user.matchPassword(password);
-      if (!isMatch && !(isDemoEmail && password === "password123")) {
-        return res.status(401).json({ message: "Invalid email or password" });
+    const hasPassword = Boolean(user.password || user.passwordHash);
+    if (hasPassword) {
+      const isMatch = await user.matchPassword(password.trim());
+      if (!isMatch && !(isDemoEmail && password.trim() === "password123")) {
+        return res.status(401).json({ success: false, message: "Invalid email or password" });
       }
     }
 
+    // Update lastLogin
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = generateToken(user);
 
-    res.json({
+    // Return authenticated user information without passwordHash
+    return res.json({
+      success: true,
+      message: "Logged in successfully",
+      token,
       _id: user._id,
+      id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      course: user.course,
-      department: user.department,
-      batch: user.batch,
-      rollNo: user.rollNo,
-      attendanceRate: user.attendanceRate,
-      token,
+      profileImage: user.profileImage || "",
+      college: user.college || "LearnX Institute of Technology",
+      course: user.course || "B.Tech CSE",
+      department: user.department || "Computer Science & Engineering",
+      year: user.year || "3rd Year",
+      semester: user.semester || "6th Semester",
+      batch: user.batch || "2022-2026",
+      rollNo: user.rollNo || "",
+      attendanceRate: user.attendanceRate ?? 85,
+      isActive: user.isActive ?? true,
+      lastLogin: user.lastLogin,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage || "",
+        college: user.college || "LearnX Institute of Technology",
+        course: user.course || "B.Tech CSE",
+        department: user.department || "Computer Science & Engineering",
+        year: user.year || "3rd Year",
+        semester: user.semester || "6th Semester",
+        batch: user.batch || "2022-2026",
+        rollNo: user.rollNo || "",
+        attendanceRate: user.attendanceRate ?? 85,
+        isActive: user.isActive ?? true,
+        lastLogin: user.lastLogin,
+      },
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ message: "Login failed: " + error.message });
+    res.status(500).json({ success: false, message: "Login failed: " + error.message });
   }
 };
 
@@ -197,44 +239,104 @@ export const login = async (req, res) => {
 // @route POST /api/auth/register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, course, department, batch, rollNo } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Please provide name, email and password" });
+    const {
+      name,
+      email,
+      password,
+      college,
+      course,
+      department,
+      year,
+      semester,
+      batch,
+      rollNo,
+      role,
+      profileImage,
+    } = req.body;
+
+    // Validate inputs
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Name is required" });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({ success: false, message: "Please provide a valid email address" });
+    }
+    if (!password || password.trim().length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters long" });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    const cleanEmail = email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email" });
+      return res.status(400).json({ success: false, message: "An account already exists with this email address" });
     }
 
     const user = await User.create({
-      name,
-      email: email.toLowerCase().trim(),
-      password,
+      name: name.trim(),
+      email: cleanEmail,
+      password: password.trim(),
+      profileImage: profileImage || "",
+      college: college || "LearnX Institute of Technology",
       course: course || "B.Tech CSE",
       department: department || "Computer Science & Engineering",
-      batch: batch || "2022-2026",
+      year: year || "1st Year",
+      semester: semester || "1st Semester",
+      batch: batch || "2024-2028",
       rollNo: rollNo || "",
-      role: "student",
+      role: role === "admin" ? "admin" : "student",
+      isActive: true,
+      lastLogin: new Date(),
     });
 
     const token = generateToken(user);
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      token,
       _id: user._id,
+      id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
+      profileImage: user.profileImage,
+      college: user.college,
       course: user.course,
       department: user.department,
+      year: user.year,
+      semester: user.semester,
       batch: user.batch,
       rollNo: user.rollNo,
       attendanceRate: user.attendanceRate,
-      token,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      user: {
+        id: user._id,
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage,
+        college: user.college,
+        course: user.course,
+        department: user.department,
+        year: user.year,
+        semester: user.semester,
+        batch: user.batch,
+        rollNo: user.rollNo,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error) {
     console.error("Register error:", error);
-    res.status(500).json({ message: "Registration failed: " + error.message });
+    res.status(500).json({ success: false, message: "Registration failed: " + error.message });
   }
 };
 

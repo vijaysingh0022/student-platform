@@ -62,6 +62,39 @@ const TeacherDashboard = () => {
   // Search in Student Directory
   const [searchQuery, setSearchQuery] = useState("");
 
+  // All MongoDB Registered Users state
+  const [mongoUsers, setMongoUsers] = useState([]);
+  const [loadingMongoUsers, setLoadingMongoUsers] = useState(false);
+  const [mongoUserSearch, setMongoUserSearch] = useState("");
+  const [mongoRoleFilter, setMongoRoleFilter] = useState("All");
+  const [adminMetrics, setAdminMetrics] = useState(null);
+
+  const fetchMongoUsers = async () => {
+    setLoadingMongoUsers(true);
+    try {
+      const [usersRes, metricsRes] = await Promise.all([
+        api.get(`/admin/users?role=${encodeURIComponent(mongoRoleFilter)}&search=${encodeURIComponent(mongoUserSearch)}`),
+        api.get("/admin/dashboard"),
+      ]);
+      if (usersRes.data?.users) {
+        setMongoUsers(usersRes.data.users);
+      }
+      if (metricsRes.data?.data) {
+        setAdminMetrics(metricsRes.data.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load admin MongoDB users:", err.message);
+    } finally {
+      setLoadingMongoUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "all-users") {
+      fetchMongoUsers();
+    }
+  }, [activeTab, mongoRoleFilter]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(""), 4000);
@@ -237,6 +270,7 @@ ${student.department || "Computer Science & Engineering"}`;
   // Tab definitions
   const TABS = [
     { id: "overview", label: "Overview", icon: "📊" },
+    { id: "all-users", label: "Registered Users (MongoDB)", icon: "🗄️" },
     { id: "curriculum-analytics", label: "Curriculum Analytics", icon: "📚" },
     { id: "weak-topics", label: "Weak Topics in Class", icon: "⚠️" },
     { id: "at-risk", label: "At-Risk Alerts", icon: "🚨", count: atRiskData?.atRiskCount },
@@ -1327,6 +1361,161 @@ ${student.department || "Computer Science & Engineering"}`;
       {activeTab === "security" && (
         <div className="space-y-6 animate-fade-in-up">
           <SecurityGovernance />
+        </div>
+      )}
+
+      {/* ── TAB 9: ALL REGISTERED USERS (MONGODB DATABASE) ── */}
+      {activeTab === "all-users" && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 animate-fade-in-up">
+          {/* Header & Stats Banner */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 mb-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live MongoDB Database Source of Truth
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                🗄️ Registered Users Database
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Every student or administrator registered or signed in to LearnX is stored in the MongoDB <code>users</code> collection.
+              </p>
+            </div>
+
+            {/* Quick Metrics Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Total Accounts</div>
+                <div className="text-base font-extrabold text-slate-900">{adminMetrics?.totalUsers || mongoUsers.length}</div>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-sky-50 border border-sky-200 text-center">
+                <div className="text-[10px] font-bold text-sky-600 uppercase">Students</div>
+                <div className="text-base font-extrabold text-sky-800">{adminMetrics?.totalStudents ?? mongoUsers.filter(u => u.role === "student").length}</div>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-center">
+                <div className="text-[10px] font-bold text-indigo-600 uppercase">Admins/Faculty</div>
+                <div className="text-base font-extrabold text-indigo-800">{adminMetrics?.totalAdmins ?? mongoUsers.filter(u => u.role !== "student").length}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filter Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+              <input
+                type="text"
+                value={mongoUserSearch}
+                onChange={(e) => setMongoUserSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && fetchMongoUsers()}
+                placeholder="Search by name, email, roll number, or college..."
+                className="w-full px-3 py-1.5 rounded-lg text-xs bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-indigo-600"
+              />
+              <button
+                type="button"
+                onClick={fetchMongoUsers}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs flex-shrink-0"
+              >
+                Search
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-600">Filter Role:</span>
+              <select
+                value={mongoRoleFilter}
+                onChange={(e) => setMongoRoleFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-indigo-600"
+              >
+                <option value="All">All Roles</option>
+                <option value="student">Students Only</option>
+                <option value="admin">Admins Only</option>
+                <option value="teacher">Faculty Only</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={fetchMongoUsers}
+                className="p-1.5 text-xs rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600"
+                title="Refresh from MongoDB"
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Users Table */}
+          {loadingMongoUsers ? (
+            <div className="py-16 text-center text-slate-400">
+              <div className="w-8 h-8 border-3 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs">Querying MongoDB <code>users</code> collection...</p>
+            </div>
+          ) : mongoUsers.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <span className="text-2xl mb-1 block">🔍</span>
+              <p className="text-xs font-medium">No registered users matched the criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">User</th>
+                    <th className="py-3 px-4">Role</th>
+                    <th className="py-3 px-4">College / Dept</th>
+                    <th className="py-3 px-4">Course / Year</th>
+                    <th className="py-3 px-4">Last Login</th>
+                    <th className="py-3 px-4">Registered Date</th>
+                    <th className="py-3 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                  {mongoUsers.map((u) => (
+                    <tr key={u._id || u.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-900">{u.name || "LearnX User"}</div>
+                        <div className="text-[11px] text-slate-400 font-mono">{u.email}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border ${
+                            u.role === "admin"
+                              ? "bg-purple-100 text-purple-800 border-purple-200"
+                              : u.role === "teacher"
+                              ? "bg-sky-100 text-sky-800 border-sky-200"
+                              : "bg-emerald-100 text-emerald-800 border-emerald-200"
+                          }`}
+                        >
+                          {u.role === "admin" ? "🛡️ Admin" : u.role === "teacher" ? "👨‍🏫 Faculty" : "🎓 Student"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-slate-800">{u.college || "LearnX Institute"}</div>
+                        <div className="text-[11px] text-slate-400">{u.department || "CSE"}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-slate-800">{u.course || "B.Tech CSE"}</div>
+                        <div className="text-[11px] text-slate-400">{u.year || "3rd Year"} • {u.semester || "6th Sem"}</div>
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                        {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}
+                      </td>
+                      <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span
+                          className={`inline-block w-2.5 h-2.5 rounded-full ${
+                            u.isActive !== false ? "bg-emerald-500" : "bg-slate-300"
+                          }`}
+                          title={u.isActive !== false ? "Active User" : "Inactive"}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

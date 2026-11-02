@@ -580,3 +580,4 @@ export const completeExamInterview = async (req, res) => {
     res.status(500).json({ message: "Failed to finalize interview summary." });
   }
 };
+

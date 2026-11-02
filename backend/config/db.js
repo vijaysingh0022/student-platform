@@ -92,29 +92,30 @@ const connectDB = async () => {
     return connectionPromise;
   }
 
-  const mongoURI = process.env.MONGO_URI;
+  const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
   if (!mongoURI) {
-    console.warn("⚠️ MONGO_URI is not set. Please add it to your Render Environment Variables.");
+    console.warn("⚠️ MONGODB_URI or MONGO_URI is not set. Please add it to your Environment Variables.");
   }
 
   connectionPromise = (async () => {
     if (mongoURI) {
       try {
-        console.log("Connecting to MongoDB Atlas...");
+        console.log("Connecting to MongoDB...");
         const conn = await mongoose.connect(mongoURI, {
           serverSelectionTimeoutMS: 10000,
           connectTimeoutMS: 10000,
           maxPoolSize: 10,
         });
-        console.log(`✅ MongoDB Atlas connected: ${conn.connection.host}`);
+        console.log("✅ MongoDB Connected Successfully");
+        console.log(`📡 MongoDB Host: ${conn.connection.host}`);
         if (!isConnected) {
           await autoSeed();
           isConnected = true;
         }
         return conn;
       } catch (error) {
-        console.error(`⚠️ MongoDB Atlas connection error (${error.message}).`);
+        console.error(`❌ MongoDB Connection Failed: ${error.message}`);
         connectionPromise = null;
         if (process.env.NODE_ENV === "production" || process.env.RENDER) {
           throw error;
