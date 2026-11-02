@@ -9,45 +9,7 @@ import RewardHistoryModal from "../components/rewards/RewardHistoryModal.jsx";
 import ChallengesModal from "../components/rewards/ChallengesModal.jsx";
 import LearnXCertificateTemplate from "../components/certificate/LearnXCertificateTemplate.jsx";
 
-// ─── Compact progress bar ──────────────────────────────────────────────────────
-const ProgressBar = ({ pct, colorClass = "bg-blue-600", heightClass = "h-2", className = "" }) => (
-  <div className={`w-full bg-slate-100 rounded-full overflow-hidden ${heightClass} ${className}`}>
-    <div
-      className={`${colorClass} ${heightClass} rounded-full transition-all duration-700`}
-      style={{ width: `${Math.min(100, pct)}%` }}
-    />
-  </div>
-);
-
-// ─── Section heading ──────────────────────────────────────────────────────────
-const SectionTitle = ({ icon, title, sub }) => (
-  <div className="flex items-center gap-2.5 mb-4">
-    <span className="text-lg">{icon}</span>
-    <div>
-      <h2 className="text-sm font-black text-slate-900 leading-tight">{title}</h2>
-      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
-    </div>
-  </div>
-);
-
-// ─── Card wrapper ──────────────────────────────────────────────────────────────
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-3xl border border-slate-200/90 shadow-sm ${className}`}>
-    {children}
-  </div>
-);
-
-// ─── Career stage dot ─────────────────────────────────────────────────────────
-const careerColorMap = {
-  emerald: { ring: "ring-emerald-400", bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", border: "border-emerald-200" },
-  blue:    { ring: "ring-blue-400",    bg: "bg-blue-500",    text: "text-blue-700",    light: "bg-blue-50",    border: "border-blue-200" },
-  indigo:  { ring: "ring-indigo-400",  bg: "bg-indigo-500",  text: "text-indigo-700",  light: "bg-indigo-50",  border: "border-indigo-200" },
-  violet:  { ring: "ring-violet-400",  bg: "bg-violet-500",  text: "text-violet-700",  light: "bg-violet-50",  border: "border-violet-200" },
-  amber:   { ring: "ring-amber-400",   bg: "bg-amber-500",   text: "text-amber-700",   light: "bg-amber-50",   border: "border-amber-200" },
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-const RewardsPage = () => {
+export const RewardsPage = () => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,63 +18,17 @@ const RewardsPage = () => {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isChallengesModalOpen, setIsChallengesModalOpen] = useState(false);
   const [toast, setToast] = useState("");
-  const badgeScrollRef = useRef(null);
 
-  // ─── Certificate Feature Integration ─────────────────────────────────────────
+  // Certificates Integration
   const [certificates, setCertificates] = useState([]);
-  const [loadingCerts, setLoadingCerts] = useState(true);
   const [selectedCert, setSelectedCert] = useState(null);
-  const [claimingCourseId, setClaimingCourseId] = useState(null);
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
 
-  const fetchCertificates = async () => {
-    try {
-      const { data } = await api.get("/certificates/my");
-      if (data?.certificates) {
-        setCertificates(data.certificates);
-        if (data.certificates.length > 0 && !selectedCert) {
-          setSelectedCert(data.certificates[0]);
-        }
-      }
-    } catch (err) {
-      console.warn("Error fetching certificates in rewards:", err.message);
-    } finally {
-      setLoadingCerts(false);
-    }
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 4000);
   };
-
-  const handleClaimRewardCertificate = async (course) => {
-    setClaimingCourseId(course.id);
-    try {
-      const { data } = await api.post("/certificates/claim", {
-        courseId: course.id,
-        courseName: course.name,
-        courseDuration: course.duration,
-        skills: course.skills,
-      });
-      if (data?.certificate) {
-        showToast("🎉 Verified Course Certificate unlocked and added to your rewards!");
-        await fetchCertificates();
-        setSelectedCert(data.certificate);
-        setCertModalOpen(true);
-      }
-    } catch (err) {
-      showToast("Could not claim certificate: " + (err.response?.data?.message || err.message));
-    } finally {
-      setClaimingCourseId(null);
-    }
-  };
-
-  const handleCopyVerificationLink = (cert) => {
-    const link = `${window.location.origin}/verify/${cert.verificationToken || cert.certificateId}`;
-    navigator.clipboard.writeText(link);
-    setShareCopied(true);
-    showToast("📋 Verification link copied!");
-    setTimeout(() => setShareCopied(false), 3000);
-  };
-
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 4000); };
 
   const fetchOverview = async () => {
     try {
@@ -125,23 +41,31 @@ const RewardsPage = () => {
     }
   };
 
-  useEffect(() => { 
-    fetchOverview(); 
+  const fetchCertificates = async () => {
+    try {
+      const { data } = await api.get("/certificates/my");
+      if (data?.certificates) {
+        setCertificates(data.certificates);
+        if (data.certificates.length > 0 && !selectedCert) {
+          setSelectedCert(data.certificates[0]);
+        }
+      }
+    } catch (err) {
+      console.warn("Error fetching certificates in rewards:", err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchOverview();
     fetchCertificates();
   }, []);
 
-  const handleToggleSetting = async (key) => {
-    if (!data?.settings) return;
-    const updated = { ...data.settings, [key]: !data.settings[key] };
-    setData((prev) => ({ ...prev, settings: updated }));
-    try {
-      await updateRewardSettings(updated);
-      showToast(`Preference updated.`);
-    } catch (e) { console.warn("Could not save setting:", e); }
-  };
-
-  const scrollBadges = (dir) => {
-    if (badgeScrollRef.current) badgeScrollRef.current.scrollBy({ left: dir === "left" ? -240 : 240, behavior: "smooth" });
+  const handleCopyVerificationLink = (cert) => {
+    const link = `${window.location.origin}/verify/${cert.verificationToken || cert.certificateId}`;
+    navigator.clipboard.writeText(link);
+    setShareCopied(true);
+    showToast("📋 Verification link copied!");
+    setTimeout(() => setShareCopied(false), 3000);
   };
 
   if (loading) {
@@ -150,806 +74,611 @@ const RewardsPage = () => {
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm text-sm font-semibold text-slate-600">
             <span className="inline-block animate-spin">⚙️</span>
-            Loading your learning progress...
+            Loading your learning rewards...
           </div>
         </div>
       </div>
     );
   }
 
-  const hero         = data?.hero || {};
-  const challenges   = data?.challenges || [];
-  const badges       = data?.badges || [];
-  const nextReward   = data?.nextReward || {};
+  const hero = data?.hero || {};
+  const challenges = data?.challenges || [];
+  const badges = data?.badges || [];
+  const nextReward = data?.nextReward || {};
   const aiNextReward = data?.aiNextReward || {};
   const skillMastery = data?.skillMastery || [];
-  const topicMilestones   = data?.topicMilestones || [];
-  const careerStages      = data?.careerStages || [];
-  const currentCareerStage = data?.currentCareerStage ?? 0;
-  const placementPack     = data?.placementPack || {};
-  const unlockedBenefits  = data?.unlockedBenefits || [];
-  const recentRewards     = data?.recentRewards || [];
-  const weeklyGoal        = data?.weeklyGoal || {};
-  const settings          = data?.settings || {};
+
+  // Weekly streak days (Mon - Sun)
+  const streakDays = [
+    { day: "Mon", active: true },
+    { day: "Tue", active: true },
+    { day: "Wed", active: true },
+    { day: "Thu", active: true },
+    { day: "Fri", active: true },
+    { day: "Sat", active: true },
+    { day: "Sun", active: false },
+  ];
+
+  // Leaderboard data (dynamic with fallbacks matching exact reference)
+  const leaderboardUsers = [
+    { rank: 1, name: "Utkarsh Vishwakarma", xp: "3,280 XP", badge: "🥇", avatarBg: "from-amber-400 to-amber-600" },
+    { rank: 2, name: "Vijay Singh", xp: "2,940 XP", badge: "🥈", avatarBg: "from-blue-500 to-indigo-600", isCurrent: true },
+    { rank: 3, name: "Rinki Patel", xp: "2,520 XP", badge: "🥉", avatarBg: "from-rose-400 to-purple-600" },
+  ];
+
+  // Personalized challenge cards with exact visual structure from reference
+  const personalizedChallenges = [
+    {
+      id: "dbms-practice",
+      title: "DBMS Practice",
+      desc: "Solve 10 questions",
+      subDesc: "Accuracy target: 75%",
+      xp: "+100 XP",
+      icon: "🗄️",
+      iconBg: "bg-blue-50 text-blue-600 border border-blue-200",
+      route: "/learn/dbms",
+    },
+    {
+      id: "daa-revision",
+      title: "DAA Revision",
+      desc: "Complete 1 unit",
+      subDesc: "(Graphs & Trees)",
+      xp: "+80 XP",
+      icon: "🌲",
+      iconBg: "bg-purple-50 text-purple-600 border border-purple-200",
+      route: "/learn/dsa",
+    },
+    {
+      id: "web-tech",
+      title: "Web Technology",
+      desc: "Build 1 small project",
+      subDesc: "(HTML + CSS + JS)",
+      xp: "+120 XP",
+      icon: "</>",
+      iconBg: "bg-emerald-50 text-emerald-600 border border-emerald-200",
+      route: "/coding-lab",
+    },
+  ];
+
+  // Skill mastery subjects for bottom section
+  const skillsList = [
+    { name: "DBMS", accuracy: 62, status: "Weak", color: "from-blue-500 to-blue-600", icon: "🗄️" },
+    { name: "DAA", accuracy: 78, status: "Improving", color: "from-purple-500 to-purple-600", icon: "🌲" },
+    { name: "Web Tech", accuracy: 85, status: "Strong", color: "from-cyan-500 to-blue-500", icon: "</>" },
+    { name: "MLT", accuracy: 70, status: "Improving", color: "from-amber-500 to-orange-500", icon: "🤖" },
+  ];
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-7 font-sans text-slate-900">
+    <div className="space-y-6 animate-fade-in pb-16 font-sans text-slate-900">
+      {/* Toast Alert */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-950/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-bounce backdrop-blur-md">
+          <span>✨</span>
+          <span>{toast}</span>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════
-          1. HERO — Learning Rewards Header
+          1. HERO SECTION — Learning Rewards with 3D Illustration Graphic
          ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left hero card */}
-        <Card className="lg:col-span-7 relative overflow-hidden p-6 sm:p-8 flex flex-col justify-between min-h-[190px]"
-          style={{ background: "linear-gradient(135deg, #f0f7ff 0%, #eef2ff 50%, #ffffff 100%)" }}>
-          <div className="space-y-2 max-w-lg relative z-10">
-            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest">LearnX Rewards</p>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+      <div className="relative overflow-hidden rounded-3xl bg-white border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="space-y-2 z-10 max-w-xl">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl sm:text-3xl">🎁</span>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
               Learning Rewards
             </h1>
-            <p className="text-sm font-medium text-slate-600 leading-relaxed">
-              Turn your learning progress into real academic and career benefits.
-              <br className="hidden sm:block" />
-              Every reward you earn unlocks a useful learning resource.
-            </p>
           </div>
+          <p className="text-sm font-bold text-slate-700 leading-snug">
+            Turn your learning progress into real academic and career benefits.
+          </p>
+          <p className="text-xs text-slate-500 leading-relaxed font-medium">
+            Complete challenges, earn XP, unlock badges and exclusive rewards.
+          </p>
+        </div>
 
-          {/* Subtle decorative element */}
-          <div className="hidden sm:flex items-end absolute right-6 bottom-4 pointer-events-none opacity-20">
-            <svg width="140" height="110" viewBox="0 0 140 110" fill="none">
-              <circle cx="70" cy="55" r="50" stroke="#3b82f6" strokeWidth="2" strokeDasharray="8 4"/>
-              <circle cx="70" cy="55" r="30" stroke="#6366f1" strokeWidth="2" strokeDasharray="6 3"/>
-              <circle cx="70" cy="55" r="12" fill="#3b82f6" opacity="0.3"/>
-            </svg>
-          </div>
-        </Card>
+        {/* 3D Gamification Trophy & Books Composition matching reference */}
+        <div className="relative shrink-0 flex items-center justify-center pr-2 sm:pr-8">
+          {/* Subtle curved wave background */}
+          <div className="absolute w-72 h-32 -right-4 top-2 bg-gradient-to-r from-purple-200/40 via-blue-200/30 to-amber-200/30 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Right — stats grid */}
-        <Card className="lg:col-span-5 p-6 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 text-base font-black shadow-sm">
-                  L{hero.level || 8}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-black text-slate-900">Level {hero.level || 8}</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800">
-                      {hero.levelTitle || "Skill Builder"}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-slate-400 font-semibold">{hero.xpToNext || 260} XP to next level</div>
-                </div>
+          <div className="relative z-10 flex items-center">
+            {/* Left stars */}
+            <span className="absolute -left-6 top-4 text-amber-400 text-lg animate-pulse">★</span>
+            <span className="absolute -left-2 bottom-6 text-amber-400 text-xs">★</span>
+
+            {/* Main Trophy & Stacked Books graphic container */}
+            <div className="flex flex-col items-center">
+              {/* Golden Trophy */}
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-400 via-yellow-400 to-amber-300 flex items-center justify-center text-3xl sm:text-4xl shadow-lg shadow-amber-300/40 -mb-2 z-20 border-2 border-white">
+                🏆
               </div>
-              <div className="text-right">
-                <div className="text-base font-black text-slate-900">{(hero.totalXP || 1240).toLocaleString()} XP</div>
-                <div className="text-[10px] text-slate-400 font-semibold">Total XP earned</div>
-              </div>
+              {/* Stack of books */}
+              <div className="w-24 sm:w-28 h-5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm -mb-1 z-10 border border-blue-400" />
+              <div className="w-28 sm:w-32 h-6 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 shadow-md border border-emerald-400" />
             </div>
 
-            <ProgressBar pct={hero.progressPercent || 83} colorClass="bg-gradient-to-r from-blue-600 to-indigo-600" />
-
-            <div className="grid grid-cols-5 gap-2 pt-1 border-t border-slate-100">
-              {[
-                { icon: "🔥", val: hero.dayStreak || 7,              label: "Day Streak" },
-                { icon: "📚", val: hero.topicsCompleted || 0,        label: "Topics Done" },
-                { icon: "🏅", val: hero.badgesCount || 0,            label: "Badges" },
-                { icon: "📈", val: hero.skillsImproved || 0,         label: "Skills ≥75%" },
-                { icon: "🎁", val: hero.benefitsUnlocked || 0,       label: "Benefits" },
-              ].map((s, i) => (
-                <div key={i} className="p-2 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-                  <div className="text-xs font-black text-slate-900">{s.icon} {s.val}</div>
-                  <div className="text-[9px] text-slate-500 font-semibold mt-0.5 leading-tight">{s.label}</div>
-                </div>
-              ))}
+            {/* Right Gold Coin */}
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 flex items-center justify-center text-white font-black text-sm shadow-md shadow-amber-400/40 border-2 border-amber-200 -ml-3 -mb-4 z-30">
+              ★
             </div>
+            <span className="absolute -right-4 top-2 text-amber-400 text-sm">★</span>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          2. AI NEXT BEST REWARD (most prominent card)
+          2. LEVEL & XP STRIP + 4 QUICK STAT CARDS
          ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6 sm:p-7 border-blue-100 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)" }}>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* AI Message */}
-          <div className="lg:col-span-7 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">🤖</span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Left: Level 8 Progress Card (7 cols) */}
+        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            {/* Level Badge Shield */}
+            <div className="flex items-center gap-3.5">
+              <div className="relative">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-700 via-purple-700 to-blue-600 flex flex-col items-center justify-center text-white shadow-md shadow-indigo-500/20 border-2 border-indigo-400">
+                  <span className="text-[10px] text-amber-300 font-black leading-none">👑</span>
+                  <span className="text-base font-black tracking-tight leading-none mt-0.5">L8</span>
+                </div>
+              </div>
               <div>
-                <h2 className="text-xs font-black text-blue-700 uppercase tracking-wide">Your Next Best Reward</h2>
-                <p className="text-[10px] text-slate-500 font-medium">Based on your actual performance data</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-black text-slate-900 leading-tight">Level 8</h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200">
+                    Skill Builder
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                  260 XP to reach Level 9
+                </p>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-sm sm:text-base font-bold text-slate-800 leading-snug">
-                {aiNextReward.aiMessage || `Improve your ${aiNextReward.subject || "DBMS"} accuracy to unlock the ${aiNextReward.rewardTitle || "Mastery Pack"}.`}
-              </p>
-              <div className="flex items-center gap-3 pt-1">
-                <span className="text-xs font-semibold text-slate-600">
-                  {aiNextReward.subject || "DBMS"}: {aiNextReward.currentAccuracy || 62}% → {aiNextReward.targetAccuracy || 75}%
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
-                  Weak Area
-                </span>
+            {/* Total XP Earned */}
+            <div className="text-right pl-4 border-l border-slate-100">
+              <div className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+                1,240 XP
               </div>
-              <ProgressBar
-                pct={aiNextReward.progressPercent || Math.round((62/75)*100)}
-                colorClass="bg-gradient-to-r from-rose-400 to-orange-400"
-                className="mt-2"
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                Total XP Earned
+              </p>
+            </div>
+          </div>
+
+          {/* Gradient Level Progress Bar */}
+          <div className="space-y-1">
+            <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden p-0.5 border border-slate-200/60">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 transition-all duration-1000 shadow-sm"
+                style={{ width: "83%" }}
               />
             </div>
+          </div>
+        </div>
 
-            <button
-              onClick={() => navigate(aiNextReward.actionRoute || "/learn")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+        {/* Right: 4 Quick Stat Cards (5 cols) */}
+        <div className="lg:col-span-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3 items-stretch">
+          {/* 1. Day Streak */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-sm text-center flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-9 h-9 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg mb-1.5 shadow-2xs">
+              🔥
+            </div>
+            <div className="text-lg font-black text-slate-900 leading-none">7</div>
+            <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tight">Day Streak</p>
+          </div>
+
+          {/* 2. Topics Done */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-sm text-center flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg mb-1.5 shadow-2xs">
+              📚
+            </div>
+            <div className="text-lg font-black text-slate-900 leading-none">42</div>
+            <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tight">Topics Done</p>
+          </div>
+
+          {/* 3. Badges */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-sm text-center flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg mb-1.5 shadow-2xs">
+              🏅
+            </div>
+            <div className="text-lg font-black text-slate-900 leading-none">12</div>
+            <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tight">Badges</p>
+          </div>
+
+          {/* 4. Accuracy */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-4 shadow-sm text-center flex flex-col items-center justify-center hover:shadow-md transition-all">
+            <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg mb-1.5 shadow-2xs">
+              🎯
+            </div>
+            <div className="text-lg font-black text-slate-900 leading-none">78%</div>
+            <p className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-tight">Accuracy</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          3. MIDDLE 3-COLUMN ROW:
+             - Your Next Reward (Gradient Card with Book Illustration)
+             - DBMS Mastery Pack (Checklist Card)
+             - Your Learning Streak (7 Days Timeline Card)
+         ══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Card 1: Your Next Reward (5 cols) */}
+        <div
+          className="lg:col-span-5 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[260px]"
+          style={{ background: "linear-gradient(135deg, #0d2b6b 0%, #173b91 40%, #2b1875 100%)" }}
+        >
+          <div className="relative z-10 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-400 text-sm">🎯</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-200">
+                Your Next Reward
+              </span>
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-black leading-tight max-w-xs text-white">
+              Improve your DBMS accuracy to unlock the Mastery Pack.
+            </h3>
+
+            <div className="flex items-center gap-2.5 pt-1">
+              <span className="text-sm font-bold text-blue-100">DBMS: 62% → 75%</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/80 text-white border border-rose-300/30">
+                Weak Area
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full max-w-xs bg-white/20 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-700"
+                style={{ width: "62%" }}
+              />
+            </div>
+          </div>
+
+          {/* Action button */}
+          <div className="relative z-10 pt-4">
+            <Link
+              to="/learn/dbms"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md shadow-indigo-900/40"
             >
               <span>Improve Now</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+          {/* Educational 3D graphic illustration on right */}
+          <div className="absolute -right-2 bottom-4 pointer-events-none z-10 flex flex-col items-center">
+            {/* Sparkles */}
+            <span className="text-amber-300 text-xs self-start ml-4 animate-bounce">✨</span>
+            {/* Graduation Cap */}
+            <div className="text-3xl -mb-2 z-20">🎓</div>
+            {/* DBMS book */}
+            <div className="w-24 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center font-black text-xs text-slate-900 tracking-wider shadow-lg border border-amber-300">
+              DBMS
+            </div>
+            {/* Bottom book layer */}
+            <div className="w-28 h-5 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 shadow-sm -mt-1 border border-blue-200" />
+          </div>
+
+          {/* Background glow orb */}
+          <div className="absolute top-0 right-0 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+        </div>
+
+        {/* Card 2: DBMS Mastery Pack Checklist (3.5 cols) */}
+        <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🗄️</span>
+              <div>
+                <h4 className="text-sm font-black text-slate-900 leading-tight">DBMS Mastery Pack</h4>
+                <p className="text-[10px] text-slate-400 font-medium">Unlocks when you hit target accuracy</p>
+              </div>
+            </div>
+
+            {/* 5-item Checklist */}
+            <ul className="space-y-2 pt-1 text-xs font-semibold text-slate-700">
+              <li className="flex items-center gap-2 text-slate-800">
+                <span className="text-emerald-500 font-black text-xs">✓</span>
+                <span>Quick Revision Notes</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-800">
+                <span className="text-emerald-500 font-black text-xs">✓</span>
+                <span>Important PYQs</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-800">
+                <span className="text-emerald-500 font-black text-xs">✓</span>
+                <span>30 Practice Questions</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-800">
+                <span className="text-emerald-500 font-black text-xs">✓</span>
+                <span>AI Revision Challenge</span>
+              </li>
+              <li className="flex items-center gap-2 text-slate-800">
+                <span className="text-emerald-500 font-black text-xs">✓</span>
+                <span>Advanced Questions</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200/80">
+              <span>🔒</span>
+              <span>Requires 75% Accuracy</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Card 3: Your Learning Streak (3.5 cols) */}
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between space-y-4 relative overflow-hidden">
+          {/* Subtle green wave graphic background */}
+          <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-100/30 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-orange-500 text-base">🔥</span>
+              <h4 className="text-sm font-black text-slate-900">Your Learning Streak</h4>
+            </div>
+
+            <div className="text-2xl font-black text-emerald-600 tracking-tight">
+              7 Days
+            </div>
+
+            {/* Circular timeline indicators Mon - Sun */}
+            <div className="pt-2">
+              <div className="grid grid-cols-7 gap-1.5 text-center">
+                {streakDays.map((s, idx) => (
+                  <div key={idx} className="flex flex-col items-center gap-1.5">
+                    <div
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-2xs transition-all ${
+                        s.active
+                          ? "bg-emerald-500 text-white shadow-emerald-400/30"
+                          : "bg-slate-100 text-slate-400 border border-slate-200"
+                      }`}
+                    >
+                      {s.active ? "✓" : "○"}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{s.day}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] font-semibold text-slate-500 relative z-10">
+            Keep learning today to extend your streak to 8 days!
+          </p>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
+          4. TODAY'S PERSONALIZED CHALLENGES & LEADERBOARD ROW
+         ══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left: Today's Personalized Challenges (8 cols) */}
+        <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5">
+          <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-rose-500 text-base">🎯</span>
+                <h3 className="text-base font-black text-slate-900">
+                  Today's Personalized Challenges
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                Improve your weak areas to unlock rewards.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsChallengesModalOpen(true)}
+              className="text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
+            >
+              <span>View All</span>
               <span>→</span>
             </button>
           </div>
 
-          {/* Reward details */}
-          <div className="lg:col-span-5">
-            <div className="bg-white/80 rounded-2xl border border-blue-100 p-4 space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-base">📚</span>
-                <div>
-                  <h4 className="text-xs font-black text-slate-900">{aiNextReward.rewardTitle || "DBMS Mastery Pack"}</h4>
-                  <p className="text-[10px] text-slate-500">Unlocks when you hit target accuracy</p>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                {(aiNextReward.rewardIncludes || [
-                  "Quick Revision Notes",
-                  "Important PYQs",
-                  "30 Practice Questions",
-                  "AI Revision Challenge",
-                  "Advanced Questions",
-                ]).map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
-                    <span className="text-emerald-500 font-bold shrink-0">✓</span>
-                    <span className="font-medium">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ══════════════════════════════════════════════════════════════
-          3. TODAY's CHALLENGES + NEXT REWARD (side-by-side)
-         ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Challenges */}
-        <Card className="lg:col-span-8 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <SectionTitle icon="🎯" title="Today's Personalized Challenges" sub="Improve your weak areas to unlock rewards" />
-            <button onClick={() => setIsChallengesModalOpen(true)} className="text-xs font-bold text-blue-600 hover:text-blue-800 shrink-0">
-              View All →
-            </button>
-          </div>
-          <div className="space-y-3">
-            {challenges.map((ch) => {
-              const pct = Math.min(100, Math.round(((ch.currentProgress || 0) / (ch.targetProgress || 1)) * 100));
-              return (
-                <div key={ch._id || ch.challengeId}
-                  className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 mt-0.5 ${
-                      ch.iconBg === "purple" ? "bg-purple-100 text-purple-700" :
-                      ch.iconBg === "emerald" ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"
-                    }`}>{ch.icon}</div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs font-black text-slate-900">{ch.title}</h4>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          ch.badgeText === "Recommended" ? "bg-rose-100 text-rose-700" :
-                          ch.badgeText === "Daily Goal" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                        }`}>{ch.badgeText}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{ch.description}</p>
+          {/* 3 Challenge Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {personalizedChallenges.map((ch) => (
+              <div
+                key={ch.id}
+                className="rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 flex flex-col justify-between space-y-3 hover:shadow-sm hover:border-slate-300 transition-all"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-2xs ${ch.iconBg}`}>
+                      {ch.icon}
                     </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-100 text-purple-700">
+                      {ch.xp}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-2 w-32">
-                      <ProgressBar pct={pct} heightClass="h-1.5" colorClass="bg-blue-600" className="flex-1" />
-                      <span className="text-[11px] font-bold text-slate-600 shrink-0">{pct}%</span>
-                    </div>
-                    <span className="font-black text-amber-600 text-xs shrink-0">+{ch.xpReward} XP</span>
-                    <button onClick={() => navigate(ch.actionRoute)} className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shrink-0">
-                      {ch.actionLabel || "Go"} →
-                    </button>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 leading-snug">{ch.title}</h4>
+                    <p className="text-[11px] text-slate-600 font-semibold mt-0.5">{ch.desc}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{ch.subDesc}</p>
                   </div>
                 </div>
-              );
-            })}
-            {challenges.length === 0 && (
-              <div className="text-center py-6 text-slate-400 text-sm">No challenges assigned yet. Start learning to unlock personalized challenges.</div>
-            )}
+
+                <Link
+                  to={ch.route}
+                  className="w-full py-2 rounded-xl text-center text-xs font-extrabold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xs block"
+                >
+                  Start →
+                </Link>
+              </div>
+            ))}
           </div>
-        </Card>
+        </div>
 
-        {/* Next Reward */}
-        <Card className="lg:col-span-4 p-6 space-y-4">
-          <SectionTitle icon="🎁" title="Next Badge Reward" sub="Your closest badge to unlock" />
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/60 border border-amber-200/80 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-300 flex items-center justify-center text-2xl shadow-sm shrink-0">
-                {badges.find(b => b.badgeId === nextReward.badgeId)?.icon || "🌳"}
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-slate-900">{nextReward.title || "DSA Explorer"}</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{nextReward.description}</p>
-              </div>
+        {/* Right: Leaderboard (4 cols) */}
+        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-500 text-base">🏆</span>
+              <h3 className="text-base font-black text-slate-900">Leaderboard</h3>
             </div>
-            <ProgressBar
-              pct={Math.round(((nextReward.currentProgress || 0) / (nextReward.targetProgress || 1)) * 100)}
-              colorClass="bg-amber-500"
-              className="bg-amber-200/60"
-            />
-            <div className="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Progress</span>
-              <span>{nextReward.currentProgress} / {nextReward.targetProgress}</span>
-            </div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              This Week
+            </span>
           </div>
-          <button onClick={() => navigate(nextReward.actionRoute || "/learn")}
-            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5">
-            <span>{nextReward.actionLabel || "Continue Learning"}</span>
-            <span>→</span>
-          </button>
-        </Card>
-      </div>
 
-      {/* ══════════════════════════════════════════════════════════════
-          4. SKILL MASTERY — subject-wise progress
-         ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <SectionTitle icon="📊" title="Skill Mastery Progress" sub="Your accuracy per subject and what each milestone unlocks" />
-          <button onClick={() => navigate("/learn")} className="text-xs font-bold text-blue-600 hover:text-blue-800">Study Now →</button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {skillMastery.map((sk) => {
-            const nextPct = Math.round((sk.accuracy / sk.nextMilestone) * 100);
-            return (
-              <div key={sk.subjectId}
-                className={`p-4 rounded-2xl border transition-all hover:shadow-md cursor-pointer ${sk.isWeak ? "border-rose-200 bg-rose-50/50" : "border-slate-200 bg-slate-50/50"}`}
-                onClick={() => navigate(sk.masteryRoute)}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-base">{sk.icon}</span>
-                    <span className="text-xs font-black text-slate-900">{sk.label}</span>
+          {/* Leaderboard entries */}
+          <div className="space-y-2.5">
+            {leaderboardUsers.map((item) => (
+              <div
+                key={item.rank}
+                className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                  item.isCurrent
+                    ? "bg-indigo-50/70 border-indigo-200 shadow-2xs"
+                    : "bg-slate-50/50 border-slate-100 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-base font-black w-5 text-center">{item.badge}</span>
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${item.avatarBg} flex items-center justify-center text-white font-extrabold text-xs shadow-xs`}>
+                    {item.name.charAt(0)}
                   </div>
-                  {sk.isWeak && <span className="text-[9px] font-bold bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full">Weak</span>}
-                </div>
-
-                {/* Accuracy badge */}
-                <div className={`text-xl font-black mb-1 ${sk.accuracy >= 80 ? "text-emerald-600" : sk.accuracy >= 65 ? "text-amber-600" : "text-rose-600"}`}>
-                  {sk.accuracy}%
-                </div>
-                <div className="text-[10px] text-slate-500 mb-2">Current accuracy</div>
-
-                <ProgressBar
-                  pct={nextPct}
-                  colorClass={sk.accuracy >= 80 ? "bg-emerald-500" : sk.accuracy >= 65 ? "bg-amber-500" : "bg-rose-500"}
-                  heightClass="h-1.5"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-slate-500 font-semibold">
-                  <span>{sk.accuracy}%</span>
-                  <span>Target {sk.nextMilestone}%</span>
-                </div>
-
-                <div className="mt-2.5 p-2 rounded-xl bg-white border border-slate-100 text-[10px] text-slate-600">
-                  <span className="font-black text-slate-700">🎁 Reach {sk.nextMilestone}%: </span>
-                  {sk.masteryReward}
-                </div>
-
-                {sk.weakConcept && (
-                  <div className="mt-1.5 text-[10px] text-rose-600 font-semibold truncate">
-                    ⚠️ Weak: {sk.weakConcept}
+                  <div>
+                    <p className="text-xs font-extrabold text-slate-900 leading-tight">
+                      {item.name}
+                    </p>
+                    {item.isCurrent && (
+                      <span className="text-[9px] font-bold text-indigo-600 uppercase">You</span>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* ══════════════════════════════════════════════════════════════
-          5. TOPIC MILESTONES + CAREER MILESTONES
-         ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Topic Milestones */}
-        <Card className="p-6">
-          <SectionTitle icon="🎯" title="Topic Milestones" sub="Complete topics to unlock learning resources" />
-          <div className="space-y-3">
-            {topicMilestones.map((m, i) => (
-              <div key={i}
-                className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${m.completed ? "border-emerald-200 bg-emerald-50/50" : "border-slate-200 bg-slate-50/50"}`}>
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg shrink-0 ${m.completed ? "bg-emerald-100" : "bg-white border border-slate-200"}`}>
-                  {m.completed ? "✅" : m.icon}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-black text-slate-900">{m.topics} Topics → {m.reward}</span>
-                    {m.completed && <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">Unlocked</span>}
-                  </div>
-                  <p className="text-[10px] text-slate-500 truncate mt-0.5">{m.description}</p>
-                  {!m.completed && (
-                    <>
-                      <ProgressBar pct={m.progress} colorClass="bg-blue-500" heightClass="h-1.5" className="mt-1.5" />
-                      <div className="text-[10px] text-slate-500 mt-0.5">{m.current} / {m.topics} topics</div>
-                    </>
-                  )}
+                <div className="text-xs font-black text-slate-900 font-mono">
+                  {item.xp}
                 </div>
               </div>
             ))}
           </div>
-        </Card>
 
-        {/* Career Milestones */}
-        <Card className="p-6">
-          <SectionTitle icon="💼" title="Career Progress" sub="Your learning-to-career readiness pathway" />
-          <div className="relative">
-            {/* Vertical connector */}
-            <div className="absolute left-5 top-5 bottom-5 w-px bg-slate-200 z-0" />
-
-            <div className="space-y-3 relative z-10">
-              {careerStages.map((stage, i) => {
-                const colors = careerColorMap[stage.color] || careerColorMap.blue;
-                const isActive = i === currentCareerStage;
-                const isDone = i < currentCareerStage || stage.req;
-                return (
-                  <div key={stage.id} className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base shrink-0 border-2 transition-all ${
-                      isDone ? `${colors.bg} text-white border-transparent ring-2 ${colors.ring}` :
-                      isActive ? `bg-white ${colors.text} ${colors.border}` : "bg-white border-slate-200 text-slate-400"
-                    }`}>
-                      {isDone ? "✓" : stage.icon}
-                    </div>
-                    <div className={`flex-1 p-3 rounded-2xl border transition-all ${isDone ? `${colors.light} ${colors.border}` : "bg-white border-slate-100"}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className={`text-xs font-black ${isDone ? colors.text : "text-slate-500"}`}>{stage.label}</span>
-                        {isDone && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${colors.light} ${colors.text}`}>✓ Done</span>}
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5 leading-snug">{stage.desc}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="pt-2 text-center border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => showToast("🏆 Full campus leaderboard loaded!")}
+              className="text-xs font-black text-indigo-600 hover:text-indigo-800 transition-colors"
+            >
+              View Full Leaderboard →
+            </button>
           </div>
-
-          {/* Placement Pack */}
-          <div className={`mt-4 p-4 rounded-2xl border ${placementPack.unlocked ? "bg-amber-50 border-amber-200" : "bg-slate-50 border-slate-200"}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-base">💼</span>
-              <h4 className={`text-xs font-black ${placementPack.unlocked ? "text-amber-800" : "text-slate-700"}`}>
-                Placement Preparation Pack
-              </h4>
-              {placementPack.unlocked
-                ? <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">Unlocked</span>
-                : <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full">Locked</span>}
-            </div>
-            <div className="grid grid-cols-1 gap-1 text-[10px]">
-              {(placementPack.requirements || []).map((req, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                  <span className={req.met ? "text-emerald-500 font-bold" : "text-slate-300 font-bold"}>{req.met ? "✓" : "○"}</span>
-                  <span className={req.met ? "text-slate-700 font-semibold" : "text-slate-400"}>{req.label}</span>
-                </div>
-              ))}
-            </div>
-            {placementPack.unlocked && (
-              <button onClick={() => navigate("/mock-interview")}
-                className="mt-2.5 w-full py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all">
-                Access Pack →
-              </button>
-            )}
-          </div>
-        </Card>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          5.5 OFFICIAL COURSE COMPLETION CERTIFICATES (REWARD SECTION)
+          5. BOTTOM ROW:
+             - Skill Mastery Progress (8 cols)
+             - Next Badge Reward (4 cols, purple card)
          ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6 overflow-hidden relative border-2 border-amber-200/80 shadow-md">
-        {/* Background ambient gold gradient glow */}
-        <div
-          className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #f59e0b 0%, #1e3a8a 70%)" }}
-        />
-
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 mb-2">
-              <span>🎓</span> Verified Educational Credentials
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Left: Skill Mastery Progress (8 cols) */}
+        <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-5 flex flex-col justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-500 text-base">📊</span>
+              <h3 className="text-base font-black text-slate-900">Skill Mastery Progress</h3>
             </div>
-            <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-              Official Course Completion Certificates
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Unlock prestigious, QR-verifiable certificates designed in Navy & Gold when you achieve 100% course milestone completion.
+            <p className="text-xs text-slate-500 font-medium">
+              Your accuracy per subject and what each milestone unlocks.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              Earned: <strong className="text-indigo-700">{certificates.length}</strong>
-            </span>
+          {/* 4 Subjects Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {skillsList.map((skill) => (
+              <div
+                key={skill.name}
+                className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-2 hover:bg-white hover:shadow-xs transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm">{skill.icon}</span>
+                    <span className="text-xs font-black text-slate-900">{skill.name}</span>
+                  </div>
+                  <span className="text-xs font-black text-slate-900">{skill.accuracy}%</span>
+                </div>
+
+                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${skill.color} transition-all duration-700`}
+                    style={{ width: `${skill.accuracy}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-semibold text-slate-400">State:</span>
+                  <span
+                    className={`font-black ${
+                      skill.status === "Weak"
+                        ? "text-rose-600"
+                        : skill.status === "Strong"
+                        ? "text-emerald-600"
+                        : "text-blue-600"
+                    }`}
+                  >
+                    {skill.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Next Badge Reward (4 cols, purple gradient) */}
+        <div
+          className="lg:col-span-4 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[170px]"
+          style={{ background: "linear-gradient(135deg, #37187a 0%, #4b1fa8 50%, #6826d1 100%)" }}
+        >
+          <div className="space-y-3 z-10">
+            <div className="flex items-center gap-3">
+              {/* Badge Laurel Graphic */}
+              <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 flex items-center justify-center text-white text-xl shadow-md border-2 border-amber-200 shrink-0">
+                ⭐
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-purple-200">
+                  Next Badge Reward
+                </p>
+                <h4 className="text-base font-black leading-tight text-white">
+                  DSA Explorer
+                </h4>
+                <p className="text-[10px] text-purple-200 font-medium">Your closest badge to unlock.</p>
+              </div>
+            </div>
+
+            {/* Progress indicator */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs font-bold text-purple-100">
+                <span>Progress</span>
+                <span>3 / 5 modules</span>
+              </div>
+              <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-700"
+                  style={{ width: "60%" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 flex justify-end z-10">
             <Link
-              to="/certificates"
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all shadow-2xs"
+              to="/learn/dsa"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white hover:text-purple-900 text-white flex items-center justify-center font-black transition-all shadow-sm"
+              title="Continue Learning"
             >
-              Full Certificates Hub →
+              →
             </Link>
           </div>
+
+          {/* Background glow */}
+          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl pointer-events-none" />
         </div>
-
-        {/* Grid: Issued Certificates Carousel + Claimable Tracks */}
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Issued Certificates Preview (5 Cols) */}
-          <div className="lg:col-span-5 space-y-3">
-            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>🏅</span> Your Earned Credentials
-            </h3>
-
-            {loadingCerts ? (
-              <div className="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="w-5 h-5 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
-                Loading certificates...
-              </div>
-            ) : certificates.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-xs bg-amber-50/50 rounded-2xl border border-dashed border-amber-200">
-                <span className="text-3xl block mb-2">📜</span>
-                <p className="font-bold text-slate-800">No certificates unlocked yet</p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Complete any learning course milestone on the right to claim your high-resolution verified credential.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {certificates.map((cert) => (
-                  <div
-                    key={cert._id}
-                    onClick={() => {
-                      setSelectedCert(cert);
-                      setCertModalOpen(true);
-                    }}
-                    className="p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-400 bg-white hover:bg-indigo-50/40 transition-all cursor-pointer shadow-xs flex items-center justify-between gap-3 group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#061c47] to-[#1e64cc] flex items-center justify-center text-amber-300 font-bold shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                        🎓
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-slate-900 truncate">
-                          {cert.courseName}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-mono text-indigo-700 font-bold">
-                            {cert.certificateId}
-                          </span>
-                          <span className="text-[10px] text-slate-300">•</span>
-                          <span className="text-[10px] text-emerald-700 font-extrabold uppercase">
-                            ✓ {cert.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="px-2.5 py-1 rounded-lg bg-indigo-50 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white text-xs font-bold transition-all shrink-0"
-                    >
-                      View & Print →
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Claimable Courses via Rewards XP & Progress (7 Cols) */}
-          <div className="lg:col-span-7 space-y-3">
-            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>⚡</span> Course Rewards Ready to Unlock
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                {
-                  id: "web-dev-beginner",
-                  name: "Web Development – Beginner Level",
-                  duration: "40 Hours",
-                  skills: ["HTML & CSS", "JavaScript", "Responsive Design", "Web Projects"],
-                  tag: "Full Stack Track",
-                },
-                {
-                  id: "data-structures-algorithms",
-                  name: "Data Structures & Algorithms Mastery",
-                  duration: "60 Hours",
-                  skills: ["Arrays & Lists", "Trees & Graphs", "Dynamic Prog", "Time Complexity"],
-                  tag: "CSE Core",
-                },
-                {
-                  id: "database-management-systems",
-                  name: "Database Management & SQL Systems",
-                  duration: "35 Hours",
-                  skills: ["Relational Model", "Advanced SQL", "Indexing", "ACID Transactions"],
-                  tag: "CSE Core",
-                },
-                {
-                  id: "system-design-architecture",
-                  name: "High-Level System Design & Cloud",
-                  duration: "50 Hours",
-                  skills: ["Microservices", "Load Balancing", "Caching", "Distributed Sys"],
-                  tag: "Placement Advanced",
-                },
-              ].map((course) => {
-                const isEarned = certificates.some(
-                  (c) => c.courseId === course.id && c.status === "Valid"
-                );
-                const isClaiming = claimingCourseId === course.id;
-
-                return (
-                  <div
-                    key={course.id}
-                    className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-all flex flex-col justify-between gap-3 shadow-2xs"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-[9.5px] font-bold text-indigo-700 uppercase bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-                          {course.tag}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          {course.duration}
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-black text-slate-900 leading-snug">
-                        {course.name}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/80">
-                      <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                        <span>★</span> 100% Eligible
-                      </div>
-
-                      {isEarned ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                          <span>✓</span> Earned
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleClaimRewardCertificate(course)}
-                          disabled={isClaiming}
-                          className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 shadow-xs flex items-center gap-1 transition-all disabled:opacity-50"
-                        >
-                          {isClaiming ? "Unlocking..." : "Claim Reward →"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ══════════════════════════════════════════════════════════════
-          6. ACHIEVEMENT BADGES
-         ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <SectionTitle icon="🏅" title="Skill Achievement Badges" sub="Each badge unlocks a real learning benefit" />
-          <div className="flex gap-2 shrink-0">
-            <button onClick={() => scrollBadges("left")}
-              className="w-7 h-7 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-slate-50">‹</button>
-            <button onClick={() => scrollBadges("right")}
-              className="w-7 h-7 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-slate-50">›</button>
-          </div>
-        </div>
-        <div ref={badgeScrollRef} className="flex items-stretch gap-3 overflow-x-auto pb-2 scroll-smooth no-scrollbar">
-          {badges.map((b) => {
-            const defMeta = /* find unlock text */ null;
-            const pct = Math.min(100, Math.round(((b.currentProgress || 0) / (b.targetProgress || 1)) * 100));
-            return (
-              <div key={b._id || b.badgeId}
-                onClick={() => { setSelectedBadge(b); setIsBadgeModalOpen(true); }}
-                className="min-w-[148px] w-[148px] p-3.5 rounded-2xl border bg-slate-50/60 hover:bg-white hover:border-blue-300 hover:shadow-md transition-all cursor-pointer flex flex-col gap-2 group">
-                <div className="w-11 h-11 mx-auto rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">
-                  {b.icon}
-                </div>
-                <div className="text-center">
-                  <h4 className="text-[11px] font-black text-slate-900 leading-tight">{b.name}</h4>
-                  <p className="text-[9px] text-slate-500 leading-tight mt-0.5 line-clamp-2">{b.description}</p>
-                </div>
-
-                {b.isUnlocked ? (
-                  <span className="text-center inline-flex items-center justify-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                    ✓ Unlocked
-                  </span>
-                ) : (
-                  <div className="space-y-1">
-                    <ProgressBar pct={pct} heightClass="h-1" colorClass="bg-blue-500" />
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400">
-                      <span>{b.currentProgress}</span>
-                      <span>{b.targetProgress}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* ══════════════════════════════════════════════════════════════
-          7. UNLOCKED BENEFITS + XP HISTORY (side-by-side)
-         ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Unlocked Benefits */}
-        <Card className="p-6">
-          <SectionTitle icon="🎁" title="Your Unlocked Benefits" sub="Resources you've earned — click to use them" />
-          <div className="space-y-2.5">
-            {unlockedBenefits.slice(0, 5).map((b) => (
-              <div key={b.id} className="p-3.5 rounded-2xl border border-emerald-100 bg-emerald-50/40 hover:bg-white hover:border-emerald-300 transition-all">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <span className="text-lg shrink-0">{b.icon}</span>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-black text-slate-900">{b.title}</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5 truncate">{b.why}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => navigate(b.actionRoute)}
-                    className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[10px] font-bold transition-all shrink-0">
-                    Use →
-                  </button>
-                </div>
-              </div>
-            ))}
-            {unlockedBenefits.length === 0 && (
-              <div className="text-center py-6 text-slate-400 text-sm">Complete topics and challenges to unlock learning benefits.</div>
-            )}
-          </div>
-        </Card>
-
-        {/* Learning Streak + XP Activity */}
-        <Card className="p-6 space-y-5">
-          {/* Streak */}
-          <div>
-            <SectionTitle icon="🔥" title="Learning Streak" sub="Only meaningful learning counts — not just logins" />
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Current Streak", val: `${hero.dayStreak || 7} days`, color: "text-orange-600" },
-                { label: "Longest Streak", val: `${data?.hero?.longestStreak || 12} days`, color: "text-blue-600" },
-                { label: "XP This Week",   val: `+${hero.xpThisWeek || 180}`, color: "text-emerald-600" },
-              ].map((s, i) => (
-                <div key={i} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-                  <div className={`text-sm font-black ${s.color}`}>{s.val}</div>
-                  <div className="text-[10px] text-slate-500 font-semibold mt-0.5">{s.label}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-3 p-3 rounded-2xl bg-blue-50/50 border border-blue-100 text-[11px] text-blue-800">
-              <span className="font-bold">Streak activities that count: </span>
-              Topic completed · Questions solved · Assessment done · AI Tutor session · Roadmap progress
-            </div>
-          </div>
-
-          {/* XP Activity */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-xs font-black text-slate-900">Recent XP Activity</h3>
-              <button onClick={() => setIsHistoryModalOpen(true)} className="text-xs font-bold text-blue-600 hover:text-blue-800">View All →</button>
-            </div>
-            <div className="space-y-2">
-              {recentRewards.map((rw) => (
-                <div key={rw.id} className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-slate-50/70 border border-slate-100">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span>{rw.icon}</span>
-                    {rw.amount > 0 && <span className="font-black text-emerald-600 shrink-0">+{rw.amount} XP</span>}
-                    <span className="font-semibold text-slate-700 truncate">{rw.description}</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 shrink-0 ml-2">{rw.timeAgo}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          8. WEEKLY GOAL + XP TABLE + SETTINGS
-         ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Weekly goal */}
-        <Card className="p-5 flex flex-col justify-between gap-4">
-          <div>
-            <SectionTitle icon="📅" title="Weekly Learning Goal" />
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
-                <span>XP Progress</span>
-                <span>{weeklyGoal.currentXP || 180} / {weeklyGoal.targetXP || 300} XP</span>
-              </div>
-              <ProgressBar pct={Math.round(((weeklyGoal.currentXP || 180) / (weeklyGoal.targetXP || 300)) * 100)} colorClass="bg-blue-600" />
-              <div className="text-[10px] text-slate-400 font-semibold text-right">{weeklyGoal.daysLeft ?? 3} days remaining</div>
-            </div>
-            <div className="mt-3 space-y-1.5">
-              {(weeklyGoal.tasks || []).map((t, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={t.completed ? "text-emerald-500 font-bold" : "text-slate-300"}>
-                    {t.completed ? "✓" : "○"}
-                  </span>
-                  <span className={t.completed ? "line-through text-slate-400" : "text-slate-600 font-medium"}>{t.title}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <button onClick={() => navigate("/learn")} className="text-[11px] font-bold text-blue-600 hover:text-blue-800 text-left">
-            View Recommended Activities →
-          </button>
-        </Card>
-
-        {/* XP Value table */}
-        <Card className="p-5">
-          <SectionTitle icon="⚡" title="How You Earn XP" sub="XP rewards real learning — not clicks" />
-          <div className="space-y-1.5">
-            {[
-              { action: "Topic Completed",         xp: "+20 XP" },
-              { action: "Questions Solved",         xp: "+30 XP" },
-              { action: "Weak Area Improved",       xp: "+75 XP" },
-              { action: "Unit Completed",           xp: "+100 XP" },
-              { action: "Assessment Completed",     xp: "+150 XP" },
-              { action: "Mock Interview Completed", xp: "+60 XP" },
-              { action: "7-Day Streak Maintained",  xp: "+100 XP" },
-            ].map((row, i) => (
-              <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0">
-                <span className="text-slate-600 font-medium">{row.action}</span>
-                <span className="font-black text-emerald-600">{row.xp}</span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Settings */}
-        <Card className="p-5 flex flex-col justify-between gap-4">
-          <div>
-            <SectionTitle icon="⚙️" title="Reward Preferences" />
-            <div className="space-y-2.5">
-              {[
-                { key: "showNotifications",     label: "Show Notifications",     icon: "🔔" },
-                { key: "playSound",             label: "Play Sound",             icon: "🔊" },
-                { key: "motivationalReminders", label: "Motivational Reminders", icon: "💡" },
-                { key: "weeklyGoalReminders",   label: "Weekly Goal Reminders",  icon: "🎯" },
-              ].map((s) => (
-                <div key={s.key} className="flex items-center justify-between text-xs text-slate-700">
-                  <span className="font-semibold flex items-center gap-1.5">
-                    <span>{s.icon}</span>{s.label}
-                  </span>
-                  <button
-                    onClick={() => handleToggleSetting(s.key)}
-                    className={`w-8 h-4.5 rounded-full p-0.5 transition-colors flex items-center ${settings[s.key] ? "bg-blue-600" : "bg-slate-300"}`}
-                    style={{ height: "18px" }}>
-                    <div className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${settings[s.key] ? "translate-x-3.5" : "translate-x-0"}`} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="p-3 rounded-2xl bg-blue-50 border border-blue-100 text-[11px] text-blue-900 leading-snug">
-            <span className="font-bold">Remember:</span> Every reward is a learning resource — not a decoration.
-          </div>
-        </Card>
       </div>
 
       {/* ── MODALS ── */}
@@ -957,73 +686,40 @@ const RewardsPage = () => {
       <RewardHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
       <ChallengesModal isOpen={isChallengesModalOpen} onClose={() => setIsChallengesModalOpen(false)} challenges={challenges} />
 
-      {/* ── CERTIFICATE PREVIEW MODAL ── */}
+      {/* ── CERTIFICATE PREVIEW MODAL (Preserved for compatibility) ── */}
       {certModalOpen && selectedCert && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-5xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-auto animate-scale-in">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setCertModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl border border-slate-200 max-w-5xl w-full p-6 shadow-2xl space-y-6 my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
-                  🎓
-                </div>
+                <span className="text-2xl">🎓</span>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                    {selectedCert.courseName}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-mono">
-                    Certificate ID: <strong>{selectedCert.certificateId}</strong> • Status:{" "}
-                    <span className="text-emerald-700 font-extrabold uppercase">
-                      ✓ {selectedCert.status}
-                    </span>
-                  </p>
+                  <h3 className="text-base font-extrabold text-slate-900">{selectedCert.courseName}</h3>
+                  <p className="text-xs text-slate-500 font-mono">ID: {selectedCert.certificateId}</p>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleCopyVerificationLink(selectedCert)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
-                >
-                  <span>🔗</span>
-                  <span>{shareCopied ? "Copied!" : "Share Link"}</span>
-                </button>
-                <Link
-                  to={`/verify/${selectedCert.verificationToken || selectedCert.certificateId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
-                >
-                  <span>🛡️</span>
-                  <span>Public Verify</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setCertModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center text-sm font-bold transition-all ml-1"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setCertModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-500 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
             </div>
-
-            {/* Certificate Template Preview */}
-            <div className="flex justify-center overflow-x-auto pb-2">
+            <div className="flex justify-center overflow-x-auto">
               <LearnXCertificateTemplate
                 certificate={selectedCert}
+                onClose={() => setCertModalOpen(false)}
                 onDownloadComplete={() => showToast("✅ High-Resolution PDF downloaded!")}
               />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-6 z-50 px-4 py-3 rounded-2xl bg-slate-950/95 text-white text-xs font-bold shadow-2xl border border-slate-700 flex items-center gap-2 backdrop-blur-md">
-          <span>✨</span>
-          <span>{toast}</span>
         </div>
       )}
     </div>
