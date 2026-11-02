@@ -62,3 +62,4 @@ const courseRequirementSchema = new mongoose.Schema(
 
 const CourseRequirement = mongoose.model("CourseRequirement", courseRequirementSchema);
 export default CourseRequirement;
+

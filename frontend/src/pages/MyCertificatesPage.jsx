@@ -40,6 +40,7 @@ export const MyCertificatesPage = () => {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCert, setSelectedCert] = useState(null);
+  const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] = useState(false);
   const [activeCourseId, setActiveCourseId] = useState("web-development-beginner-level");
   const [courseStatus, setCourseStatus] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -54,12 +55,41 @@ export const MyCertificatesPage = () => {
     setTimeout(() => setToastMessage(""), 4500);
   };
 
+  // Close modal handler — restores scroll and clears overflow lock
+  const handleCloseCertPreview = () => {
+    setIsCertificatePreviewOpen(false);
+    document.body.style.overflow = "";
+  };
+
+  // Lock body scroll when modal is open; restore on close / unmount
+  useEffect(() => {
+    if (isCertificatePreviewOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isCertificatePreviewOpen]);
+
+  // ESC key listener — only active while modal is open
+  useEffect(() => {
+    if (!isCertificatePreviewOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") handleCloseCertPreview();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCertificatePreviewOpen]);
+
   const fetchCertificates = async () => {
     setLoading(true);
     try {
       const { data } = await api.get("/certificates/my");
       if (data?.certificates) {
         setCertificates(data.certificates);
+        // Auto-select first cert metadata but do NOT open modal on load
         if (data.certificates.length > 0 && !selectedCert) {
           setSelectedCert(data.certificates[0]);
         }
@@ -77,6 +107,7 @@ export const MyCertificatesPage = () => {
       const { data } = await api.get(`/certificates/status/${courseId}`);
       if (data?.success) {
         setCourseStatus(data);
+        // Auto-select cert metadata but do NOT open modal on load
         if (data.certificate) {
           setSelectedCert(data.certificate);
         }
@@ -111,6 +142,7 @@ export const MyCertificatesPage = () => {
         await fetchCertificates();
         if (data.certificate) {
           setSelectedCert(data.certificate);
+          setIsCertificatePreviewOpen(true);
         }
       } else {
         showToast("Progress updated. Review remaining requirements below.");
@@ -398,58 +430,213 @@ export const MyCertificatesPage = () => {
           )}
         </div>
 
-        {/* Right Column (7 cols): High-Resolution Certificate Preview & QR Code Details */}
+        {/* Right Column (7 cols): Earned Certificates List */}
         <div className="lg:col-span-7 space-y-4">
-          {selectedCert ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-6">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-extrabold text-slate-900">
-                      {selectedCert.courseName}
-                    </h2>
-                    <span
-                      className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
-                        selectedCert.status === "Revoked"
-                          ? "bg-rose-100 text-rose-800"
-                          : "bg-emerald-100 text-emerald-800"
-                      }`}
-                    >
-                      {selectedCert.status}
-                    </span>
+          {/* Earned Certificates Header */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <span>🏆</span> Earned Certificates
+              </h2>
+              <span className="text-[11px] text-slate-400 font-semibold">{certificates.length} credential{certificates.length !== 1 ? "s" : ""}</span>
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-10 text-slate-400 text-sm gap-2">
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                Loading certificates…
+              </div>
+            ) : certificates.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 space-y-2">
+                <span className="text-4xl block">📜</span>
+                <p className="text-sm font-bold text-slate-700">No Certificate Earned Yet</p>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  Certificates are strictly non-claimable until every single lesson, assignment, module, project, and exam meets the 100% threshold. Complete your course track on the left to automatically unlock your credential.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {certificates.map((cert) => (
+                  <div
+                    key={cert._id || cert.certificateId}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white hover:shadow-sm transition-all"
+                  >
+                    {/* Cert Info */}
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-extrabold text-slate-900 truncate">{cert.courseName}</span>
+                        <span
+                          className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md shrink-0 ${
+                            cert.status === "Revoked"
+                              ? "bg-rose-100 text-rose-800"
+                              : "bg-emerald-100 text-emerald-800"
+                          }`}
+                        >
+                          {cert.status === "Valid" ? "✓ Valid" : cert.status}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Issued to <strong>{cert.studentName}</strong> •{" "}
+                        <code className="text-indigo-600 font-bold font-mono">{cert.certificateId}</code>
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : ""}
+                        {cert.courseDuration ? ` • ${cert.courseDuration}` : ""}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleCopyShareLink(cert)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                        title="Copy share link"
+                      >
+                        <span>🔗</span>
+                        <span className="hidden sm:inline">{shareCopied ? "Copied!" : "Share"}</span>
+                      </button>
+
+                      <Link
+                        to={`/verify/${cert.verificationToken || cert.certificateId}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
+                        title="Public verification page"
+                      >
+                        <span>🛡️</span>
+                        <span className="hidden sm:inline">Verify</span>
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCert(cert);
+                          setIsCertificatePreviewOpen(true);
+                        }}
+                        className="px-4 py-1.5 rounded-xl text-xs font-extrabold text-white bg-gradient-to-r from-[#061c47] to-[#1e64cc] hover:from-[#0d3b85] hover:to-[#2563eb] transition-all flex items-center gap-1.5 shadow-sm"
+                        title="View full certificate"
+                      >
+                        <span>👁️</span> View →
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Hint card when cert is selected but modal is closed */}
+          {selectedCert && !isCertificatePreviewOpen && (
+            <div className="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-2xl px-5 py-3">
+              <div className="text-xs text-indigo-700 font-semibold">
+                <span className="font-black">{selectedCert.courseName}</span> is ready to view
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCertificatePreviewOpen(true)}
+                className="px-4 py-1.5 rounded-xl text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm shrink-0"
+              >
+                Open Certificate ↗
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────────
+          CERTIFICATE PREVIEW MODAL
+          - Full-screen overlay with blur backdrop
+          - Click outside → close
+          - ESC → close (via useEffect above)
+          - Sticky top bar with ← Back + circular X button
+      ─────────────────────────────────────────────────────────────── */}
+      {isCertificatePreviewOpen && selectedCert && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-start justify-center overflow-y-auto p-4 sm:p-6"
+          onClick={handleCloseCertPreview}
+          aria-modal="true"
+          role="dialog"
+          aria-label="Certificate Preview"
+        >
+          <div
+            className="relative my-4 mx-auto w-full max-w-5xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sticky top control bar */}
+            <div className="sticky top-0 z-10 flex items-center justify-between bg-white/95 backdrop-blur-sm border-b border-slate-200 px-4 py-3 rounded-t-2xl shadow-sm">
+              {/* ← Back button */}
+              <button
+                type="button"
+                onClick={handleCloseCertPreview}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all"
+                title="Back to Certificates"
+              >
+                ← Back to Certificates
+              </button>
+
+              {/* Right-side actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopyShareLink(selectedCert)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
+                  title="Copy share link"
+                >
+                  <span>🔗</span>
+                  <span className="hidden sm:inline">{shareCopied ? "Copied!" : "Share Link"}</span>
+                </button>
+
+                <Link
+                  to={`/verify/${selectedCert.verificationToken || selectedCert.certificateId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
+                  title="Open public verification page"
+                >
+                  <span>🛡️</span>
+                  <span className="hidden sm:inline">Public Verify</span>
+                </Link>
+
+                {/* Prominent circular × close button */}
+                <button
+                  type="button"
+                  onClick={handleCloseCertPreview}
+                  title="Close Certificate"
+                  aria-label="Close Certificate Preview"
+                  className="w-9 h-9 rounded-full bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-500 flex items-center justify-center transition-all font-black text-xl leading-none shadow-sm"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            {/* Certificate content */}
+            <div className="bg-white rounded-b-2xl p-4 sm:p-6 overflow-x-auto shadow-2xl">
+              {/* Cert ID / title strip */}
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">{selectedCert.courseName}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Issued to <strong>{selectedCert.studentName}</strong> • ID:{" "}
-                    <code className="text-indigo-600 font-bold font-mono">
-                      {selectedCert.certificateId}
-                    </code>
+                    Issued to <strong>{selectedCert.studentName}</strong> •{" "}
+                    <code className="text-indigo-600 font-bold font-mono">{selectedCert.certificateId}</code>
                   </p>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCopyShareLink(selectedCert)}
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <span>🔗</span>
-                    <span>{shareCopied ? "Link Copied!" : "Share Link"}</span>
-                  </button>
-
-                  <Link
-                    to={`/verify/${selectedCert.verificationToken || selectedCert.certificateId}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
-                  >
-                    <span>🛡️</span>
-                    <span>Public Verify</span>
-                  </Link>
-                </div>
+                <span
+                  className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-lg ${
+                    selectedCert.status === "Revoked"
+                      ? "bg-rose-100 text-rose-800"
+                      : "bg-emerald-100 text-emerald-800"
+                  }`}
+                >
+                  {selectedCert.status === "Valid" ? "✓ Valid & Verified" : selectedCert.status}
+                </span>
               </div>
 
-              {/* Certificate Template Component */}
+              {/* The actual certificate template (unchanged) */}
               <div className="w-full flex justify-center">
                 <LearnXCertificateTemplate
                   certificate={selectedCert}
@@ -457,17 +644,9 @@ export const MyCertificatesPage = () => {
                 />
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 space-y-2">
-              <span className="text-4xl block">📜</span>
-              <p className="text-sm font-bold text-slate-700">No Certificate Earned Yet</p>
-              <p className="text-xs text-slate-400 max-w-md mx-auto">
-                Certificates are strictly non-claimable until every single lesson, assignment, module, project, and exam meets the 100% threshold. Complete your course track on the left to automatically unlock your credential.
-              </p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
