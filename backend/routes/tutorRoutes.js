@@ -1,9 +1,10 @@
 import express from "express";
-import protect from "../middleware/auth.js";
+import { optionalAuth } from "../middleware/auth.js";
 import { askTutor } from "../controllers/tutorController.js";
 
 const router = express.Router();
 
-router.post("/ask", protect, askTutor);
+router.post("/ask", optionalAuth, askTutor);
+router.post("/chat", optionalAuth, askTutor);
 
 export default router;

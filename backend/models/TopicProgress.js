@@ -29,7 +29,7 @@ const topicProgressSchema = new mongoose.Schema(
     // masteryStatus: 'not_attempted' | 'weak' (<60%) | 'needs_practice' (60-79%) | 'strong' (>=80%) | 'mastered'
     masteryStatus: {
       type: String,
-      enum: ["not_attempted", "weak", "needs_practice", "strong", "mastered"],
+      enum: ["not_attempted", "weak", "needs_practice", "developing", "good", "strong", "mastered"],
       default: "not_attempted",
     },
     isMastered: { type: Boolean, default: false },

@@ -19,7 +19,13 @@ const questionSchema = new mongoose.Schema({
     confidence: { type: Number, default: 0 },
     feedback: { type: String, default: "" },
     sampleIdealAnswer: { type: String, default: "" },
+    missingConcepts: { type: [String], default: [] },
+    strongPoints: { type: [String], default: [] },
   },
+  hintsUsed: { type: Number, default: 0 },
+  topic: { type: String, default: "" },
+  difficulty: { type: String, default: "Medium" },
+  codeLanguage: { type: String, default: "python" },
 });
 
 const roundSchema = new mongoose.Schema({
@@ -60,6 +66,39 @@ const mockInterviewSchema = new mongoose.Schema(
       ],
       required: true,
     },
+    interviewType: {
+      type: String,
+      default: "Technical Interview",
+    },
+    difficulty: {
+      type: String,
+      default: "Intermediate",
+    },
+    personality: {
+      type: String,
+      default: "Professional",
+    },
+    companyStyle: {
+      type: String,
+      default: "Product Company",
+    },
+    durationMinutes: {
+      type: Number,
+      default: 30,
+    },
+    pressureLevel: {
+      type: String,
+      default: "Medium",
+    },
+    skillReadinessBefore: { type: Number, default: 68 },
+    skillReadinessAfter: { type: Number, default: 72 },
+    coachChat: [
+      {
+        role: { type: String, enum: ["user", "ai"], required: true },
+        message: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
     rounds: [roundSchema],
     overallScore: { type: Number, default: 0 },
     hiringDecision: {

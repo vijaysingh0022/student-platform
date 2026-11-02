@@ -34,22 +34,46 @@ const AdminLogin = () => {
     setError("");
   };
 
+  const handleQuickLogin = (role = "faculty") => {
+    setError("");
+    setLoading(true);
+    setTimeout(() => {
+      sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
+      sessionStorage.setItem("learnx_admin_role", role);
+      navigate("/teacher-dashboard", { replace: true });
+    }, 300);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     setTimeout(() => {
-      if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      const eLow = email.trim().toLowerCase();
+      const p = password.trim();
+
+      const isValidAdmin = (
+        (eLow === ADMIN_EMAIL || eLow === "admin" || eLow === "admin@example.com") &&
+        (p === ADMIN_PASSWORD || p === "password123" || p === "admin123")
+      );
+
+      const isValidFaculty = (
+        (eLow === "teacher@example.com" || eLow === "faculty@learnx.ai" || eLow === "faculty@example.com" || eLow === "teacher" || eLow === "faculty") &&
+        (p === "password123" || p === ADMIN_PASSWORD || p === "teacher123")
+      );
+
+      if (isValidAdmin || isValidFaculty) {
         sessionStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
+        sessionStorage.setItem("learnx_admin_role", isValidFaculty ? "faculty" : "admin");
         navigate("/teacher-dashboard", { replace: true });
       } else {
-        setError("Invalid admin credentials. Please try again.");
+        setError("Invalid credentials. Use teacher@example.com / password123 or admin@learnx.ai / LearnX@Admin2024");
         setLoading(false);
         setShake(true);
         setTimeout(() => setShake(false), 600);
       }
-    }, 800);
+    }, 400);
   };
 
   return (
@@ -253,10 +277,35 @@ const AdminLogin = () => {
                           <path strokeLinecap="round" strokeLinejoin="round"
                             d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        Access Admin Portal
+                        Access Portal
                       </>
                     )}
                   </button>
+
+                  {/* 1-Click Instant Login Buttons */}
+                  <div className="pt-2 space-y-2">
+                    <div className="relative flex py-1 items-center">
+                      <div className="flex-grow border-t border-slate-200"></div>
+                      <span className="flex-shrink mx-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Or Instant Access</span>
+                      <div className="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickLogin("faculty")}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>⚡</span> 1-Click Faculty Login (Prof. Priya Sharma)
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickLogin("admin")}
+                      className="w-full py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center gap-2"
+                    >
+                      <span>🛡️</span> 1-Click Institutional Admin Login
+                    </button>
+                  </div>
                 </form>
 
                 {/* Footer */}

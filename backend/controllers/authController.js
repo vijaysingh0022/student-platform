@@ -105,3 +105,198 @@ export const getMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const generateToken = (user) => {
+  const secret = process.env.JWT_SECRET || "learnx_super_secret_jwt_key_2024_do_not_use_in_production";
+  return jwt.sign(
+    { id: user._id, role: user.role, email: user.email, name: user.name },
+    secret,
+    { expiresIn: "30d" }
+  );
+};
+
+// @desc Direct email/password login
+// @route POST /api/auth/login
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please provide email and password" });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    // Handle demo account login
+    if (!user && email.toLowerCase().trim() === "demo@example.com") {
+      user = await User.create({
+        name: "Demo Student",
+        email: "demo@example.com",
+        password: "password123",
+        course: "B.Tech CSE",
+        department: "Computer Science & Engineering",
+        batch: "2022-2026",
+        role: "student",
+      });
+    } else if (!user && (email.toLowerCase().trim() === "teacher@example.com" || email.toLowerCase().trim() === "faculty@learnx.ai")) {
+      user = await User.create({
+        name: "Prof. Priya Sharma",
+        email: email.toLowerCase().trim(),
+        password: "password123",
+        department: "Computer Science & Engineering",
+        role: "teacher",
+      });
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isDemoEmail =
+      email.toLowerCase().trim() === "demo@example.com" ||
+      email.toLowerCase().trim() === "teacher@example.com" ||
+      email.toLowerCase().trim() === "faculty@learnx.ai";
+
+    // Verify password if user has password set
+    if (user.password) {
+      const isMatch = await user.matchPassword(password);
+      if (!isMatch && !(isDemoEmail && password === "password123")) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      course: user.course,
+      department: user.department,
+      batch: user.batch,
+      rollNo: user.rollNo,
+      attendanceRate: user.attendanceRate,
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Login failed: " + error.message });
+  }
+};
+
+// @desc Direct email/password registration
+// @route POST /api/auth/register
+export const register = async (req, res) => {
+  try {
+    const { name, email, password, course, department, batch, rollNo } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Please provide name, email and password" });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists with this email" });
+    }
+
+    const user = await User.create({
+      name,
+      email: email.toLowerCase().trim(),
+      password,
+      course: course || "B.Tech CSE",
+      department: department || "Computer Science & Engineering",
+      batch: batch || "2022-2026",
+      rollNo: rollNo || "",
+      role: "student",
+    });
+
+    const token = generateToken(user);
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      course: user.course,
+      department: user.department,
+      batch: user.batch,
+      rollNo: user.rollNo,
+      attendanceRate: user.attendanceRate,
+      token,
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ message: "Registration failed: " + error.message });
+  }
+};
+
+// @desc One-click Demo Student Login
+// @route POST /api/auth/demo
+export const demoLogin = async (req, res) => {
+  try {
+    let user = await User.findOne({ email: "demo@example.com" });
+    if (!user) {
+      user = await User.create({
+        name: "Demo Student",
+        email: "demo@example.com",
+        password: "password123",
+        course: "B.Tech CSE",
+        department: "Computer Science & Engineering",
+        batch: "2022-2026",
+        role: "student",
+      });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      course: user.course,
+      department: user.department,
+      batch: user.batch,
+      rollNo: user.rollNo,
+      attendanceRate: user.attendanceRate,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Demo login failed: " + error.message });
+  }
+};
+
+// @desc Simulated Institutional Single Sign-On (Google/Microsoft/SAML)
+// @route POST /api/auth/sso
+export const ssoLogin = async (req, res) => {
+  try {
+    const { email, name, role = "student", provider = "google" } = req.body;
+    const targetEmail = (email || `${provider}.scholar@learnx.ai`).toLowerCase().trim();
+
+    let user = await User.findOne({ email: targetEmail });
+    if (!user) {
+      user = await User.create({
+        name: name || "Institutional Scholar",
+        email: targetEmail,
+        course: "B.Tech CSE",
+        department: "Computer Science & Engineering",
+        batch: "2022-2026",
+        role: role || "student",
+      });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      course: user.course,
+      department: user.department,
+      batch: user.batch,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "SSO login failed: " + error.message });
+  }
+};

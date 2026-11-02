@@ -4,11 +4,11 @@
  */
 
 const STORAGE_KEYS = {
-  OFFLINE_PACKS: "studentiq_offline_packs",
-  OFFLINE_QUESTIONS: "studentiq_offline_questions",
-  OFFLINE_QUEUE: "studentiq_offline_sync_queue",
-  LOW_DATA_MODE: "studentiq_low_data_mode",
-  OFFLINE_SIMULATOR: "studentiq_offline_simulator_active",
+  OFFLINE_PACKS: "learnx_offline_packs",
+  OFFLINE_QUESTIONS: "learnx_offline_questions",
+  OFFLINE_QUEUE: "learnx_offline_sync_queue",
+  LOW_DATA_MODE: "learnx_low_data_mode",
+  OFFLINE_SIMULATOR: "learnx_offline_simulator_active",
 };
 
 // Fallback embedded base questions for instant offline access even without initial download
@@ -103,7 +103,7 @@ export const getStorageUsageKB = () => {
   try {
     let totalBytes = 0;
     for (let key in localStorage) {
-      if (localStorage.hasOwnProperty(key) && key.startsWith("studentiq_")) {
+      if (localStorage.hasOwnProperty(key) && (key.startsWith("learnx_") || key.startsWith("studentiq_"))) {
         totalBytes += (localStorage[key].length + key.length) * 2;
       }
     }

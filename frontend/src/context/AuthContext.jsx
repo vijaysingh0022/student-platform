@@ -10,6 +10,14 @@ export const AuthProvider = ({ children }) => {
 
   // dbUser holds the MongoDB profile (role, course, etc.)
   const [dbUser, setDbUser] = useState(null);
+  const [localUser, setLocalUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("learnx_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [syncing, setSyncing] = useState(false);
 
   const syncWithBackend = useCallback(async () => {
@@ -44,7 +52,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, [clerkUserLoaded, isSignedIn, syncWithBackend]);
 
-  // Unified user object: immediate Clerk profile + MongoDB enrichment
+  const login = (userData) => {
+    if (userData) {
+      if (userData.token) {
+        localStorage.setItem("learnx_token", userData.token);
+      }
+      localStorage.setItem("learnx_user", JSON.stringify(userData));
+      setLocalUser(userData);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("learnx_user");
+    localStorage.removeItem("learnx_token");
+    setLocalUser(null);
+    setDbUser(null);
+  };
+
+  // Unified user object: immediate Clerk profile + MongoDB enrichment + Local fallback
   const user = isSignedIn
     ? {
         clerkId: clerkUser?.id,
@@ -64,15 +89,25 @@ export const AuthProvider = ({ children }) => {
         rollNo: dbUser?.rollNo || "CSE-2024",
         attendanceRate: dbUser?.attendanceRate || 88,
       }
+    : localUser
+    ? {
+        _id: localUser._id || "local-demo-id",
+        name: localUser.name || "Demo Student",
+        email: localUser.email || "demo@example.com",
+        role: localUser.role || "student",
+        course: localUser.course || "B.Tech CSE",
+        department: localUser.department || "Computer Science & Engineering",
+        batch: localUser.batch || "2022-2026",
+        rollNo: localUser.rollNo || "CSE-2201",
+        attendanceRate: localUser.attendanceRate || 85,
+      }
     : null;
 
   // Unblock UI immediately once Clerk user state has loaded
   const isLoading = !clerkUserLoaded;
 
-  const login = () => {};
-
   return (
-    <AuthContext.Provider value={{ user, login, isLoading, isSyncing: syncing }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading, isSyncing: syncing }}>
       {children}
     </AuthContext.Provider>
   );

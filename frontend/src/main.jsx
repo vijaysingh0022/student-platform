@@ -5,7 +5,10 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { AppStateProvider } from "./context/AppStateContext.jsx";
+import { registerServiceWorker } from "./serviceWorkerRegistration.js";
 import "./index.css";
+
+registerServiceWorker();
 
 const PUBLISHABLE_KEY =
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||

@@ -61,6 +61,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    height: auto;
+    min-height: 100%;
+    overflow-y: auto;
   }
 
   body {
@@ -68,8 +71,9 @@
     background-color: #f0f6fc;  /* soft blue white — same as landing page */
     min-height: 100vh;
     color: #0f172a;
-    overflow-x: hidden;
     line-height: 1.6;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -83,11 +87,11 @@
   a { text-decoration: none; color: inherit; }
   button { font-family: inherit; cursor: pointer; }
 
-  /* Scrollbar — sky blue themed */
-  ::-webkit-scrollbar        { width: 5px; }
-  ::-webkit-scrollbar-track  { background: #e0f2fe; }
-  ::-webkit-scrollbar-thumb  { background: rgba(2, 132, 199, 0.35); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(2, 132, 199, 0.6); }
+  /* Standard accessible scrollbar */
+  ::-webkit-scrollbar        { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track  { background: #f1f5f9; }
+  ::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
   /* Selection — sky blue */
   ::selection { background: rgba(2, 132, 199, 0.15); color: #0f172a; }
@@ -463,4 +467,15 @@
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--c-border);
   background: var(--c-surface);
+}
+
+/* Hide scrollbar across all browsers */
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }

@@ -45,6 +45,7 @@ import {
 } from "recharts";
 import { useAuth } from "../context/AuthContext.jsx";
 import { LearnXLogo } from "../components/LearnXLogo.jsx";
+import { TubesBackground } from "../components/TubesBackground.jsx";
 import * as THREE from "three";
 
 // Recharts radar data for Section 4 (AI Learning Profile)
@@ -1314,46 +1315,52 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── SECTION 8: ULTRA LUXURY FINAL CTA ──────────────────────────────── */}
-      <section className="py-20 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 text-white relative overflow-hidden">
-        {/* Glow orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+      {/* ─── SECTION 8: ULTRA LUXURY FINAL CTA WITH 3D INTERACTIVE TUBES ─────── */}
+      <section className="relative overflow-hidden border-t border-slate-800">
+        <TubesBackground
+          preset="brand"
+          enableClickInteraction={true}
+          showBadge={false}
+          showControls={false}
+          className="py-24 sm:py-32"
+          backgroundColor="bg-gradient-to-br from-[#030712] via-[#090d24] to-[#040612]"
+        >
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10 pointer-events-none">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-black uppercase tracking-wider backdrop-blur-md shadow-lg pointer-events-auto">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span>Join 15,000+ Future Tech Leaders</span>
+            </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-xs font-black uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <span>Join 15,000+ Future Tech Leaders</span>
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)] select-none">
+              Stop Guessing. Start Mastering. <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
+                Crack Your Dream Placements.
+              </span>
+            </h2>
+
+            <p className="text-slate-300 text-base sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed drop-shadow-md select-none">
+              Get instant access to 159+ LeetCode DSA problems, AI Mock Interviewer, 3D Visualizer, and your custom 7-day sprint. Move your cursor to interact with the 3D neon tubes!
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pointer-events-auto">
+              <Link
+                to={user ? "/dashboard" : "/sign-up"}
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-black text-base shadow-2xl shadow-blue-500/40 transition transform hover:-translate-y-0.5 flex items-center gap-2.5 backdrop-blur-sm"
+              >
+                <span>🚀 Start Learning Free Today</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+
+              <Link
+                to="/coding-lab"
+                className="px-6 py-4 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-700/80 text-slate-200 font-black text-base transition flex items-center gap-2 backdrop-blur-md shadow-lg"
+              >
+                <Code2 className="w-5 h-5 text-violet-400" />
+                <span>Explore 159+ Coding Lab</span>
+              </Link>
+            </div>
           </div>
-
-          <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Stop Guessing. Start Mastering. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-              Crack Your Dream Placements.
-            </span>
-          </h2>
-
-          <p className="text-slate-300 text-base sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-            Get instant access to 159+ LeetCode DSA problems, AI Mock Interviewer, 3D Visualizer, and your custom 7-day sprint.
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Link
-              to={user ? "/dashboard" : "/sign-up"}
-              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white font-black text-base shadow-2xl shadow-blue-500/40 transition transform hover:-translate-y-0.5 flex items-center gap-2.5"
-            >
-              <span>🚀 Start Learning Free Today</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-
-            <Link
-              to="/coding-lab"
-              className="px-6 py-4 rounded-2xl bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-slate-200 font-black text-base transition flex items-center gap-2"
-            >
-              <Code2 className="w-5 h-5 text-violet-400" />
-              <span>Explore 159+ Coding Lab</span>
-            </Link>
-          </div>
-        </div>
+        </TubesBackground>
       </section>
 
       {/* ─── FOOTER ───────────────────────────────────────────────────────── */}

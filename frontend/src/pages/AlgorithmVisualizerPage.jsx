@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import SortingVisualizer from "../components/visualizer/SortingVisualizer.jsx";
 import GraphVisualizer from "../components/visualizer/GraphVisualizer.jsx";
 import TreeVisualizer from "../components/visualizer/TreeVisualizer.jsx";
+import ProcessSchedulingVisualizer from "../components/visualizer/ProcessSchedulingVisualizer.jsx";
 import {
   generateBubbleSortSteps,
   generateSelectionSortSteps,
@@ -21,8 +22,11 @@ import {
   generateRedBlackSteps,
 } from "../utils/algorithmStepGenerators.js";
 
-// List of all 15 algorithms with metadata
+// List of all 16 algorithms with metadata
 const ALGORITHMS = [
+  // OS CPU Scheduling
+  { id: "round-robin", name: "Round Robin CPU Scheduling", category: "os", icon: "⏱️", difficulty: "Core OS" },
+
   // Sorting
   { id: "bubble", name: "Bubble Sort", category: "sorting", icon: "🫧", difficulty: "Beginner" },
   { id: "selection", name: "Selection Sort", category: "sorting", icon: "🎯", difficulty: "Beginner" },
@@ -217,13 +221,14 @@ const AlgorithmVisualizerPage = () => {
               Select Category:
             </span>
             <span className="text-xs font-bold text-slate-500">
-              Showing 15 Core CSE Algorithms
+              Showing 16 Core CSE Algorithms
             </span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             {[
-              { id: "all", label: "All Algorithms (15)" },
+              { id: "all", label: "All Algorithms (16)" },
+              { id: "os", label: "OS CPU Scheduling (1)" },
               { id: "sorting", label: "Sorting (5)" },
               { id: "searching", label: "Searching (1)" },
               { id: "graph", label: "Graph & Shortest Path (5)" },
@@ -276,8 +281,12 @@ const AlgorithmVisualizerPage = () => {
           </div>
         </div>
 
-        {/* CONTROLS TOOLBAR & PLAYBACK ENGINE */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {selectedAlgoId === "round-robin" ? (
+          <ProcessSchedulingVisualizer />
+        ) : (
+          <>
+            {/* CONTROLS TOOLBAR & PLAYBACK ENGINE */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* Algorithm Title & Step Progress */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -470,8 +479,10 @@ const AlgorithmVisualizerPage = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+            </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -6,18 +6,22 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
 });
 
-// Automatic request interceptor: retrieves token from Clerk if active in browser session
+// Automatic request interceptor: retrieves token from Clerk or localStorage
 api.interceptors.request.use(
   async (config) => {
     try {
+      let token = null;
       if (typeof window !== "undefined" && window.Clerk?.session) {
-        const token = await window.Clerk.session.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        token = await window.Clerk.session.getToken();
+      }
+      if (!token && typeof window !== "undefined") {
+        token = localStorage.getItem("learnx_token");
+      }
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (err) {
-      console.warn("Could not attach Clerk token to request:", err.message);
+      console.warn("Could not attach token to request:", err.message);
     }
     return config;
   },
@@ -155,6 +159,7 @@ export const submitTopicQuizAnswers = async (topicId, payload, config = {}) => {
 export const getStudentLearningDashboard = async (config = {}) => {
   return api.get("/learning/student/dashboard-summary", config);
 };
+export const getStudentLearningSummary = getStudentLearningDashboard;
 
 export const getFacultyLearningStats = async (config = {}) => {
   return api.get("/learning/faculty/analytics", config);
@@ -166,6 +171,51 @@ export const generateUnitRoadmap = async (unitId, payload = {}, config = {}) => 
 
 export const searchCurriculum = async (params = {}, config = {}) => {
   return api.get("/learning/search", { params, ...config });
+};
+
+// AI Learning Companion & Voice Teacher
+export const askLearningCompanion = async (payload, config = {}) => {
+  return api.post("/learning/companion", payload, config);
+};
+
+export const evaluateStudentAnswer = async (payload, config = {}) => {
+  return api.post("/learning/evaluate-answer", payload, config);
+};
+
+// Exam Answer & Revision Notes Generator
+export const generateExamAnswer = async (payload, config = {}) => {
+  return api.post("/learning/exam-answer", payload, config);
+};
+
+export const generateRevisionNotes = async (payload, config = {}) => {
+  return api.post("/learning/revision-notes", payload, config);
+};
+
+// Learning Bookmarks
+export const getLearningBookmarks = async (config = {}) => {
+  return api.get("/learning/bookmarks", config);
+};
+
+export const toggleLearningBookmark = async (payload, config = {}) => {
+  return api.post("/learning/bookmarks/toggle", payload, config);
+};
+
+// Topic Mastery
+export const updateTopicMastery = async (topicId, payload, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/mastery`, payload, config);
+};
+
+// Topic Notes (CRUD)
+export const getTopicNotes = async (topicId, config = {}) => {
+  return api.get(`/notes/${topicId}`, config);
+};
+
+export const createTopicNote = async (payload, config = {}) => {
+  return api.post("/notes", payload, config);
+};
+
+export const deleteTopicNote = async (noteId, config = {}) => {
+  return api.delete(`/notes/${noteId}`, config);
 };
 
 // Legacy SSO fallback
@@ -200,12 +250,36 @@ export const getCodingProblems = async (config = {}) => {
   return api.get("/coding/problems", config);
 };
 
+export const getCodingStats = async (config = {}) => {
+  return api.get("/coding/stats", config);
+};
+
 export const runCodingCode = async (data, config = {}) => {
   return api.post("/coding/run", data, config);
 };
 
 export const submitCodingCode = async (data, config = {}) => {
   return api.post("/coding/submit", data, config);
+};
+
+export const askCodingCopilot = async (data, config = {}) => {
+  return api.post("/coding/copilot", data, config);
+};
+
+export const getCodingSubmissions = async (config = {}) => {
+  return api.get("/coding/submissions", config);
+};
+
+export const getCodingBookmarks = async (config = {}) => {
+  return api.get("/coding/bookmarks", config);
+};
+
+export const toggleCodingBookmark = async (data, config = {}) => {
+  return api.post("/coding/bookmarks", data, config);
+};
+
+export const getCodingMistakes = async (config = {}) => {
+  return api.get("/coding/mistakes", config);
 };
 
 export const debugCodingCode = async (data, config = {}) => {
@@ -217,8 +291,17 @@ export const generateCodingTestCases = async (data, config = {}) => {
 };
 
 // ─── AI Mock Interview ────────────────────────────────────────────────────────
-export const startMockInterview = async (role, config = {}) => {
-  return api.post("/interview/start", { role }, config);
+export const getMockInterviewRecommendations = async (config = {}) => {
+  return api.get("/interview/recommendations", config);
+};
+
+export const startMockInterview = async (payload, config = {}) => {
+  const body = typeof payload === "string" ? { role: payload } : payload;
+  return api.post("/interview/start", body, config);
+};
+
+export const getInterviewQuestionHint = async (id, data, config = {}) => {
+  return api.post(`/interview/${id}/hint`, data, config);
 };
 
 export const submitInterviewAnswer = async (id, data, config = {}) => {
@@ -231,6 +314,14 @@ export const submitInterviewFollowUp = async (id, data, config = {}) => {
 
 export const completeMockInterview = async (id, config = {}) => {
   return api.post(`/interview/${id}/complete`, {}, config);
+};
+
+export const sendCoachChatMessage = async (id, message, config = {}) => {
+  return api.post(`/interview/${id}/coach-chat`, { message }, config);
+};
+
+export const deleteMockInterview = async (id, config = {}) => {
+  return api.delete(`/interview/${id}`, config);
 };
 
 export const getMockInterviewHistory = async (config = {}) => {
@@ -258,4 +349,82 @@ export const generateAIExamQuestions = async (data, config = {}) => {
   return api.post("/exam-prep/generate-ai", data, config);
 };
 
+// ─── AI Exam Copilot ──────────────────────────────────────────────────────────
+export const askExamCopilot = async (data, config = {}) => {
+  return api.post("/exam-prep/copilot/ask", data, config);
+};
+
+export const getMistakeBook = async (config = {}) => {
+  return api.get("/exam-prep/copilot/mistake-book", config);
+};
+
+export const toggleMistakeBookItem = async (data, config = {}) => {
+  return api.post("/exam-prep/copilot/mistake-book", data, config);
+};
+
+export const evaluateSimilarQuestion = async (data, config = {}) => {
+  return api.post("/exam-prep/copilot/evaluate-similar", data, config);
+};
+
+// ─── AI Career Twin ───────────────────────────────────────────────────────────
+export const getCareerTwin = async (config = {}) => {
+  return api.get("/career-twin", config);
+};
+
+export const refreshCareerTwin = async (data = {}, config = {}) => {
+  return api.post("/career-twin/refresh", data, config);
+};
+
+export const updateCareerTwinSprintDay = async (day, status, config = {}) => {
+  return api.patch(`/career-twin/sprint/${day}`, { status }, config);
+};
+
+export const updateCareerTwinRole = async (targetRole, config = {}) => {
+  return api.patch("/career-twin/target-role", { targetRole }, config);
+};
+
+export const sendCareerTwinChatMessage = async (message, config = {}) => {
+  return api.post("/career-twin/coach-chat", { message }, config);
+};
+
+export const simulateSkillImprovement = async (skill, targetScore, config = {}) => {
+  return api.get("/career-twin/simulate", {
+    params: { skill, targetScore },
+    ...config,
+  });
+};
+
+// ─── Rewards & Challenges Engine ─────────────────────────────────────────────
+export const getRewardsOverview = async (config = {}) => {
+  return api.get("/rewards", config);
+};
+
+export const getRewardHistory = async (type = "All", config = {}) => {
+  return api.get("/rewards/history", {
+    params: { type },
+    ...config,
+  });
+};
+
+export const getBadges = async (config = {}) => {
+  return api.get("/rewards/badges", config);
+};
+
+export const getChallenges = async (config = {}) => {
+  return api.get("/rewards/challenges", config);
+};
+
+export const startChallenge = async (challengeId, config = {}) => {
+  return api.post(`/rewards/challenges/${challengeId}/start`, {}, config);
+};
+
+export const recordLearningActivityReward = async (activityData, config = {}) => {
+  return api.post("/rewards/activity", activityData, config);
+};
+
+export const updateRewardSettings = async (settings, config = {}) => {
+  return api.patch("/rewards/settings", { settings }, config);
+};
+
 export default api;
+

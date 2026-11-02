@@ -1,146 +1,290 @@
-# LearnX — Student Growth & Career Intelligence Platform
+# LearnX — AI-Powered Student Growth & Career Intelligence Platform
 
-> **"Learn. Practice. Grow. Succeed."**
-> *More Than Learning, A Brighter You.*
-
-LearnX is an AI-powered diagnostic, assessment, and career acceleration platform engineered for Computer Science & Engineering (CSE) students, faculty, and academic institutions. It bridges the gap between curriculum exams and top-tier tech placements through continuous skill gap analysis, personalized AI roadmaps, 24/7 academic tutoring, and resilient low-bandwidth offline learning.
+> **"Learn. Practice. Grow. Succeed."**  
+> *A Production-Grade Personal AI Learning, Assessment & Career Intelligence Ecosystem for Computer Science Students.*
 
 ---
 
-## 🚀 Instant 1-Click Live Launch (No Setup Required)
+## 📌 Architecture & Learning Feedback Loop
 
-Collaborators and friends can launch and test the full **LearnX** platform directly in their web browser with **1 click** via GitHub Codespaces:
+LearnX transforms traditional engineering education into an active, data-driven mastery cycle:
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=vijaysingh0022/student-platform)
-
-> **Direct Launch Link:**
-> 👉 **[Click here to open LearnX in Cloud Browser](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=vijaysingh0022/student-platform)**
->
-> *GitHub Codespaces spins up a full cloud environment, installs dependencies, starts both frontend & backend servers, and opens the running application in your browser automatically — with all 92 placement questions seeded and demo accounts ready.*
-
----
-
-## 🌍 Live Deployment (Vercel)
-
-The platform is production-deployed on **Vercel** with a serverless Node.js + Express backend and a Vite/React frontend served as a CDN-optimized static site.
-
-> 🔗 **[View Live on Vercel →](https://student-platform-vijaysingh0022.vercel.app)** *(deploy in progress — link active after first push)*
-
-**Architecture on Vercel:**
-- **Frontend** — React SPA built by Vite, served from Vercel's global CDN edge network
-- **Backend API** — Express.js deployed as a Vercel Serverless Function (`/api/*`)
-- **Database** — MongoDB Atlas (cloud-hosted, persistent data across all requests)
-- **AI** — OpenRouter API key wired to `openai/gpt-4o-mini` and `google/gemini-2.0-flash-001`
+```mermaid
+graph TD
+    Student[👤 Student] --> Diagnostic[📝 Dynamic Assessment & Test Arena]
+    Diagnostic --> SkillProfile[📊 Knowledge & Skill Graph]
+    SkillProfile --> Weakness[⚠️ Automated Deficit & Gap Detection]
+    Weakness --> Reco[🎯 Next Best Action Recommendation]
+    Reco --> Learn[📚 Structured Topic Curriculum & Visualizers]
+    Learn --> CodingLab[💻 Practice Coding Lab & Test Cases]
+    CodingLab --> MockInterview[👔 AI Role-Playing Technical Interview]
+    MockInterview --> Analytics[📈 Performance & Accuracy Analytics]
+    Analytics --> UpdateSkill[🔄 Continuous Mastery Recalculation]
+    UpdateSkill --> UpdateRoadmap[🗺️ Adaptive 7-Day AI Roadmap]
+    UpdateRoadmap --> UpdateReadiness[💼 ML Placement Prediction & Career Twin]
+    UpdateReadiness --> Reco
+```
 
 ---
 
-## 🌟 Core Features
+## 🌟 Comprehensive Platform Modules & Features
 
-### 1. 🎯 CSE Placement Diagnostic Assessment Arena
-- **8 Core Placement Tracks** (total 92 calibrated MCQs):
-  - ⚡ **DSA**: Data Structures & Algorithms
-  - 🗄️ **DBMS**: Database Systems & SQL
-  - 💻 **OS**: Operating Systems
-  - 🌐 **CN**: Computer Networks
-  - 🧩 **OOPS**: OOPs & SOLID Principles
-  - 🏗️ **System Design**: Architecture & Scalability
-  - 🧠 **Aptitude**: Quantitative Aptitude & Reasoning
-  - 🚀 **Web Dev**: Web Development & Cloud/DevOps
-- Real-time client-side and server-side evaluation
-- Unanswered questions warning & auto-scroll protection
-- Instant topic-by-topic accuracy breakdown & weak topic detection (<60% threshold)
-
-### 2. 🤖 24/7 AI Academic Tutor (Powered by OpenRouter)
-- Specialized pedagogical guidance across all 8 CSE placement subjects
-- Markdown explanations with TL;DR overview, step-by-step logic, code blocks (C++, Python, Java, SQL, JS), and exam pitfalls
-- Quick action buttons: **"💡 Simpler Analogy"**, **"💻 Code Example"**, and **"❓ Quiz Me"**
-- Backed by `openai/gpt-4o-mini` via OpenRouter API
-
-### 3. 🗺️ Personalized 7-Day AI Remediation Roadmap
-- Auto-generated after assessment, targeting specific weak topics
-- Day-by-day actionable tasks, pro tips, time allocation, and interactive checklist
-
-### 4. 📡 Offline & Low-Bandwidth Learning Hub
-- **Client-Side Storage**: Offline study packs & formula cheatsheets stored locally
-- **Offline Quiz Arena**: Complete diagnostic tests running 100% in-browser with zero latency
-- **Auto-Sync Queue**: Local test records queued in `localStorage` and auto-synced when connectivity resumes
-- **Low Data Mode & Offline Simulator**: Toggleable bandwidth controls for low-connectivity regions
-
-### 5. 🎓 Teacher & Institution Dashboard
-- Class performance overview, average scores, and pass rates
-- Departmental weak topics aggregation across batches
-- At-risk student alert system based on performance velocity
-- Student-wise progress and exportable institutional reports
-
-### 6. 💼 ML Placement Readiness & Competency Engine
-- **Predictive Placement Readiness Score (0–100)** evaluated via a trained supervised Scikit-Learn model (`v1.0`)
-- **14-Feature Extraction Pipeline** spanning 8 core CSE domains (DSA, DBMS, OS, CN, OOPs, System Design, Aptitude, Web Dev), attempt volume, score velocity, consistency index, and weak topic count
-- **Explainable Attribution** detailing specific positive competencies and critical deficit deltas
-- **Ethical & Transparent**: Quantifies student mastery and learning readiness; explicitly documented as not an employment guarantee
-- **Connected Pipeline**: Feeds diagnosed strengths and weak areas directly into the AI Tutor and personalized 7-Day Roadmap generators
-
-### 7. 🔒 Security & Governance
-- **RBAC** — Role-based access control (student / teacher / admin)
-- **SSO** — Single Sign-On via Google Workspace, Microsoft 365 & Institutional SAML
-- **Audit Logs** — Every login, registration, and role-switch is recorded immutably
-- **Enterprise Security Middleware** — HSTS, CSP, rate limiting (150 req/min), XSS & NoSQL injection protection
-- **Data Privacy** — GDPR-compliant data export, consent management, and data purge
-
-### 8. 🧠 AI Quiz & MCQ Generator
-- Upload study material (PDF/DOCX) and auto-generate multiple-choice quizzes
-- Instant AI-powered quiz evaluation and scoring
+### 1. 🏠 Intelligent Student Command Center (`/dashboard`)
+- **Real-time KPI Tracking**: Live calculation of Overall Progress, Placement Probability, Active Learning Streak, and Weekly Learning Velocity.
+- **Next Best Action Card**: Contextual recommendation pinpointing the student's highest-priority weak topic (e.g., *DBMS Normalization at 38% accuracy vs. 70% placement target*) with direct 15-minute practice and AI tutor shortcuts.
+- **Daily Goals & Habit Tracker**: Locally persisted interactive checklist synchronized with active semester coursework.
+- **Subject Domain Snapshot**: Clean progress and accuracy gauges across all major CSE tracks.
+- **Quick-Access Capabilities**: Direct launchpads for Assessments, Coding Lab, Mock Interviews, AI Tutor, and Career Twin.
 
 ---
 
-## 🛠️ Technology Stack
-
-| Layer | Technologies |
-|---|---|
-| **Frontend** | React 18, Vite 5, Tailwind CSS, Recharts, React Router DOM |
-| **Backend** | Node.js, Express.js, JWT Authentication, CORS, Dotenv, Mongoose |
-| **Machine Learning** | Python 3, Scikit-Learn 1.9, Gradient Boosting Regressor, Ridge Regression, Pandas, NumPy, Joblib |
-| **Database** | MongoDB Atlas (persistent cloud DB) **+** Auto-embedded fallback for local dev |
-| **AI Integration** | OpenRouter API (`openai/gpt-4o-mini`, `google/gemini-2.0-flash-001`) |
-| **Security** | RBAC, SSO (SAML/OAuth2), Audit Logs, Rate Limiting (150 req/min), CSP, HSTS |
-| **Deployment** | Render / Vercel (Serverless Functions + CDN Edge) |
-| **DevOps** | GitHub Codespaces, Concurrently, Nodemon, GitHub Actions ready |
+### 2. 📝 Production Diagnostic & Assessment Platform (`/test` / `/assessments`)
+- **Large Curated Question Bank**: **921+ authentic, verified CSE assessment questions** stored in MongoDB Atlas across 9 core technical subjects (no placeholder or duplicate data).
+- **Strict Subject & Topic Isolation**:
+  - Independent topic selection (e.g. *DSA $\rightarrow$ Binary Search* loads strictly Binary Search questions).
+  - Immediate state reset and request cancellation (`activeRequestIdRef`) preventing cross-subject data contamination or stale response overwrites.
+- **Test Configuration Modal**:
+  - Configurable question counts: `10`, `20`, `30`, `50`, `75`, `100`, or `Custom`.
+  - Hard limit validation: Prevents requesting more questions than available in the database, with informative user alerts.
+  - Difficulty selection: *All Difficulties*, *Easy*, *Medium*, *Hard*.
+- **Resilient Active Test Runner**:
+  - **Zero Answer Loss**: Answers remain saved when navigating using `← Previous`, `Save & Continue →`, or the Question Palette.
+  - **Session Persistence**: Test progress (answers, current index, marked flags, elapsed time) is saved in `localStorage` and seamlessly survives browser refreshes.
+  - **Interactive Question Palette**: 4 distinct visual states: *Answered* (emerald), *Current* (indigo active ring), *Marked for Review* (amber flag 🚩), and *Not Visited* (slate).
+  - **Live Auto-Submitting Timer**: Authoritatively submits when time expires.
+- **Authoritative Submission & LearnX Diagnostic Report**:
+  - Evaluates scores and accuracy against actual test questions on the backend.
+  - Displays Score %, Accuracy %, Attempted, Correct, Wrong, Skipped, and Time Used.
+  - Topic Mastery Breakdown with dynamic progress bars.
+  - AI-generated Diagnostic Summary and recommended revision tasks.
+  - Expandable **Solution & Explanation Review** for every question.
+  - Historical Assessment Attempts log modal.
 
 ---
 
-## 📁 Repository Structure
+### 3. 📚 Hierarchical Curriculum & Topic Learning Engine (`/curriculum`, `/learn`)
+- **Hierarchical Knowledge Base**: Structured as `Subject → Unit → Chapter → Topic` matching university standards and competitive exams.
+- **6-Part Structured Content Delivery**:
+  1. *📌 TL;DR*: Quick conceptual snapshot.
+  2. *💡 Simple Explanation*: Clear breakdown with English/Hinglish toggle for intuitive understanding.
+  3. *🌍 Real-World Analogy*: Tangible systems comparison (e.g., database indexing vs. library catalog).
+  4. *🪜 Step-by-Step Walkthrough*: Code snippets and algorithmic traces.
+  5. *⚠️ Common Pitfalls & Edge Cases*: Real interview mistakes to avoid.
+  6. *❓ Quick Check MCQ*: Instant retention validation.
+- **Rich Learning Tools**: Interactive note-taking, topic bookmarking, mark-as-completed progress tracking, and direct transition to practice.
+
+---
+
+### 4. 🔬 Interactive Computer Science Visualizers (`/visualizer`)
+Interactive step-by-step visualizers to develop algorithmic intuition:
+- **Binary Search Tree (BST) Visualizer**: Real-time animated node insertion, search path highlighting, deletion, and in-order/pre-order traversals.
+- **Stack & Queue Visualizer**: Visual LIFO/FIFO representations with animated push, pop, enqueue, dequeue, and overflow/underflow boundary checks.
+- **CPU Process Scheduling Visualizer**: Interactive Gantt chart generator simulating *First Come First Served (FCFS)*, *Shortest Job First (SJF)*, *Round Robin (RR)*, and *Shortest Remaining Time First (SRTF)* with turnaround and waiting time tables.
+- **DBMS Normalization & Dependency Visualizer**: Interactive functional dependency mapping and step-by-step decomposition into 1NF, 2NF, 3NF, and BCNF.
+
+---
+
+### 5. 💻 Interactive Coding Lab (`/coding`)
+- **In-Browser Code Runner**: Multi-language support (Python, JavaScript, C++, Java).
+- **Curated Problem Bank**: Graded by difficulty (Easy, Medium, Hard) and tag (Arrays, Dynamic Programming, Strings, Trees).
+- **Automated Test Suite**: Evaluates against hidden and public test cases with execution time and memory measurement.
+- **Code Assistant**: Integrated AI code review, hints, complexity analysis ($O(N)$ time / space bounds), and submission history.
+
+---
+
+### 6. 🤖 24/7 Context-Aware AI Tutor & Voice Companion (`/tutor`)
+- **Curriculum & Weakness Context**: Automatically injected with the student's current active topic and detected weak areas.
+- **One-Click Query Prompts**:
+  - *Explain Simply*
+  - *Show Code Example*
+  - *Give Real-Life Analogy*
+  - *Quiz Me*
+  - *Common Interview Mistakes*
+  - *Exam-Style Answer*
+- **Speech Synthesis / Voice Companion**: Listen to concept summaries spoken aloud with voice controls for auditory learners.
+
+---
+
+### 7. 👔 AI Mock Interview Arena (`/interview`)
+- **Role-Based Simulations**: Frontend Engineer, Backend Systems, Fullstack Developer, and SDE-1 tracks.
+- **Interactive Technical & Behavioral Dialogue**: Real-time voice and text questions posed by an AI technical interviewer.
+- **Rubric-Based Evaluation**: Automated feedback scoring technical accuracy, communication clarity, problem-solving structure, and areas for improvement.
+
+---
+
+### 8. 🎯 AI Career Twin & Placement Intelligence (`/career`, `/career-twin`)
+- **Digital Career Avatar**: Models the student's skills against real engineering profiles at companies like Google, Amazon, Microsoft, TCS, Infosys, and startups.
+- **Gap & Deficit Matrix**: Identifies missing technical competencies, frameworks, and system design concepts required for target roles.
+- **Resume Keyword Optimizer**: Highlights missing keywords in student projects to clear ATS screening.
+- **Salary & Readiness Forecast**: Predicts interview clearing probability based on continuous test and coding performance.
+
+---
+
+### 9. 🗺️ Personalized 7-Day AI Learning Roadmap (`/roadmap`)
+- **Adaptive Remediation**: Generates a tailored 7-day study plan dynamically targeting the student's specific weak topics.
+- **Daily Milestone Schedule**: Breaks complex subjects into manageable daily goals (30-60 min/day) combining concept review, coding practice, and self-checks.
+- **Progress Sync**: Completing roadmap topics automatically updates the global skill profile.
+
+---
+
+### 10. 📊 Interactive Skill Graph & Knowledge Topology (`/skill-graph`)
+- **Visual Concept Graph**: Interactive network graph showing dependencies and prerequisites between computer science topics.
+- **Mastery Heatmap**: Nodes dynamically colored by user mastery:
+  - 🟢 **Mastered / Strong** ($\ge 70\%$)
+  - 🔵 **Developing** ($40\% - 69\%$)
+  - 🟡 **Weak / At Risk** ($< 40\%$)
+  - ⚪ **Unexplored**
+- **Prerequisite Guidance**: Click any node to view dependent concepts, mastery level, and recommended practice.
+
+---
+
+### 11. 🏆 Gamification, Learning Streaks & Rewards Hub (`/rewards`)
+- **Experience Points (XP)**: Earn XP for completing topics, passing assessments, solving coding problems, and taking mock interviews.
+- **Daily Learning Streaks**: Encourages consistency with streak counters and fire milestones.
+- **Achievement Badges**: Unlock badges like *DSA Ninja*, *Bug Hunter*, *SQL Maestro*, *Consistent Learner*, and *Speed Demon*.
+- **Rewards Store**: Redeem accumulated points for custom platform perks, certificates, and badges.
+
+---
+
+### 12. 📱 Offline-First Learning & PWA Sync (`/offline`)
+- **Progressive Web App (PWA)**: Installable on desktop and mobile devices with Service Worker asset caching.
+- **IndexedDB Local Storage**: Save study notes, read cached curriculum chapters, and attempt practice quizzes offline without internet connectivity.
+- **Background Synchronization**: Automatically syncs completed offline quizzes and notes back to the cloud when internet connection is restored.
+
+---
+
+### 13. 🎓 Faculty & Institutional Governance Dashboard (`/teacher`)
+- **Batch & Class Health Overview**: Aggregate analytics across CSE student cohorts.
+- **At-Risk Student Alerts**: Automated early warning flags for students falling behind in core curriculum subjects or attendance.
+- **Class Weak Topic Detection**: Pinpoints topics where class-wide assessment averages drop below 50% to inform lecture adjustments.
+- **Audit Logging & Security**: Complete immutable audit trail for assessments, submissions, and logins.
+
+---
+
+## 📊 Question Bank & Subject Coverage
+
+The platform features **921 real, hand-verified assessment questions** with zero placeholder duplication:
+
+| Subject Domain | Canonical ID | Questions in DB | Core Topics Included |
+| :--- | :---: | :---: | :--- |
+| **Data Structures & Algorithms** | `DSA` | **105** | Arrays, Linked Lists, Stacks, Queues, Binary Search, Sorting, Recursion, Trees, Graphs, Dynamic Programming, Greedy, Hashing, Heaps, Tries, Backtracking |
+| **Database Management Systems** | `DBMS` | **104** | ER Model, Relational Model, Keys, Functional Dependencies, Normalization (1NF-BCNF), SQL Queries, Joins, Transactions, Concurrency, Indexing, B+ Trees, ACID, Recovery |
+| **Operating Systems** | `OS` | **110** | Processes, Threads, CPU Scheduling (FCFS/SJF/RR), Deadlocks, Memory Management, Paging, Segmentation, Virtual Memory, File Systems, Synchronization |
+| **Computer Networks** | `CN` | **110** | OSI 7 Layers, TCP/IP, IP Addressing, Subnetting, Routing Protocols, TCP Handshake, UDP, DNS, HTTP/HTTPS, Network Security & TLS |
+| **Object Oriented Programming** | `OOP` | **108** | Classes, Objects, Inheritance, Polymorphism, Encapsulation, Abstraction, Interfaces, SOLID Principles, Design Patterns |
+| **System Design & Architecture** | `SYSTEM_DESIGN` | **90** | Scalability, Load Balancing, Caching (Redis/Memcached), Database Sharding, Message Queues (Kafka/RabbitMQ), Microservices, CAP Theorem, CDN |
+| **Web Development** | `WEB_DEV` | **86** | HTML5 Semantics, CSS3 Flex/Grid, JavaScript Core & ES6+, DOM, React 18 Hooks/Lifecycle, Node.js Event Loop, REST APIs, Web Security (XSS/CSRF/CORS), Core Web Vitals |
+| **Aptitude & Logical Reasoning** | `APTITUDE` | **104** | Quantitative Aptitude, Percentages & Profit/Loss, Time & Work, Speed Distance Time, Permutations & Probability, Series, Blood Relations, Verbal Ability, Data Interpretation |
+| **Programming Core & Systems** | `PROGRAMMING` | **104** | C/C++ Pointers & Memory Management, Java Core & JVM Architecture, Python Internals & GIL, Bit Manipulation, Concurrency & Recursion |
+| **Total Available Bank** | — | **921** | **All Unique, Verified Multiple-Choice Questions** |
+
+---
+
+## 🛠️ Complete Technology Stack
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                               FRONTEND                                 │
+│  React 18  ·  Vite 5  ·  Tailwind CSS  ·  Framer Motion  ·  Recharts   │
+│  Lucide Icons  ·  React Router DOM v6  ·  Service Worker PWA           │
+├────────────────────────────────────────────────────────────────────────┤
+│                                BACKEND                                 │
+│  Node.js (LTS)  ·  Express.js  ·  Mongoose ODM  ·  JWT Authentication  │
+│  Helmet Security Headers  ·  Rate Limiting  ·  XSS Sanitization        │
+├────────────────────────────────────────────────────────────────────────┤
+│                           MACHINE LEARNING                             │
+│  Python 3  ·  Scikit-Learn  ·  Gradient Boosting  ·  Ridge Regression  │
+│  Joblib Serialization  ·  Pandas & NumPy Pipeline                      │
+├────────────────────────────────────────────────────────────────────────┤
+│                           DATABASE & STORAGE                           │
+│  MongoDB Atlas (Cloud Cluster)  ·  IndexedDB (Browser Offline Store)   │
+├────────────────────────────────────────────────────────────────────────┤
+│                             AI INTEGRATION                             │
+│  OpenRouter / OpenAI APIs  ·  GPT-4o-Mini  ·  Gemini-2.5-Flash         │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Repository Directory Structure
 
 ```text
 student-platform/
-├── docs/
-│   └── PLACEMENT_READINESS_VIVA.md # Comprehensive 18-question Viva & technical defense guide
-├── ml/
-│   ├── data/                    # Dataset generator & synthetic prototype data (seed=42)
-│   ├── models/                  # Serialized ML models & weights (.joblib, model_weights.json)
-│   ├── scripts/                 # Training pipeline, cross-validation & CLI prediction runner
-│   ├── reports/                 # Genuine empirical evaluation metrics (model_metrics.json)
-│   └── README.md                # ML architecture, training guide & ethics disclaimer
 ├── backend/
 │   ├── config/
-│   │   ├── db.js                # MongoDB Atlas + embedded fallback
-│   │   └── ai.js                # OpenRouter/OpenAI client factory
-│   ├── controllers/             # Auth, Prediction, Career, Tutor, Roadmap, Coding, Quiz…
-│   ├── middleware/              # JWT auth, RBAC, security headers, rate limiter
-│   ├── models/                  # User, PlacementPrediction, TestResult, Curriculum…
-│   ├── routes/                  # Express REST API endpoints (/api/career/readiness, etc.)
-│   ├── services/                # featureExtractor.js, mlReadinessService.js
-│   ├── seed/                    # 92 calibrated placement MCQs (all 8 tracks)
-│   ├── .env                     # Environment config (not committed)
-│   └── server.js                # Express app entry point
+│   │   ├── db.js                     # MongoDB connection with autoSeed integration
+│   │   └── ai.js                     # AI Client factory (OpenRouter/OpenAI)
+│   ├── controllers/
+│   │   ├── testController.js         # Assessment engine, dynamic counts, scoring
+│   │   ├── learningController.js     # Curriculum, units, chapters & topics
+│   │   ├── tutorController.js        # 6-part AI Tutor logic & prompt engineering
+│   │   ├── codingController.js       # Code execution & test case evaluation
+│   │   ├── interviewController.js    # AI mock interview simulation & rubric
+│   │   ├── careerTwinController.js   # Digital career twin & dream company matrix
+│   │   ├── skillGraphController.js   # Knowledge topology & mastery calculation
+│   │   ├── rewardController.js       # XP, streaks, badges & reward ledger
+│   │   ├── examPrepController.js     # University exam copilot & pyq bank
+│   │   ├── predictionController.js   # Placement readiness prediction
+│   │   ├── institutionController.js  # Faculty & at-risk student monitoring
+│   │   └── authController.js         # JWT auth, profile & role-based access
+│   ├── middleware/
+│   │   ├── auth.js                   # JWT authentication guard
+│   │   └── securityMiddleware.js     # Rate limiting, CSP, XSS sanitization
+│   ├── models/
+│   │   ├── Question.js               # Assessment questions schema & indexes
+│   │   ├── TestResult.js             # Detailed attempt records & breakdown
+│   │   ├── Curriculum.js             # Subject, Unit, Chapter, Topic schemas
+│   │   ├── User.js                   # Student, teacher & admin accounts
+│   │   ├── MockInterview.js          # Interview transcripts & AI scores
+│   │   ├── CareerTwin.js             # Career readiness & skills gap snapshot
+│   │   ├── RewardTransaction.js      # XP points audit trail
+│   │   └── UserBadge.js              # Unlocked student achievement badges
+│   ├── routes/                       # Express REST routers (/api/tests, /api/auth, etc.)
+│   ├── seed/
+│   │   ├── questions/                # 9 modular subject question banks (921 Qs)
+│   │   │   ├── dsa.js, dbms.js, os.js, cn.js, oop.js
+│   │   │   ├── systemDesign.js, webDev.js, aptitude.js, programming.js
+│   │   │   └── index.js
+│   │   └── seedComprehensiveQuestions.js # Full database population script
+│   └── server.js                     # Main Express server entry point
 ├── frontend/
+│   ├── public/
+│   │   ├── sw.js                     # Progressive Web App Service Worker
+│   │   └── assets/                   # Static logos, avatars, icons
 │   ├── src/
-│   │   ├── components/          # Sidebar, TopHeader, AppLayout, GlobalSearchModal…
-│   │   ├── pages/               # Dashboard, PlacementPrediction, CodingLabPage, Tutor…
-│   │   ├── services/            # Axios API client
-│   │   └── App.jsx
-│   └── vite.config.js
-├── vercel.json                  # Vercel deployment config
-├── render.yaml                  # Render deployment config
-└── README.md
+│   │   ├── components/
+│   │   │   ├── visualizer/           # BST, Stack/Queue, Scheduling, Normalization
+│   │   │   ├── voice/                # Audio companion & speech synthesis
+│   │   │   ├── Sidebar.jsx           # Global 10-module navigation sidebar
+│   │   │   └── TopHeader.jsx         # User status, notifications & quick search
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx       # User authentication state
+│   │   │   ├── AppStateContext.jsx   # Global mastery, XP & prediction sync
+│   │   │   └── OfflineContext.jsx    # Online/offline network status provider
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx         # Main student command center
+│   │   │   ├── TestPage.jsx          # Diagnostic testing, config modal & test runner
+│   │   │   ├── TopicLearningPage.jsx # Structured concept learning with Hinglish
+│   │   │   ├── CodingLabPage.jsx     # In-browser multi-language coding editor
+│   │   │   ├── Tutor.jsx             # 24/7 6-part AI Tutor interface
+│   │   │   ├── MockInterviewPage.jsx # AI-powered technical mock interview
+│   │   │   ├── CareerTwinPage.jsx    # Career Twin & dream company gap matrix
+│   │   │   ├── SkillGraphPage.jsx    # Interactive concept dependency graph
+│   │   │   ├── RewardsPage.jsx       # Gamified achievements, streaks & XP store
+│   │   │   ├── ExamPrepPage.jsx      # University exam cheat sheets & PYQs
+│   │   │   ├── OfflineLearning.jsx   # Offline note-taking & cached lessons
+│   │   │   └── TeacherDashboard.jsx  # Faculty analytics & student intervention
+│   │   ├── services/
+│   │   │   ├── api.js                # Axios HTTP client with interceptors
+│   │   │   └── indexedDBService.js   # Browser offline persistence engine
+│   │   └── App.jsx                   # React Router route registry
+│   └── vite.config.js                # Vite build and proxy configuration
+├── ml/                               # Supervised ML Placement Readiness Engine
+│   ├── data/                         # Synthetic prototype dataset generator
+│   ├── models/                       # Serialized Gradient Boosting & Ridge weights
+│   └── scripts/                      # Training, cross-validation & prediction scripts
+├── vercel.json                       # Vercel serverless deployment routing
+└── README.md                         # Project documentation
 ```
 
 ---
@@ -151,33 +295,34 @@ student-platform/
 - **Node.js** v18+ or v20+
 - **npm** v9+
 - **Git**
-
-> **✅ No database setup needed** — the app automatically starts an embedded in-process MongoDB and seeds all demo data on first boot. Just clone and run.
+- **MongoDB Atlas Connection** (or local MongoDB on port 27017)
 
 ---
 
-### ⚡ Quick Start (3 Commands)
+### ⚡ Quick Start in 3 Steps
 
 ```bash
 # 1. Clone the repository
 git clone https://github.com/vijaysingh0022/student-platform.git
 cd student-platform
 
-# 2. Install all dependencies (backend + frontend)
+# 2. Install all dependencies (Backend + Frontend)
 npm run setup
 
-# 3. Start both servers with one command
+# 3. Seed Comprehensive Question Bank (921 Questions)
+node backend/seed/seedComprehensiveQuestions.js
+
+# 4. Start both Backend & Frontend in parallel
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** in your browser.
-
-- Frontend → `http://localhost:3000`
-- Backend API → `http://localhost:5001`
+The application is now live at:
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Backend API**: [http://localhost:5001](http://localhost:5001)
 
 ---
 
-### Or Run Separately in 2 Terminals
+### Running in Separate Terminals
 
 **Terminal 1 — Backend:**
 ```bash
@@ -197,109 +342,71 @@ npm run dev
 
 ## 🔑 Default Demo Accounts
 
-Upon initial server boot, the database is **auto-seeded** with:
+Upon initial startup, the platform is seeded with pre-configured accounts:
 
-| Role | Email | Password | Access |
-|---|---|---|---|
-| **Student** | `demo@example.com` | `password123` | Dashboard, Tests, AI Tutor, Offline Hub, Career Engine |
-| **Faculty** | `faculty@example.com` | `password123` | Faculty Portal, Institutional Analytics, Student Reports |
+| Role | Email | Password | Access Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Student** | `demo@example.com` | `password123` | Dashboard, Assessments, Coding Lab, AI Tutor, Career Twin, Rewards, Offline Hub |
+| **Faculty / Admin** | `teacher@example.com` | `password123` | Cohort Analytics, Weak Topic Analysis, At-Risk Student Flags, Class Reports |
 
-> No sign-up required for testing — just use the credentials above on the Login page.
+> 💡 **Instant Testing**: You can also click the **"⚡ 1-Click Instant Demo Student Login"** button on the Login page for immediate zero-credential access.
 
 ---
 
 ## ⚙️ Environment Variables
 
-### Local Development (`backend/.env`)
-
-The `backend/.env` file ships with safe working defaults for local dev. You can optionally customize:
+Create or customize `.env` in the root or `backend/.env`:
 
 ```env
-# MongoDB Atlas URI (optional — embedded in-memory DB starts automatically if blank)
-MONGO_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/student-platform
+# MongoDB Connection URI (Atlas recommended)
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/student-platform?retryWrites=true&w=majority
 
-# Server port (default: 5001)
+# Backend Server Port (default: 5001)
 PORT=5001
 
-# JWT secret — change this in production!
-JWT_SECRET=your_secret_key_here
+# JWT Secret Key for token signing
+JWT_SECRET=learnx_super_secure_jwt_secret_key_2026
 
-# OpenAI / OpenRouter API Key — required for AI Tutor & Roadmap features
-# Get a free key at: https://openrouter.ai
-OPENAI_API_KEY=sk-or-your-key-here
+# OpenRouter / OpenAI API Key (for AI Tutor, Mock Interview, Roadmap & Diagnostic Summary)
+OPENAI_API_KEY=sk-or-v1-your-api-key-here
 ```
-
-### Vercel Production Environment Variables
-
-Set these in the [Vercel Dashboard](https://vercel.com/dashboard) → Your Project → **Settings → Environment Variables**:
-
-| Variable | Description |
-|---|---|
-| `MONGO_URI` | Your MongoDB Atlas connection string |
-| `JWT_SECRET` | A long, random secret string for signing JWT tokens |
-| `OPENAI_API_KEY` | Your OpenRouter or OpenAI API key |
-
-> ⚠️ **Important:** After adding environment variables on Vercel, redeploy the project to apply them.
-
-> ⚠️ **MongoDB Atlas:** Make sure to whitelist `0.0.0.0/0` (Allow from Anywhere) in your Atlas **Network Access** settings, since Vercel uses dynamic IP addresses.
-
----
-
-## ☁️ Deploying to Vercel
-
-This project is pre-configured for one-command Vercel deployment.
-
-```bash
-# Install Vercel CLI (if not already installed)
-npm i -g vercel
-
-# Login to your Vercel account
-vercel login
-
-# Deploy to production
-vercel deploy --prod
-```
-
-Then set the environment variables (`MONGO_URI`, `JWT_SECRET`, `OPENAI_API_KEY`) in the Vercel dashboard and trigger a redeploy.
-
-**How it works on Vercel:**
-- `vercel.json` routes all `/api/*` requests to the serverless Express handler at `api/index.js`
-- All other routes (`/`, `/dashboard`, `/login`, etc.) are served by the Vite-built React SPA from `frontend/dist/`
-- The backend uses connection caching to reuse MongoDB connections across serverless warm invocations
-
----
-
-## 🌿 Git Branching Workflow
-
-- **`main`**: Production-ready code (auto-deploys to Vercel)
-- **`develop`**: Active development branch
-- **`feature/*`**: Feature branches (e.g. `feature/quiz-generator`)
 
 ---
 
 ## 🤖 ML Placement Readiness Engine (`/ml`)
 
-The system includes a fully reproducible, supervised Machine Learning engine evaluated on 14 diagnostic assessment features:
+The platform contains a dedicated, empirically tested Machine Learning regression engine trained to forecast student placement probability:
 
 ```bash
 # 1. Activate Python virtual environment
 source ml/venv/bin/activate
 
-# 2. Generate synthetic prototype dataset (clearly labeled seed=42)
+# 2. Generate training dataset (14 academic performance indicators)
 python ml/data/generate_dataset.py
 
-# 3. Train, evaluate & compare Scikit-Learn models (Gradient Boosting, Ridge, Random Forest)
+# 3. Train & cross-validate models (Gradient Boosting vs. Ridge vs. Random Forest)
 python ml/scripts/train_model.py
 
-# 4. Run CLI prediction test
-python ml/scripts/predict.py '{"dsa":84, "dbms":76, "os":72, "cn":68, "oops":82, "system_design":61, "aptitude":88, "web_dev":75, "overall_accuracy":76, "attempts":3, "improvement_rate":12, "learning_velocity":8.2, "consistency_score":74, "weak_topic_count":2}'
-
-# 5. Run backend end-to-end integration tests
-node backend/scripts/testMLPipeline.js
+# 4. Test live prediction from CLI
+python ml/scripts/predict.py '{"dsa":82, "dbms":78, "os":74, "cn":70, "oops":85, "system_design":65, "aptitude":88, "web_dev":80, "overall_accuracy":78, "attempts":4, "improvement_rate":14, "learning_velocity":8.5, "consistency_score":80, "weak_topic_count":2}'
 ```
 
-### 🎓 Viva & Technical Defense
-See [`docs/PLACEMENT_READINESS_VIVA.md`](docs/PLACEMENT_READINESS_VIVA.md) for 18 detailed technical defense questions with mathematical formulations, evaluation metrics ($R^2=0.9892$, $\text{MAE}=1.6509$), model comparisons, and ethical AI/ML disclaimers.
+- **Evaluation Performance**: $R^2 = 0.9892$, $\text{MAE} = 1.6509$.
+- See [`docs/PLACEMENT_READINESS_VIVA.md`](docs/PLACEMENT_READINESS_VIVA.md) for 18 detailed viva questions, mathematical feature weights, and algorithmic defense explanations.
+
+---
+
+## ☁️ Deployment
+
+### Deploying to Vercel
+1. Install the Vercel CLI: `npm i -g vercel`
+2. Run `vercel deploy --prod` from the project root.
+3. Configure `MONGO_URI`, `JWT_SECRET`, and `OPENAI_API_KEY` in your Vercel Dashboard under **Settings $\rightarrow$ Environment Variables**.
+4. Whitelist `0.0.0.0/0` in MongoDB Atlas Network Access.
+
+### Deploying to Render
+1. The repository includes a `render.yaml` blueprint defining the web service and static site.
+2. Connect your GitHub repository to Render and configure the required environment variables.
 
 ---
 

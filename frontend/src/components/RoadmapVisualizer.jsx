@@ -1,9 +1,81 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { updatePlanDayStatus } from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
 
-const RoadmapVisualizer = ({
+// ── Small Circular Progress Ring ─────────────────────────────────────────────
+const SmallRing = ({ value = 0, size = 48, strokeWidth = 4.5, strokeColor = "#3b82f6" }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, value));
+  const offset = circumference - (clamped / 100) * circumference;
+
+  return (
+    <div className="relative flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-700 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="text-xs font-black text-slate-800">{clamped}%</span>
+      </div>
+    </div>
+  );
+};
+
+// ── Topic Mastery default topics for CSE subjects ────────────────────────────
+const TOPIC_MASTERY_MAP = {
+  DSA: [
+    { name: "Arrays", score: 0 },
+    { name: "Linked Lists", score: 0 },
+    { name: "Stacks & Queues", score: 0 },
+    { name: "Trees", score: 0 },
+    { name: "Graphs", score: 0 },
+    { name: "Dynamic Programming", score: 0 },
+    { name: "Sorting & Searching", score: 0 },
+    { name: "Hashing", score: 0 },
+    { name: "Recursion & Backtracking", score: 0 },
+    { name: "Greedy Algorithms", score: 0 },
+  ],
+  DBMS: [
+    { name: "ER & Relational Model", score: 42 },
+    { name: "SQL & Joins", score: 23 },
+    { name: "Normalization (1NF-BCNF)", score: 50 },
+    { name: "Indexing & B+ Trees", score: 35 },
+    { name: "Transactions & ACID", score: 60 },
+    { name: "Concurrency Control", score: 40 },
+    { name: "NoSQL Systems", score: 30 },
+  ],
+  OS: [
+    { name: "Process & Threads", score: 55 },
+    { name: "CPU Scheduling", score: 65 },
+    { name: "Deadlocks & Semaphores", score: 45 },
+    { name: "Memory Management", score: 50 },
+    { name: "Virtual Memory & Paging", score: 40 },
+    { name: "File Systems", score: 60 },
+  ],
+  CN: [
+    { name: "OSI & TCP/IP", score: 68 },
+    { name: "Data Link Layer", score: 50 },
+    { name: "Routing Protocols", score: 51 },
+    { name: "Transport Layer & TCP", score: 60 },
+    { name: "Application Protocols", score: 70 },
+    { name: "Network Security", score: 45 },
+  ],
+};
+
+export const RoadmapVisualizer = ({
   roadmap,
   onRoadmapUpdated,
   onRegenerate,
@@ -15,13 +87,11 @@ const RoadmapVisualizer = ({
 }) => {
   const navigate = useNavigate();
   const { onRoadmapDayToggled } = useAppState();
-  const [filter, setFilter] = useState("all"); // 'all' | 'active' | 'completed'
-  const [expandedDays, setExpandedDays] = useState({ 1: true });
+
+  const [filter, setFilter] = useState("all"); // 'all' | 'remaining' | 'completed'
+  const [expandedDays, setExpandedDays] = useState({ 1: true, 2: true });
   const [copied, setCopied] = useState(false);
   const [updatingDay, setUpdatingDay] = useState(null);
-
-  // Performance Rating Modal State on Completing a Day
-  const [completingDayItem, setCompletingDayItem] = useState(null);
 
   if (!roadmap || !roadmap.days || roadmap.days.length === 0) {
     return null;
@@ -31,15 +101,16 @@ const RoadmapVisualizer = ({
   const completedCount = days.filter((d) => d.completed || d.status === "completed").length;
   const totalDays = days.length;
   const progressPercent = Math.round((completedCount / totalDays) * 100);
+  const remainingCount = totalDays - completedCount;
 
-  // Identify Today's Goal (first non-completed and non-skipped day, or day with status 'in-progress')
+  // Identify Today's Goal (first in-progress or non-completed day)
   const todaysGoal =
     days.find((d) => d.status === "in-progress") ||
     days.find((d) => !d.completed && d.status !== "skipped") ||
-    days[days.length - 1];
+    days[0];
 
   const filteredDays = days.filter((day) => {
-    if (filter === "active") return !day.completed && day.status !== "skipped";
+    if (filter === "remaining") return !day.completed && day.status !== "completed";
     if (filter === "completed") return day.completed || day.status === "completed";
     return true;
   });
@@ -59,47 +130,16 @@ const RoadmapVisualizer = ({
     setExpandedDays(all);
   };
 
-  const collapseAll = () => {
-    setExpandedDays({});
-  };
-
-  // Status Action Handlers: Start, Pause, Complete, Skip
-  const handleStatusChange = async (dayNum, status, performanceRating = "good") => {
-    if (!roadmap?._id) return;
-    setUpdatingDay(dayNum);
-    try {
-      const { data } = await updatePlanDayStatus(roadmap._id, dayNum, status, performanceRating);
-      if (onRoadmapUpdated) {
-        onRoadmapUpdated(data);
-      }
-      onRoadmapDayToggled(roadmap.subject, data);
-    } catch (err) {
-      console.error("Failed to update day status:", err);
-    } finally {
-      setUpdatingDay(null);
-      setCompletingDayItem(null);
-    }
-  };
-
-  const handleAskTutor = (e, day) => {
-    e.stopPropagation();
-    const query = `I am studying Day ${day.day} of my ${roadmap.subject} study planner: "${day.title}". Can you explain: ${day.keyConcepts?.join(", ")}? Also give me guidance on doing: "${day.actionItem}"`;
-    navigate(`/tutor?q=${encodeURIComponent(query)}&subject=${encodeURIComponent(roadmap.subject)}`);
-  };
-
   const handleCopySummary = () => {
     const text =
-      `# Dynamic AI Study Plan: ${roadmap.subject}\n` +
-      `Exam Goal: ${roadmap.examGoal || "General"} | Target Date: ${roadmap.examDate ? new Date(roadmap.examDate).toLocaleDateString() : "TBD"}\n` +
-      `AI Recommendation: ${roadmap.aiRecommendation}\n\n` +
+      `# LearnX AI Study Plan: ${roadmap.subject}\n` +
+      `Goal: ${roadmap.examGoal || "GATE & Placement Prep"} | Target Date: ${roadmap.examDate ? new Date(roadmap.examDate).toLocaleDateString() : "2026-10-15"}\n\n` +
       roadmap.days
         .map(
           (d) =>
-            `## Day ${d.day} (${d.date || "Scheduled"}): ${d.title} [${d.duration || "45m"}] - Status: ${d.status.toUpperCase()}\n` +
-            `- **Pipeline**: ${d.pipeline?.join(" → ")}\n` +
-            `- **Concepts**: ${d.keyConcepts?.join(", ")}\n` +
-            `- **Action Item**: ${d.actionItem}\n` +
-            `- **Pro Tip**: ${d.proTip}\n`
+            `## Day ${d.day} (${d.date || "Scheduled"}): ${d.title} [${d.duration || "45m"}] - Status: ${d.status?.toUpperCase() || "PENDING"}\n` +
+            `- Pipeline: ${(d.pipeline || ["Learn", "Practice", "Quiz"]).join(" → ")}\n` +
+            `- Concepts: ${(d.keyConcepts || []).join(", ")}\n`
         )
         .join("\n");
     navigator.clipboard.writeText(text);
@@ -107,514 +147,388 @@ const RoadmapVisualizer = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "completed":
-        return { bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-200", label: "Completed ✓" };
-      case "in-progress":
-        return { bg: "bg-blue-100", text: "text-blue-800", border: "border-blue-200", label: "In Progress ⚡" };
-      case "paused":
-        return { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200", label: "Paused ⏸️" };
-      case "skipped":
-        return { bg: "bg-slate-100", text: "text-slate-500", border: "border-slate-200", label: "Skipped ⏭️" };
-      default:
-        return { bg: "bg-violet-100", text: "text-violet-800", border: "border-violet-200", label: "Not Started" };
+  const handleStatusChange = async (dayNum, status) => {
+    if (!roadmap?._id) return;
+    setUpdatingDay(dayNum);
+    try {
+      const { data } = await updatePlanDayStatus(roadmap._id, dayNum, status, "good");
+      if (onRoadmapUpdated) onRoadmapUpdated(data);
+      onRoadmapDayToggled(roadmap.subject, data);
+    } catch (err) {
+      console.error("Failed to update day status:", err);
+    } finally {
+      setUpdatingDay(null);
     }
   };
 
+  // Get topic mastery items
+  const masteryItems = TOPIC_MASTERY_MAP[roadmap.subject] || TOPIC_MASTERY_MAP.DSA;
+
   return (
-    <div className="space-y-6 animate-fade-in" id="visual-roadmap-container">
-      {/* 🌟 TODAY'S GOAL SPOTLIGHT HERO CARD */}
-      {todaysGoal && (
-        <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-900 shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-violet-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+    <div className="space-y-6">
 
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 z-10 relative">
-            <div className="space-y-3 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-violet-600 text-white shadow-xs">
-                  📌 TODAY'S GOAL (DAY {todaysGoal.day})
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-slate-300 border border-white/10">
-                  ⏱️ {todaysGoal.duration || "45 min"}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/10 text-slate-300 border border-white/10">
-                  📅 {todaysGoal.date || "Today"}
-                </span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {todaysGoal.title}
-              </h2>
-
-              {/* Learning Pipeline */}
-              <div className="flex items-center gap-2 pt-1 flex-wrap">
-                <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wide">
-                  Learning Flow:
-                </span>
-                {(todaysGoal.pipeline || ["Learn", "Practice", "Quiz"]).map((step, idx) => (
-                  <React.Fragment key={idx}>
-                    <span className="px-2.5 py-1 rounded-lg text-xs font-extrabold bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                      {idx + 1}. {step}
-                    </span>
-                    {idx < (todaysGoal.pipeline || []).length - 1 && (
-                      <span className="text-xs text-slate-500">→</span>
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-2xl pt-1">
-                {todaysGoal.actionItem}
-              </p>
-            </div>
-
-            {/* Interactive Goal Controls: Start, Pause, Complete, Skip */}
-            <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 z-10 flex-shrink-0 min-w-[200px]">
-              {todaysGoal.status !== "completed" && (
-                <>
-                  {todaysGoal.status === "in-progress" ? (
-                    <button
-                      onClick={() => handleStatusChange(todaysGoal.day, "paused")}
-                      disabled={updatingDay === todaysGoal.day}
-                      className="px-4 py-3 rounded-2xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-slate-950 flex items-center justify-center gap-2 shadow-sm transition-all"
-                    >
-                      ⏸️ Pause Session
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleStatusChange(todaysGoal.day, "in-progress")}
-                      disabled={updatingDay === todaysGoal.day}
-                      className="px-4 py-3 rounded-2xl text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-2 shadow-sm transition-all"
-                    >
-                      ▶️ Start Goal
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => setCompletingDayItem(todaysGoal)}
-                    disabled={updatingDay === todaysGoal.day}
-                    className="btn-gradient px-4 py-3 rounded-2xl text-xs font-black text-white flex items-center justify-center gap-2 shadow-sm transition-all"
-                  >
-                    ✓ Complete Goal
-                  </button>
-
-                  <button
-                    onClick={() => handleStatusChange(todaysGoal.day, "skipped")}
-                    disabled={updatingDay === todaysGoal.day}
-                    className="px-4 py-2 rounded-2xl text-xs font-bold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center gap-2 transition-all"
-                  >
-                    ⏭️ Skip Topic
-                  </button>
-                </>
-              )}
-
-              {todaysGoal.status === "completed" && (
-                <div className="p-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-center space-y-1">
-                  <div className="text-sm">🎉 Goal Completed!</div>
-                  <p className="text-[11px] text-emerald-300 font-semibold">Great work! Check upcoming goals below.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 🧠 AI RECOMMENDATION & PACING DISPLAY */}
-      {roadmap.aiRecommendation && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-violet-50 via-sky-50 to-emerald-50 border border-violet-200 shadow-xs flex items-start gap-3.5">
-          <div className="w-10 h-10 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-lg font-black flex-shrink-0 shadow-xs">
-            🤖
-          </div>
-          <div className="space-y-1 flex-1">
-            <h4 className="text-xs font-black text-violet-900 uppercase tracking-wide">
-              AI Recommendation & Adaptive Insights:
-            </h4>
-            <p className="text-xs text-slate-800 font-medium leading-relaxed">
-              {roadmap.aiRecommendation}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* SUMMARY STATS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Progress % */}
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase">Progress</div>
-          <div className="text-2xl font-black text-violet-700">{progressPercent}%</div>
-          <p className="text-[11px] text-slate-600 font-semibold">{completedCount} of {totalDays} Goals Completed</p>
+      {/* ──────────────────────────────────────────────────────────────────────
+          TOP FILTER & ACTION BUTTONS BAR
+      ────────────────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+        {/* Left Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              filter === "all"
+                ? "bg-blue-600 text-white shadow-xs font-black"
+                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+            }`}
+          >
+            All Goals ({totalDays})
+          </button>
+          <button
+            onClick={() => setFilter("remaining")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              filter === "remaining"
+                ? "bg-blue-600 text-white shadow-xs font-black"
+                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+            }`}
+          >
+            Remaining ({remainingCount})
+          </button>
+          <button
+            onClick={() => setFilter("completed")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs ${
+              filter === "completed"
+                ? "bg-blue-600 text-white shadow-xs font-black"
+                : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
+            }`}
+          >
+            Completed ({completedCount})
+          </button>
         </div>
 
-        {/* Time Remaining */}
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase">Time Remaining</div>
-          <div className="text-2xl font-black text-slate-900">
-            {daysRemaining !== null ? `${daysRemaining} Days` : "14 Days"}
-          </div>
-          <p className="text-[11px] text-slate-600 font-semibold">Until Target Exam Date</p>
-        </div>
-
-        {/* Daily Study Time */}
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase">Daily Allocation</div>
-          <div className="text-2xl font-black text-sky-700">
-            {roadmap.availableHoursPerDay || 2} Hrs / Day
-          </div>
-          <p className="text-[11px] text-slate-600 font-semibold">Preferred Slot: {roadmap.preferredStudyTime || "Evening"}</p>
-        </div>
-
-        {/* Target Goal */}
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-1 shadow-xs">
-          <div className="text-xs font-bold text-slate-500 uppercase">Exam Goal</div>
-          <div className="text-base font-black text-slate-900 truncate">
-            {roadmap.examGoal || "Placement Prep"}
-          </div>
-          <p className="text-[11px] text-emerald-700 font-bold">Target Score: {roadmap.targetScore || "90%"}</p>
-        </div>
-      </div>
-
-      {/* ACTION BAR & FILTER TABS */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 border border-slate-200">
-          {[
-            { id: "all", label: `All Goals (${totalDays})` },
-            { id: "active", label: `Remaining (${totalDays - completedCount})` },
-            { id: "completed", label: `Completed (${completedCount})` },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setFilter(tab.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${
-                filter === tab.id
-                  ? "bg-violet-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
+        {/* Right Actions */}
         <div className="flex items-center gap-2 flex-wrap">
-          {onReschedule && (
-            <button
-              onClick={onReschedule}
-              disabled={rescheduling}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition-all flex items-center gap-1.5"
-            >
-              {rescheduling ? "🗓️ Rescheduling..." : "🗓️ Reschedule Missed Days"}
-            </button>
-          )}
+          <button
+            onClick={onReschedule}
+            disabled={rescheduling}
+            className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs disabled:opacity-50"
+          >
+            <span>📅</span>
+            <span>{rescheduling ? "Recalculating..." : "Reschedule Missed Days"}</span>
+          </button>
 
           <button
-            onClick={Object.keys(expandedDays).length >= totalDays ? collapseAll : expandAll}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all"
+            onClick={expandAll}
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
           >
-            {Object.keys(expandedDays).length >= totalDays ? "📁 Collapse All" : "📂 Expand All"}
+            <span>⤢</span>
+            <span>Expand All</span>
           </button>
 
           <button
             onClick={handleCopySummary}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
           >
-            {copied ? "✓ Copied" : "📋 Copy Plan"}
+            <span>📄</span>
+            <span>{copied ? "Copied!" : "Copy Plan"}</span>
           </button>
         </div>
       </div>
 
-      {/* UPCOMING & ALL GOALS TIMELINE */}
-      <div className="relative pl-6 md:pl-8 space-y-6">
-        <div
-          className="absolute left-3 md:left-4 top-4 bottom-4 w-0.5"
-          style={{
-            background: "linear-gradient(180deg, #7c3aed 0%, #0ea5e9 50%, rgba(124,58,237,0.2) 100%)",
-          }}
-        />
+      {/* ──────────────────────────────────────────────────────────────────────
+          MAIN TWO-COLUMN GRID: TIMELINE ON LEFT, INSIGHTS ON RIGHT
+      ────────────────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        {filteredDays.length === 0 ? (
-          <div className="p-8 text-center ml-2 bg-white rounded-2xl border border-slate-200">
-            <p className="text-sm font-semibold text-slate-500">
-              No goals match the "{filter}" filter.
-            </p>
-          </div>
-        ) : (
-          filteredDays.map((day) => {
-            const isExpanded = !!expandedDays[day.day];
-            const isUpdating = updatingDay === day.day;
-            const badge = getStatusBadge(day.status);
+        {/* ── LEFT COLUMN: VERTICAL ROADMAP TIMELINE (~70%) ── */}
+        <div className="lg:col-span-8 space-y-4">
+          <div className="relative pl-7 sm:pl-9 space-y-4 before:absolute before:left-3.5 before:top-4 before:bottom-4 before:w-0.5 before:bg-indigo-300">
+            {filteredDays.map((day) => {
+              const isCompleted = day.completed || day.status === "completed";
+              const isInProgress = day.status === "in-progress" || day.day === todaysGoal?.day;
+              const isExpanded = !!expandedDays[day.day];
 
-            return (
-              <div key={day.day} className="relative group transition-all duration-300">
-                {/* Node icon */}
-                <button
-                  onClick={() => setCompletingDayItem(day)}
-                  disabled={isUpdating}
-                  className="absolute -left-6 md:-left-8 top-4 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 z-10 text-white shadow-xs"
-                  style={{
-                    background: day.completed || day.status === "completed"
-                      ? "linear-gradient(135deg, #059669, #0ea5e9)"
-                      : day.status === "in-progress"
-                      ? "#2563eb"
-                      : "#ffffff",
-                    border: day.completed || day.status === "completed"
-                      ? "2px solid #059669"
-                      : "2px solid #7c3aed",
-                    color: day.completed || day.status === "completed" || day.status === "in-progress" ? "#ffffff" : "#7c3aed",
-                  }}
-                >
-                  {isUpdating ? (
-                    <span className="animate-spin text-[10px]">⏳</span>
-                  ) : day.completed || day.status === "completed" ? (
-                    "✓"
-                  ) : (
-                    <span className="text-[10px] font-bold">{day.day}</span>
-                  )}
-                </button>
+              // Priority pill styling
+              const priority = day.priority || (day.day <= 2 ? "High Priority" : day.day <= 5 ? "Foundation" : "Important");
+              const priorityClass =
+                priority === "High Priority"
+                  ? "bg-rose-50 text-rose-700 border-rose-200"
+                  : priority === "Foundation"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200";
 
-                {/* Day Card */}
-                <div
-                  onClick={() => toggleDayExpanded(day.day)}
-                  className={`rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden bg-white border shadow-xs hover:shadow-md ${
-                    day.completed || day.status === "completed"
-                      ? "border-emerald-300 bg-emerald-50/20"
-                      : day.status === "in-progress"
-                      ? "border-blue-400 bg-blue-50/20"
-                      : isExpanded
-                      ? "border-violet-300 bg-violet-50/20"
-                      : "border-slate-200"
-                  }`}
-                >
-                  {/* Card Header */}
-                  <div className="p-4 md:p-5 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-slate-900 text-white border border-slate-900">
-                        DAY {day.day < 10 ? `0${day.day}` : day.day}
-                      </span>
-
-                      <span className="text-xs font-bold text-slate-500">
-                        📅 {day.date || `Day ${day.day}`}
-                      </span>
-
-                      <h4
-                        className={`text-base font-extrabold transition-colors ${
-                          day.completed || day.status === "completed" ? "line-through text-slate-400" : "text-slate-900"
-                        }`}
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                      >
-                        {day.title}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {/* Status Badge */}
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${badge.bg} ${badge.text} ${badge.border}`}>
-                        {badge.label}
-                      </span>
-
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold hidden sm:inline-block bg-slate-100 border border-slate-200 text-slate-700">
-                        ⏱️ {day.duration || "45m"}
-                      </span>
-
-                      <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs transition-transform duration-300 bg-slate-100 text-slate-600 ${
-                          isExpanded ? "rotate-180" : "rotate-0"
-                        }`}
-                      >
-                        ▼
-                      </div>
-                    </div>
+              return (
+                <div key={day.day} className="relative group">
+                  {/* Circular Timeline Node */}
+                  <div
+                    className={`absolute -left-7 sm:-left-9 top-4 w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-black transition-all ${
+                      isCompleted
+                        ? "bg-emerald-500 border-emerald-500 text-white shadow-xs"
+                        : isInProgress
+                        ? "bg-white border-indigo-600 text-indigo-700 font-extrabold ring-4 ring-indigo-100 shadow-xs"
+                        : "bg-white border-indigo-300 text-indigo-600"
+                    }`}
+                  >
+                    {isCompleted ? "✓" : day.day}
                   </div>
 
-                  {/* Expandable Content Area */}
-                  {isExpanded && (
-                    <div className="px-4 pb-5 md:px-5 md:pb-5 space-y-4 pt-2 border-t border-slate-100">
-                      {/* Learning Pipeline */}
-                      <div>
-                        <p className="text-xs font-extrabold mb-1 text-slate-500 uppercase tracking-wide">
-                          Pipeline Stage:
-                        </p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {(day.pipeline || ["Learn", "Practice", "Quiz"]).map((pStep, pIdx) => (
-                            <span
-                              key={pIdx}
-                              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-violet-100 text-violet-800 border border-violet-200"
-                            >
-                              {pStep}
-                            </span>
-                          ))}
+                  {/* Goal Card Container */}
+                  <div
+                    className={`rounded-2xl border transition-all p-5 shadow-2xs bg-white ${
+                      isInProgress
+                        ? "border-indigo-200/90 ring-1 ring-indigo-100"
+                        : "border-slate-200/90 hover:border-slate-300"
+                    }`}
+                  >
+                    {/* Header Row */}
+                    <div
+                      onClick={() => toggleDayExpanded(day.day)}
+                      className="cursor-pointer flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-slate-100"
+                    >
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-md bg-[#0f172a] text-white text-[10px] font-black">
+                          Day {day.day}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                          <span>📅</span> {day.date || `2026-10-${String(13 + day.day).padStart(2, "0")}`}
+                        </span>
+                        <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                          {day.title}
+                        </h3>
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${priorityClass}`}>
+                          {priority}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          {isCompleted ? "Completed" : isInProgress ? "In Progress" : "Not Started"}
+                        </span>
+                        <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                          <span>🕒</span> {day.duration || "45 min"}
+                        </span>
+                        <span className={`text-slate-400 text-xs transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
+                          ▼
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Narrative Description */}
+                    <p className="text-xs text-slate-600 leading-relaxed mt-2.5">
+                      {day.description || `Build strong foundation with ${day.title}, input-output, and basic problem solving.`}
+                    </p>
+
+                    {/* Learning Flow & Key Concepts Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mt-3 pt-3 border-t border-slate-100 text-xs">
+                      {/* Learning Flow */}
+                      <div className="md:col-span-5 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Learning Flow:
+                        </span>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">❶ Learn</span>
+                          <span className="text-slate-300">→</span>
+                          <span className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700">❷ Practice</span>
+                          <span className="text-slate-300">→</span>
+                          <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700">❸ Quiz</span>
                         </div>
                       </div>
 
                       {/* Key Concepts */}
-                      {day.keyConcepts && day.keyConcepts.length > 0 && (
-                        <div>
-                          <p className="text-xs font-extrabold mb-1.5 text-violet-800">
-                            📚 KEY CONCEPTS:
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {day.keyConcepts.map((concept, cIdx) => (
-                              <span
-                                key={cIdx}
-                                className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 border border-violet-200 text-violet-900"
-                              >
-                                🔹 {concept}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Action Item */}
-                      {day.actionItem && (
-                        <div className="rounded-xl p-3.5 bg-sky-50 border border-sky-200">
-                          <div className="flex items-start gap-2.5">
-                            <span className="text-lg flex-shrink-0 mt-0.5">🎯</span>
-                            <div>
-                              <p className="text-xs font-extrabold tracking-wide mb-1 text-sky-800">
-                                DAILY MISSION:
-                              </p>
-                              <p className="text-xs leading-relaxed text-slate-800 font-medium">
-                                {day.actionItem}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Pro Tip */}
-                      {day.proTip && (
-                        <div className="rounded-xl p-3.5 bg-amber-50 border border-amber-200">
-                          <div className="flex items-start gap-2.5">
-                            <span className="text-lg flex-shrink-0 mt-0.5">💡</span>
-                            <div>
-                              <p className="text-xs font-extrabold tracking-wide mb-0.5 text-amber-800">
-                                EXAM & INTERVIEW TIP:
-                              </p>
-                              <p className="text-xs leading-relaxed text-slate-800 font-medium">
-                                {day.proTip}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Card Action Controls */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {day.status !== "in-progress" && day.status !== "completed" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(day.day, "in-progress");
-                              }}
-                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                      <div className="md:col-span-7 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Key Concepts:
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {(day.keyConcepts && day.keyConcepts.length > 0
+                            ? day.keyConcepts
+                            : ["Basics", "Traversal", "Time Complexity", "Common Patterns"]
+                          ).map((concept, ci) => (
+                            <span
+                              key={ci}
+                              className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold"
                             >
-                              ▶️ Start
-                            </button>
-                          )}
-
-                          {day.status === "in-progress" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleStatusChange(day.day, "paused");
-                              }}
-                              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-xs"
-                            >
-                              ⏸️ Pause
-                            </button>
-                          )}
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCompletingDayItem(day);
-                            }}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                          >
-                            ✓ Mark Complete
-                          </button>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStatusChange(day.day, "skipped");
-                            }}
-                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
-                          >
-                            ⏭️ Skip
-                          </button>
+                              {concept}
+                            </span>
+                          ))}
                         </div>
-
-                        <button
-                          onClick={(e) => handleAskTutor(e, day)}
-                          className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white btn-gradient flex items-center gap-1.5 shadow-xs"
-                        >
-                          🤖 Ask AI Tutor About Day {day.day} →
-                        </button>
                       </div>
                     </div>
-                  )}
+
+                    {/* Expanded Content with Action Buttons */}
+                    {isExpanded && (
+                      <div className="mt-4 pt-3 border-t border-slate-100 space-y-3">
+                        {day.actionItem && (
+                          <div className="p-3 rounded-xl bg-slate-50 text-xs text-slate-700 flex items-start gap-2">
+                            <span className="font-bold text-indigo-600">Action Item:</span>
+                            <span>{day.actionItem}</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <Link
+                              to={`/learn/${roadmap.subject?.toLowerCase() || "dsa"}`}
+                              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs"
+                            >
+                              Start Learning →
+                            </Link>
+                            <Link
+                              to={`/tutor?topic=${encodeURIComponent(day.title)}`}
+                              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs"
+                            >
+                              💬 Ask AI Tutor
+                            </Link>
+                          </div>
+
+                          {/* Status Toggle Button */}
+                          <button
+                            onClick={() => handleStatusChange(day.day, isCompleted ? "not-started" : "completed")}
+                            disabled={updatingDay === day.day}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                              isCompleted
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 border-slate-200"
+                            }`}
+                          >
+                            {updatingDay === day.day
+                              ? "Updating..."
+                              : isCompleted
+                              ? "✓ Mark Incomplete"
+                              : "Mark Complete"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* PERFORMANCE FEEDBACK MODAL ON COMPLETING A GOAL */}
-      {completingDayItem && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-slate-200">
-            <div className="text-center space-y-2">
-              <div className="text-3xl">🎯</div>
-              <h3 className="text-lg font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Goal Performance Feedback
-              </h3>
-              <p className="text-xs text-slate-600 font-medium">
-                How did you perform on <strong>Day {completingDayItem.day}: {completingDayItem.topic}</strong>?
-                The AI will use this feedback to adapt your upcoming schedule.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => handleStatusChange(completingDayItem.day, "completed", "mastered")}
-                className="w-full p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs font-extrabold flex items-center justify-between transition-all"
-              >
-                <span>🌟 Fully Mastered</span>
-                <span className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded-full">Accelerate Plan</span>
-              </button>
-
-              <button
-                onClick={() => handleStatusChange(completingDayItem.day, "completed", "good")}
-                className="w-full p-3.5 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-900 text-xs font-extrabold flex items-center justify-between transition-all"
-              >
-                <span>👍 Good / Solved Pipeline</span>
-                <span className="text-[10px] bg-blue-200 px-2 py-0.5 rounded-full">On Track</span>
-              </button>
-
-              <button
-                onClick={() => handleStatusChange(completingDayItem.day, "completed", "poor")}
-                className="w-full p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-extrabold flex items-center justify-between transition-all"
-              >
-                <span>⚠️ Struggle / Low Quiz Score</span>
-                <span className="text-[10px] bg-amber-200 px-2 py-0.5 rounded-full">+Add Revision</span>
-              </button>
-            </div>
-
-            <div className="pt-2 text-center">
-              <button
-                onClick={() => setCompletingDayItem(null)}
-                className="text-xs text-slate-500 font-bold hover:underline"
-              >
-                Cancel
-              </button>
-            </div>
+              );
+            })}
           </div>
         </div>
-      )}
+
+        {/* ── RIGHT COLUMN: INSIGHTS & MASTERY (~30%) ── */}
+        <div className="lg:col-span-4 space-y-4">
+
+          {/* Card 1: Today's Goal (Day 2) */}
+          {todaysGoal && (
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                  Today's Goal (Day {todaysGoal.day})
+                </h3>
+                <span
+                  onClick={() => {
+                    const el = document.getElementById("visual-roadmap-container");
+                    el?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
+                >
+                  View Plan
+                </span>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <SmallRing value={progressPercent} size={54} strokeWidth={5} strokeColor="#3b82f6" />
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-900 leading-tight">
+                    {todaysGoal.title}
+                  </h4>
+                  <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400 font-medium">
+                    <span>🕒 {todaysGoal.duration || "45 minutes"}</span>
+                    <span>•</span>
+                    <span className="text-emerald-600 font-bold">Complete all 3 steps</span>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                to={`/learn/${roadmap.subject?.toLowerCase() || "dsa"}`}
+                className="w-full block py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold text-center transition-all shadow-xs"
+              >
+                Start Learning →
+              </Link>
+            </div>
+          )}
+
+          {/* Card 2: AI Recommendation */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-3">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+              <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                🤖
+              </div>
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                AI Recommendation
+              </h3>
+            </div>
+
+            <div className="flex items-start gap-2.5 text-xs text-slate-600 leading-relaxed font-medium">
+              <span className="text-amber-500 text-base mt-0.5">💡</span>
+              <p>
+                {roadmap.aiRecommendation ||
+                  `You are currently focusing on Day ${todaysGoal?.day || 2}: ${todaysGoal?.title || "Linked Lists"}. Since this is a fundamental topic, make sure to complete the practice questions and quiz to build a strong foundation.`}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Topic Mastery (Subject) */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                Topic Mastery ({roadmap.subject})
+              </h3>
+              <Link to="/skill-graph" className="text-xs font-bold text-blue-600 hover:text-blue-800">
+                View Details
+              </Link>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              {masteryItems.map((item, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="text-slate-700">{item.name}</span>
+                    <span className="text-slate-400 text-[10px] font-medium">{item.score}%</span>
+                  </div>
+                  <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                      style={{ width: `${item.score}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Card 4: Learning Streak */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center text-xl shrink-0">
+                🔥
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Learning Streak</p>
+                <p className="text-base font-black text-slate-900 tracking-tight">0 Days</p>
+                <p className="text-[10px] text-slate-400">Keep learning consistently!</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-[8px] font-bold text-slate-400">
+              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                <span
+                  key={i}
+                  className={`w-4 h-4 rounded-full flex items-center justify-center border ${
+                    i === 3 ? "bg-blue-600 text-white border-blue-600 font-black" : "border-slate-200 bg-slate-50"
+                  }`}
+                >
+                  {d}
+                </span>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };

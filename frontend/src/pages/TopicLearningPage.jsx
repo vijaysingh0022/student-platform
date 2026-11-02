@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getTopicDetails, markTopicAsCompleted } from "../services/api.js";
+import {
+  getTopicDetails,
+  markTopicAsCompleted,
+  askLearningCompanion,
+  generateExamAnswer,
+  generateRevisionNotes,
+  toggleLearningBookmark,
+  updateTopicMastery,
+  getTopicNotes,
+  createTopicNote,
+  deleteTopicNote,
+} from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
-import CodePlayground from "../components/CodePlayground.jsx";
-import SortingVisualizer from "../components/SortingVisualizer.jsx";
-import PracticePanel from "../components/PracticePanel.jsx";
-import NoteEditor from "../components/NoteEditor.jsx";
-import AITutorPanel from "../components/AITutorPanel.jsx";
+import DynamicTopicVisualizer from "../components/visualizer/DynamicTopicVisualizer.jsx";
+import LearningCompanion from "../components/LearningCompanion.jsx";
+import VoiceTeacherExperience from "../components/voice/VoiceTeacherExperience.jsx";
 
 const TopicLearningPage = () => {
   const { subjectId, topicId } = useParams();
@@ -15,28 +24,76 @@ const TopicLearningPage = () => {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("content");
-  const [selectedLanguage, setSelectedLanguage] = useState("cpp");
-  const [markingCompleted, setMarkingCompleted] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "ai_explain" | "visualize" | "examples" | "quick_check" | "practice" | "quick_test" | "notes" | "exam_answer"
+
+  // Learning Progress & Mastery
+  const [masteryStatus, setMasteryStatus] = useState("learning"); // "not_started" | "learning" | "practicing" | "understood" | "mastered"
+  const [isBookmarked, setIsBookmarked] = useState(false);
   const [completedState, setCompletedState] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [markingCompleted, setMarkingCompleted] = useState(false);
+
+  // AI Explain State
+  const [aiExplainMode, setAiExplainMode] = useState("beginner");
+  const [aiExplainText, setAiExplainText] = useState("");
+  const [aiExplainLoading, setAiExplainLoading] = useState(false);
+  const [aiLanguage, setAiLanguage] = useState("english");
+
+  // Exam Answer State
+  const [selectedMarks, setSelectedMarks] = useState(5);
+  const [examAnswerText, setExamAnswerText] = useState("");
+  const [examAnswerLoading, setExamAnswerLoading] = useState(false);
+
+  // Quick Check active learning state
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [quickCheckAnswered, setQuickCheckAnswered] = useState(false);
+
+  // 20-min Focus Learning Session Mode
+  const [isSessionActive, setIsSessionActive] = useState(false);
+  const [sessionStep, setSessionStep] = useState(1);
+
+  // Notes state
+  const [notesList, setNotesList] = useState([]);
+  const [newNoteText, setNewNoteText] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [generatingRevision, setGeneratingRevision] = useState(false);
+  const [revisionNotesData, setRevisionNotesData] = useState(null);
+
+  // Practice state
+  const [activePracticeIndex, setActivePracticeIndex] = useState(0);
+  const [practiceAnswers, setPracticeAnswers] = useState({});
+  const [practiceFeedback, setPracticeFeedback] = useState({});
+
+  // Quick Test state
+  const [testActive, setTestActive] = useState(false);
+  const [testCurrentIndex, setTestCurrentIndex] = useState(0);
+  const [testSelectedAnswers, setTestSelectedAnswers] = useState({});
+  const [testSubmitted, setTestSubmitted] = useState(false);
+  const [testScore, setTestScore] = useState(0);
+
+  // Voice Companion Drawer
+  const [isCompanionOpen, setIsCompanionOpen] = useState(false);
+  const [companionInitialMode, setCompanionInitialMode] = useState("beginner");
 
   useEffect(() => {
     let isMounted = true;
     const fetchTopic = async () => {
       setLoading(true);
-      setActiveTab("content");
       try {
         const res = await getTopicDetails(topicId);
-        if (isMounted) {
+        if (isMounted && res.data) {
           setData(res.data);
-          setCompletedState(!!res.data.progress?.isCompleted);
-
-          // Set default code tab based on available snippets
-          const snippets = res.data.topic?.content?.codeSnippets || [];
-          if (snippets.length > 0) {
-            setSelectedLanguage(snippets[0].language);
+          const prog = res.data.progress;
+          setCompletedState(!!prog?.isCompleted);
+          if (prog?.masteryStatus) {
+            setMasteryStatus(prog.masteryStatus);
           }
+
+          // Fetch personal notes
+          getTopicNotes(topicId)
+            .then((nRes) => {
+              if (isMounted && nRes?.data?.notes) setNotesList(nRes.data.notes);
+            })
+            .catch(() => {});
         }
       } catch (err) {
         console.error("Error loading topic:", err);
@@ -51,36 +108,142 @@ const TopicLearningPage = () => {
     };
   }, [topicId]);
 
+  // Load AI Explanation when tab changes to "ai_explain"
+  useEffect(() => {
+    if (activeTab === "ai_explain" && !aiExplainText && data?.topic) {
+      handleRequestAIExplain(aiExplainMode, aiLanguage);
+    }
+  }, [activeTab]);
+
+  const handleRequestAIExplain = async (mode = "beginner", lang = "english") => {
+    setAiExplainLoading(true);
+    setAiExplainMode(mode);
+    setAiLanguage(lang);
+    try {
+      const res = await askLearningCompanion({
+        topicId,
+        subjectId,
+        prompt: `Explain ${data?.topic?.title || topicId} thoroughly.`,
+        mode,
+        language: lang,
+      });
+      if (res?.data?.text) {
+        setAiExplainText(res.data.text);
+      }
+    } catch (e) {
+      console.warn("AI explain failed:", e);
+    } finally {
+      setAiExplainLoading(false);
+    }
+  };
+
+  const handleGenerateExamAnswer = async (marks = 5) => {
+    setExamAnswerLoading(true);
+    setSelectedMarks(marks);
+    try {
+      const res = await generateExamAnswer({
+        topicId,
+        subjectId,
+        marks,
+      });
+      if (res?.data?.answer) {
+        setExamAnswerText(res.data.answer);
+      }
+    } catch (e) {
+      console.warn("Exam answer generator error:", e);
+    } finally {
+      setExamAnswerLoading(false);
+    }
+  };
+
+  const handleCreateRevisionNotes = async (save = false) => {
+    setGeneratingRevision(true);
+    try {
+      const res = await generateRevisionNotes({
+        topicId,
+        subjectId,
+        saveToNotes: save,
+      });
+      if (res?.data?.notes) {
+        setRevisionNotesData(res.data.notes);
+        if (save && res.data.savedNote) {
+          setNotesList((prev) => [res.data.savedNote, ...prev]);
+        }
+      }
+    } catch (e) {
+      console.warn("Revision notes generation error:", e);
+    } finally {
+      setGeneratingRevision(false);
+    }
+  };
+
+  const handleSavePersonalNote = async (e) => {
+    if (e) e.preventDefault();
+    if (!newNoteText.trim()) return;
+    setSavingNote(true);
+    try {
+      const res = await createTopicNote({
+        topicId,
+        title: `Note on ${data?.topic?.title || topicId}`,
+        content: newNoteText.trim(),
+        tags: [subjectId.toUpperCase(), "Personal"],
+      });
+      if (res?.data?.note) {
+        setNotesList((prev) => [res.data.note, ...prev]);
+        setNewNoteText("");
+      }
+    } catch (e) {
+      console.warn("Failed to save note:", e);
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (id) => {
+    try {
+      await deleteTopicNote(id);
+      setNotesList((prev) => prev.filter((n) => n._id !== id));
+    } catch (e) {
+      console.warn("Failed to delete note:", e);
+    }
+  };
+
+  const handleBookmarkToggle = async () => {
+    try {
+      const res = await toggleLearningBookmark({
+        itemId: topicId,
+        itemType: "topic",
+        title: data?.topic?.title || topicId,
+        subjectId,
+        subjectName: data?.breadcrumbs?.subject?.name || subjectId,
+        unitId: data?.topic?.unitId || "",
+      });
+      setIsBookmarked(!!res?.data?.isBookmarked);
+    } catch (e) {
+      console.warn("Bookmark toggle error:", e);
+    }
+  };
+
   const handleMarkComplete = async () => {
     setMarkingCompleted(true);
     try {
       await markTopicAsCompleted(topicId);
+      await updateTopicMastery(topicId, { masteryStatus: "mastered", accuracy: 100 });
       setCompletedState(true);
-      onTopicCompleted(topicId, subjectId);
+      setMasteryStatus("mastered");
+      if (onTopicCompleted) onTopicCompleted(topicId, subjectId);
     } catch (err) {
-      console.error("Error marking topic as completed:", err);
+      console.error("Error marking topic completed:", err);
     } finally {
       setMarkingCompleted(false);
     }
   };
 
-  const handleAskTutor = () => {
-    if (!data?.topic) return;
-    const prompt = `I am currently studying the ${data.topic.title} module in ${data.breadcrumbs?.subject?.name || subjectId}. Can you explain ${data.topic.concepts?.slice(0, 3).join(", ") || data.topic.title} using a simple analogy and viva questions?`;
-    navigate(`/tutor?q=${encodeURIComponent(prompt)}&subject=${encodeURIComponent(data.breadcrumbs?.subject?.name || subjectId)}`);
-  };
-
-  const handleCopyCode = (codeText) => {
-    navigator.clipboard.writeText(codeText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   if (loading) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-10 h-10 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-bold text-slate-600">Loading topic module...</p>
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-bold text-slate-600">Loading topic workspace...</p>
       </div>
     );
   }
@@ -90,721 +253,868 @@ const TopicLearningPage = () => {
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center space-y-4">
         <div className="text-4xl">📄</div>
         <h2 className="text-xl font-bold text-slate-900">Topic Not Found</h2>
-        <p className="text-xs text-slate-500 max-w-sm">The requested learning topic could not be located.</p>
-        <Link to={`/learn/${subjectId}`} className="btn-gradient px-4 py-2 rounded-xl text-xs font-bold text-white">
+        <p className="text-xs text-slate-500 max-w-sm">The requested topic could not be located in the curriculum.</p>
+        <Link to={`/learn/${subjectId}`} className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600">
           Back to Subject
         </Link>
       </div>
     );
   }
 
-  const { topic, breadcrumbs, navigation, progress } = data;
+  const { topic, breadcrumbs } = data;
   const content = topic.content || {};
-  const codeSnippets = content.codeSnippets || [];
-  const codeMap = codeSnippets.reduce((acc, snippet) => {
-    if (snippet.language && snippet.code) {
-      acc[snippet.language] = snippet.code;
-    }
-    return acc;
-  }, {});
 
-  // Determine if this topic requires/supports algorithm or data structure visualization
-  const hasVisualization = Boolean(
-    topic?.hasVisualization ||
-    content?.hasVisualization ||
-    (() => {
-      const title = (topic?.title || "").toLowerCase();
-      const subId = (subjectId || "").toLowerCase();
-      const subtopics = (topic?.subtopics || []).join(" ").toLowerCase();
-      const concepts = (content?.concepts || []).join(" ").toLowerCase();
-      const combined = `${title} ${subtopics} ${concepts}`;
+  // Check which visualizer to load
+  const isNormalization = topicId.includes("norm") || topic.title.toLowerCase().includes("normal");
+  const isBST = topicId.includes("bst") || topic.title.toLowerCase().includes("tree");
+  const isStackQueue = topicId.includes("stack") || topicId.includes("queue");
+  const isProcess = topicId.includes("process") || topicId.includes("schedul");
 
-      const visualKeywords = [
-        "sort", "search", "tree", "graph", "stack", "queue", "array", "linked list",
-        "heap", "traversal", "binary search", "bfs", "dfs", "dijkstra", "scheduling",
-        "round robin", "page replacement", "fifo", "lru", "sliding window", "two pointer",
-        "hashing", "hash table", "matrix", "recursion", "trie", "pathfinding", "visualizer",
-        "partition", "bubble", "quick", "merge sort", "insertion sort"
-      ];
+  // Sample quick check question
+  const quickCheckQuestion = {
+    question: isNormalization
+      ? "In which Normal Form must all non-prime attributes be fully functionally dependent on the entire primary key, eliminating partial dependencies?"
+      : isBST
+      ? "What is the worst-case time complexity of searching a key in an un-balanced degenerate Binary Search Tree?"
+      : "What is the primary benefit of decomposing a data structure or database relation?",
+    options: isNormalization
+      ? ["First Normal Form (1NF)", "Second Normal Form (2NF)", "Third Normal Form (3NF)", "Boyce-Codd Normal Form (BCNF)"]
+      : isBST
+      ? ["O(1)", "O(log N)", "O(N)", "O(N log N)"]
+      : ["Increases disk storage", "Eliminates anomalies & prevents corruption", "Slows down query speed", "Requires manual backups"],
+    correctIdx: isNormalization ? 1 : isBST ? 2 : 1,
+    explanation: isNormalization
+      ? "Second Normal Form (2NF) enforces that no non-prime attribute should depend on a proper subset of any candidate key (eliminates Partial Dependency)."
+      : isBST
+      ? "When items are inserted in sorted order, an un-balanced BST degrades into a linear linked list where search takes O(N) worst-case time."
+      : "Decomposition breaks apart monolithic tables or structures to eliminate update, insertion, and deletion anomalies.",
+  };
 
-      return visualKeywords.some(keyword => combined.includes(keyword)) || subId === "dsa";
-    })()
-  );
-
-  const tabs = [
-    { id: "content", label: "Content" },
-    { id: "examples", label: "Examples & Dry Run" },
-    { id: "code", label: "Code" },
-    ...(hasVisualization ? [{ id: "visualisation", label: "Visualisation" }] : []),
-    { id: "exam-prep", label: "Exam Prep" },
-    { id: "practice", label: "Practice & Interview" },
-    { id: "notes", label: "Notes" },
+  // Sample practice questions
+  const practiceQuestions = [
+    {
+      id: "p1",
+      difficulty: "Easy",
+      title: "Core Definition Check",
+      question: `Define the primary objective of ${topic.title} and identify its main constraint.`,
+      options: [
+        "Eliminate data redundancy while preserving dependencies",
+        "Merge all data into one single table",
+        "Discard indexes to save memory",
+        "Enforce strict linear search",
+      ],
+      correctIdx: 0,
+      hint: "Think about why databases decompose tables into clean relations.",
+      explanation: "The core goal is to reduce redundancy and prevent update/delete anomalies without losing data.",
+    },
+    {
+      id: "p2",
+      difficulty: "Medium",
+      title: "Transitive Dependency & Functional Analysis",
+      question: "If relation R has attributes (A, B, C) with FDs: A → B and B → C, which normal form is violated?",
+      options: ["1NF", "2NF", "3NF", "None (Already normalized)"],
+      correctIdx: 2,
+      hint: "A is primary key. Non-key attribute C depends on another non-key attribute B.",
+      explanation: "Transitive dependency occurs when non-key attribute depends on another non-key attribute (A → B → C). This violates 3NF.",
+    },
+    {
+      id: "p3",
+      difficulty: "Challenge",
+      title: "Decomposition Verification",
+      question: "Which mathematical condition guarantees that a decomposition is Lossless Join?",
+      options: [
+        "R1 ∩ R2 must be empty",
+        "R1 ∩ R2 must functionally determine (R1 - R2) or (R2 - R1)",
+        "Both tables must have identical row counts",
+        "R1 ∪ R2 must contain NULL values only",
+      ],
+      correctIdx: 1,
+      hint: "Common attributes must form a superkey of at least one of the decomposed relations.",
+      explanation: "Lossless Join is mathematically guaranteed if and only if R1 ∩ R2 → (R1 - R2) or R1 ∩ R2 → (R2 - R1) holds true in the FD set.",
+    },
   ];
 
+  // Quick Test 5 questions
+  const quickTestQuestions = [
+    {
+      q: "What does 1NF strictly mandate for all table columns?",
+      options: ["Foreign keys only", "Atomic (indivisible) values", "Composite primary keys", "No NULL values"],
+      correct: 1,
+    },
+    {
+      q: "A partial functional dependency occurs when a non-key attribute depends on:",
+      options: ["The entire primary key", "A proper subset of a composite candidate key", "Another non-prime attribute", "Foreign keys"],
+      correct: 1,
+    },
+    {
+      q: "Which normal form is strictly stronger than 3NF by requiring every determinant to be a super key?",
+      options: ["2NF", "BCNF (Boyce-Codd)", "4NF", "5NF"],
+      correct: 1,
+    },
+    {
+      q: "What is an 'Update Anomaly'?",
+      options: [
+        "Database crashing during server boot",
+        "Inconsistency caused when redundant copies of a data item are not all updated simultaneously",
+        "Slow network throughput",
+        "Corrupted hard drive sectors",
+      ],
+      correct: 1,
+    },
+    {
+      q: "Lossless join decomposition ensures that:",
+      options: [
+        "Natural join of decomposed tables produces exactly the original relation without spurious tuples",
+        "No columns are repeated",
+        "Queries execute in zero milliseconds",
+        "All tables are merged into one file",
+      ],
+      correct: 0,
+    },
+  ];
+
+  const handleQuickTestSubmit = () => {
+    let score = 0;
+    quickTestQuestions.forEach((q, i) => {
+      if (testSelectedAnswers[i] === q.correct) score++;
+    });
+    setTestScore(score);
+    setTestSubmitted(true);
+    const accuracy = Math.round((score / quickTestQuestions.length) * 100);
+    if (accuracy >= 80) {
+      updateTopicMastery(topicId, { masteryStatus: "mastered", accuracy });
+      setMasteryStatus("mastered");
+    } else if (accuracy >= 60) {
+      updateTopicMastery(topicId, { masteryStatus: "understood", accuracy });
+      setMasteryStatus("understood");
+    } else {
+      updateTopicMastery(topicId, { masteryStatus: "practicing", accuracy });
+      setMasteryStatus("practicing");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#f0f6fc] py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-        {/* Breadcrumb Navigation Bar */}
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-500 flex-wrap">
-          <Link to="/learn" className="hover:text-violet-600 transition-colors">
-            All Subjects
-          </Link>
-          <span>/</span>
-          <Link to={`/learn/${subjectId}`} className="hover:text-violet-600 transition-colors">
-            {breadcrumbs.subject.name}
-          </Link>
-          <span>/</span>
-          <span className="text-slate-400">{breadcrumbs.unit.title}</span>
-          <span>/</span>
-          <span className="text-slate-900">{topic.title}</span>
-        </div>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 py-6 px-4 sm:px-6 lg:px-8 space-y-6 animate-fade-in">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-wrap">
+        <Link to="/learn" className="hover:text-blue-600 transition-colors">
+          My Learning
+        </Link>
+        <span>/</span>
+        <Link to={`/learn/${subjectId}`} className="hover:text-blue-600 transition-colors">
+          {breadcrumbs?.subject?.name || subjectId.toUpperCase()}
+        </Link>
+        <span>/</span>
+        <span className="text-slate-500">{breadcrumbs?.unit?.title || "Unit"}</span>
+        <span>/</span>
+        <span className="text-slate-900 font-extrabold">{topic.title}</span>
+      </div>
 
-        {/* Topic Header Card */}
-        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-violet-100 text-violet-800 border border-violet-200">
-                  Topic #{topic.topicNumber}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                  ⏱️ {topic.estimatedMinutes} Mins
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                  {topic.difficulty}
-                </span>
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {topic.title}
-              </h1>
-            </div>
-
-            {/* Quick Actions in Header */}
-            <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0 flex-wrap">
-              <button
-                onClick={handleMarkComplete}
-                disabled={markingCompleted || completedState}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
-                  completedState
-                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default"
-                    : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300"
+      {/* TOPIC HEADER CARD */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-blue-100 text-blue-800 border border-blue-200">
+                Topic #{topic.topicNumber || 1}
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                ⏱️ {topic.estimatedMinutes || 20} Mins
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                {topic.difficulty || "Intermediate"}
+              </span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase border ${
+                  masteryStatus === "mastered"
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                    : masteryStatus === "understood"
+                    ? "bg-blue-100 text-blue-800 border-blue-300"
+                    : "bg-slate-100 text-slate-600 border-slate-300"
                 }`}
               >
-                <span>{completedState ? "✓ Completed" : "Mark as Complete"}</span>
-              </button>
+                ● {masteryStatus.toUpperCase()}
+              </span>
+            </div>
 
-              <button
-                onClick={() => setActiveTab("practice")}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-colors flex items-center gap-1.5 shadow-xs"
-              >
-                <span>📝 Practice This Topic</span>
-              </button>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              {topic.title}
+            </h1>
+          </div>
 
-              <button
-                onClick={handleAskTutor}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 transition-colors flex items-center gap-1.5 shadow-xs"
-              >
-                <span>🤖 Ask AI Tutor</span>
-              </button>
+          {/* Quick Flagship Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => {
+                setCompanionInitialMode("teach_me");
+                setIsCompanionOpen(true);
+              }}
+              className="px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <span>🎓 TEACH ME</span>
+            </button>
 
-              <Link
-                to={`/learn/${subjectId}/${topicId}/quiz`}
-                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 flex items-center gap-1.5 shadow-xs"
-              >
-                <span>⚡ Topic Quiz</span>
-              </Link>
+            <button
+              onClick={() => setActiveTab("voice_teacher")}
+              className="px-3.5 py-2 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors flex items-center gap-1.5"
+            >
+              <span>🎙 Voice Teacher</span>
+            </button>
+
+            <button
+              onClick={handleBookmarkToggle}
+              className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                isBookmarked
+                  ? "bg-amber-50 text-amber-800 border-amber-300"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span>{isBookmarked ? "🔖 Bookmarked" : "🔖 Bookmark"}</span>
+            </button>
+
+            <button
+              onClick={handleMarkComplete}
+              disabled={markingCompleted || completedState}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
+                completedState
+                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-default"
+                  : "bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300"
+              }`}
+            >
+              <span>{completedState ? "✓ Mastered" : "Mark Mastered"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 20-min Focus Learning Session Banner */}
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+              ⏱️
+            </span>
+            <div>
+              <div className="text-xs font-black text-slate-900">20-Minute Focus Learning Session</div>
+              <div className="text-[11px] text-slate-500 font-medium">
+                Step 1: Learn (5m) → Step 2: Visual (4m) → Step 3: Quick Check (2m) → Step 4: Practice (6m) → Step 5: Recap (3m)
+              </div>
             </div>
           </div>
 
-          {/* Subtopics Tags */}
-          {topic.subtopics && topic.subtopics.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100">
-              <span className="text-[11px] font-extrabold text-slate-400 uppercase mr-1">
-                Concepts:
+          <button
+            onClick={() => {
+              setIsSessionActive(!isSessionActive);
+              if (!isSessionActive) {
+                setActiveTab("overview");
+                setSessionStep(1);
+              }
+            }}
+            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 shadow-2xs shrink-0"
+          >
+            {isSessionActive ? `In Session: Step ${sessionStep} / 5` : "Start 20-min Session"}
+          </button>
+        </div>
+      </div>
+
+      {/* TOPIC NAVIGATION TABS */}
+      <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs overflow-x-auto scrollbar-none">
+        {[
+          { id: "overview", label: "📖 Learn & Overview" },
+          { id: "voice_teacher", label: "🎙 Voice Teacher" },
+          { id: "ai_explain", label: "✨ Explain with AI" },
+          { id: "visualize", label: "👁️ Visualize" },
+          { id: "examples", label: "🌍 Examples & Dry Run" },
+          { id: "quick_check", label: "⚡ Quick Check (30s)" },
+          { id: "practice", label: "📝 Practice This Topic" },
+          { id: "quick_test", label: "🏆 Quick Test (5 Qs)" },
+          { id: "notes", label: "📓 Notes & Revision" },
+          { id: "exam_answer", label: "🎓 Exam Answer" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === tab.id
+                ? "bg-blue-600 text-white shadow-xs"
+                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── TAB: VOICE TEACHER EXPERIENCE ───────────────────────────────────── */}
+      {activeTab === "voice_teacher" && (
+        <VoiceTeacherExperience
+          topicId={topicId}
+          topicTitle={topic.title}
+          subjectId={subjectId}
+          subjectName={breadcrumbs?.subject?.name || subjectId.toUpperCase()}
+          embedded={true}
+        />
+      )}
+
+      {/* ── TAB 1: OVERVIEW & DEEP READING EXPERIENCE ──────────────────────── */}
+      {activeTab === "overview" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          {/* Summary / WHAT */}
+          <div className="space-y-2">
+            <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span>📌</span>
+              <span>WHAT IS IT?</span>
+            </h2>
+            <p className="text-sm text-slate-700 font-medium leading-relaxed">
+              {content.shortExplanation || topic.summary || "Core concept fundamental in computer science and engineering systems."}
+            </p>
+          </div>
+
+          {/* WHY DOES IT MATTER? */}
+          <div className="space-y-2 p-4 rounded-2xl bg-blue-50/40 border border-blue-100">
+            <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
+              <span>💡</span>
+              <span>WHY DO WE NEED THIS?</span>
+            </h3>
+            <p className="text-xs text-blue-950 font-medium leading-relaxed">
+              {content.simpleExplanation ||
+                "Without this concept, systems suffer from high storage redundancy, potential data corruption during concurrent transactions, and unbounded worst-case processing times."}
+            </p>
+          </div>
+
+          {/* HOW DOES IT WORK? (Numbered steps) */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span>🪜</span>
+              <span>HOW DOES IT WORK? (STEP-BY-STEP)</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-1">
+                <span className="text-xs font-black text-blue-600">STEP 1</span>
+                <h4 className="text-xs font-bold text-slate-900">Inspect Invariants & Constraints</h4>
+                <p className="text-[11px] text-slate-500">Analyze the input parameters, schema attributes, and dependencies.</p>
+              </div>
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-1">
+                <span className="text-xs font-black text-indigo-600">STEP 2</span>
+                <h4 className="text-xs font-bold text-slate-900">Decompose / Rebalance Structure</h4>
+                <p className="text-[11px] text-slate-500">Apply algorithmic transformations to eliminate redundancies or imbalances.</p>
+              </div>
+              <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-1">
+                <span className="text-xs font-black text-emerald-600">STEP 3</span>
+                <h4 className="text-xs font-bold text-slate-900">Verify Correctness & Dependencies</h4>
+                <p className="text-[11px] text-slate-500">Confirm lossless properties, dependency preservation, or log-N height bounds.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* WHERE IS IT USED? */}
+          <div className="space-y-2">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span>🌍</span>
+              <span>WHERE IS IT USED IN INDUSTRY?</span>
+            </h3>
+            <p className="text-xs text-slate-600 font-medium leading-relaxed">
+              {content.realWorldExample ||
+                "Used in relational databases like PostgreSQL/MySQL to guarantee ACID consistency, and in search indexing engines to retrieve records with minimal disk I/O."}
+            </p>
+          </div>
+
+          {/* HOW IS IT ASKED IN EXAMS? */}
+          <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                <span>🎓</span>
+                <span>HOW IS THIS ASKED IN UNIVERSITY SEMESTER EXAMS?</span>
+              </h3>
+              <button
+                onClick={() => setActiveTab("exam_answer")}
+                className="text-xs font-bold text-amber-800 underline hover:text-amber-900"
+              >
+                View 5-Mark Answer Format →
+              </button>
+            </div>
+            <p className="text-xs text-amber-950 font-medium">
+              Common questions include: "Explain 2NF and 3NF with real-life database schema", "Prove why BCNF is stricter than 3NF", or numerical problems calculating Candidate Keys and identifying partial dependencies.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 2: EXPLAIN WITH AI (ALL PRESET MODES) ───────────────────────── */}
+      {activeTab === "ai_explain" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-amber-500 text-lg">✨</span>
+                <h2 className="text-base font-black text-slate-900 uppercase tracking-wider">
+                  Explain with AI
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Switch explanation level dynamically based on your current need.
+              </p>
+            </div>
+
+            {/* Language & Mode buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => handleRequestAIExplain(aiExplainMode, aiLanguage === "english" ? "hinglish" : "english")}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
+              >
+                🗣️ Language: {aiLanguage === "english" ? "English" : "Hinglish"}
+              </button>
+            </div>
+          </div>
+
+          {/* Mode Switcher Pills */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { id: "beginner", label: "👶 Beginner / Simpler" },
+              { id: "exam_ready", label: "🎓 Exam Ready (5 Marks)" },
+              { id: "interview_ready", label: "💼 Interview Ready" },
+              { id: "deep_dive", label: "🔬 Deep Dive (Internal Details)" },
+              { id: "hinglish", label: "🇮🇳 Explain in Hinglish" },
+            ].map((m) => (
+              <button
+                key={m.id}
+                onClick={() => handleRequestAIExplain(m.id, m.id === "hinglish" ? "hinglish" : aiLanguage)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  aiExplainMode === m.id
+                    ? "bg-blue-600 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {/* AI Explanation Box */}
+          <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium min-h-[160px] whitespace-pre-wrap">
+            {aiExplainLoading ? (
+              <div className="flex items-center gap-2 text-slate-500">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
+                <span>Generating explanation tailored for CSE students...</span>
+              </div>
+            ) : (
+              aiExplainText || "Click any explanation mode above to generate an instant conceptual breakdown."
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3: VISUALIZE (INTERACTIVE CSE LABS) ─────────────────────────── */}
+      {activeTab === "visualize" && (
+        <div className="space-y-6">
+          <DynamicTopicVisualizer
+            topicId={topicId}
+            topicTitle={topic.title}
+            subjectId={subjectId}
+            subjectName={breadcrumbs?.subject?.name || subjectId.toUpperCase()}
+          />
+        </div>
+      )}
+
+      {/* ── TAB 4: EXAMPLES & DRY RUN ───────────────────────────────────────── */}
+      {activeTab === "examples" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <span>🌍</span>
+            <span>THREE PERSPECTIVES: REAL-LIFE, TECHNICAL & EXAM</span>
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Real Life */}
+            <div className="p-5 rounded-2xl border border-blue-100 bg-blue-50/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-800">
+                Real-Life Example
               </span>
-              {topic.subtopics.map((sub, i) => (
-                <span
-                  key={i}
-                  className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-100"
-                >
-                  {sub}
-                </span>
-              ))}
+              <h4 className="text-xs font-bold text-slate-900">Hospital Patient Management</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                A patient has one unique PatientID. Instead of copying their medical history, insurance, and doctor name into every billing slip, the hospital references PatientID across appointments.
+              </p>
+            </div>
+
+            {/* Technical */}
+            <div className="p-5 rounded-2xl border border-indigo-100 bg-indigo-50/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-100 text-indigo-800">
+                Technical Architecture
+              </span>
+              <h4 className="text-xs font-bold text-slate-900">Foreign Key Integrity & Indexing</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Relational engines create B-Tree indexes on Primary and Foreign keys. Queries use index seeks (O(log N)) to join tables without full table scans.
+              </p>
+            </div>
+
+            {/* Exam */}
+            <div className="p-5 rounded-2xl border border-emerald-100 bg-emerald-50/30 space-y-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                University Exam Example
+              </span>
+              <h4 className="text-xs font-bold text-slate-900">Given Relation R(A, B, C, D)</h4>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                FDs: A → B, BC → D. Compute candidate key (AC), test for 2NF violation (A → B violates 2NF because A is part of candidate key AC).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: ACTIVE LEARNING QUICK CHECK (30 SECONDS) ────────────────── */}
+      {activeTab === "quick_check" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          <div>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-200">
+              ⚡ 30-Second Active Check
+            </span>
+            <h2 className="text-lg font-black text-slate-900 mt-2">
+              {quickCheckQuestion.question}
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {quickCheckQuestion.options.map((opt, idx) => (
+              <button
+                key={idx}
+                disabled={quickCheckAnswered}
+                onClick={() => {
+                  setSelectedOption(idx);
+                  setQuickCheckAnswered(true);
+                }}
+                className={`p-4 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
+                  quickCheckAnswered
+                    ? idx === quickCheckQuestion.correctIdx
+                      ? "bg-emerald-50 border-emerald-400 text-emerald-900"
+                      : selectedOption === idx
+                      ? "bg-rose-50 border-rose-400 text-rose-900"
+                      : "bg-slate-50 border-slate-200 text-slate-400"
+                    : selectedOption === idx
+                    ? "bg-blue-50 border-blue-400 text-blue-900"
+                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <span>{opt}</span>
+                {quickCheckAnswered && idx === quickCheckQuestion.correctIdx && <span>✓ Correct</span>}
+                {quickCheckAnswered && selectedOption === idx && idx !== quickCheckQuestion.correctIdx && (
+                  <span>✕ Incorrect</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {quickCheckAnswered && (
+            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-950 font-medium space-y-1 animate-fade-in">
+              <span className="font-bold">💡 Why this is the correct answer:</span>
+              <p>{quickCheckQuestion.explanation}</p>
             </div>
           )}
         </div>
+      )}
 
-        {/* Grid Layout: Main Learning Content & Right Action Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Main Content (3 cols) */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* ─── TOPIC LEARNING TABS NAVIGATION ───────────────────────────────────── */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-1.5 rounded-2xl bg-white border border-sky-100 shadow-xs">
-              {tabs.map((tab) => (
+      {/* ── TAB 6: PRACTICE THIS TOPIC (ADAPTIVE QUESTION BANK) ─────────────── */}
+      {activeTab === "practice" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+                Targeted Practice
+              </span>
+              <h2 className="text-base font-black text-slate-900">
+                Practice Questions for {topic.title}
+              </h2>
+            </div>
+
+            {/* Easy / Med / Challenge indicators */}
+            <div className="flex items-center gap-1.5">
+              {practiceQuestions.map((q, idx) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex-shrink-0 flex items-center gap-2 ${
-                    activeTab === tab.id
-                      ? "bg-sky-600 text-white shadow-md shadow-sky-600/20"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  key={q.id}
+                  onClick={() => setActivePracticeIndex(idx)}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
+                    activePracticeIndex === idx
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  <span>{tab.label}</span>
+                  Q{idx + 1} ({q.difficulty})
                 </button>
               ))}
             </div>
+          </div>
 
-        {/* ─── TAB 1: CONTENT ──────────────────────────────────────────────────────── */}
-        {activeTab === "content" && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Short Explanation / Overview Card */}
-            {(content.shortExplanation || content.introduction) && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>📌</span>
-                  <span>Introduction & Short Summary</span>
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-700 font-medium">
-                  {content.shortExplanation || content.introduction}
-                </p>
-              </div>
-            )}
+          {/* Current Question */}
+          {(() => {
+            const q = practiceQuestions[activePracticeIndex];
+            const chosen = practiceAnswers[q.id];
+            const feedback = practiceFeedback[q.id];
 
-            {/* Simple Explanation Card */}
-            {content.simpleExplanation && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>👶</span>
-                  <span>Explain Like I'm 5</span>
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-700 font-medium">
-                  {content.simpleExplanation}
-                </p>
-              </div>
-            )}
-
-            {/* Real World Example Card */}
-            {content.realWorldExample && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>🌍</span>
-                  <span>Real-World Application</span>
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-700 font-medium">
-                  {content.realWorldExample}
-                </p>
-              </div>
-            )}
-
-            {/* In-Depth Academic Theory Card */}
-            {(content.detailedExplanation || content.explanationMarkdown) && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>📖</span>
-                  <span>Detailed Academic Explanation</span>
-                </h3>
-                <div className="text-sm leading-relaxed text-slate-700 font-medium whitespace-pre-line space-y-2">
-                  {content.detailedExplanation || content.explanationMarkdown}
-                </div>
-              </div>
-            )}
-
-            {/* Visual Diagram Section */}
-            {content.visualDiagram && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-3">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>📐</span>
-                  <span>Visual Representation & System Diagram</span>
-                </h3>
-                <div className="p-4 rounded-2xl bg-slate-900 text-sky-300 font-mono text-xs overflow-x-auto whitespace-pre leading-relaxed shadow-inner">
-                  {content.visualDiagram}
-                </div>
-              </div>
-            )}
-
-            {/* Core Concepts Breakdown */}
-            {content.concepts && content.concepts.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-violet-800 uppercase tracking-wider flex items-center gap-2">
-                  <span>📚</span>
-                  <span>Core Concepts to Master</span>
-                </h3>
-                <div className="grid grid-cols-1 gap-3">
-                  {content.concepts.map((concept, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl bg-violet-50/40 border border-violet-100 flex items-start gap-3">
-                      <span className="w-6 h-6 rounded-lg bg-violet-600 text-white flex items-center justify-center font-bold text-xs flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
-                        {concept}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Algorithm Steps & Mechanics */}
-            {content.algorithmSteps && content.algorithmSteps.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>⚙️</span>
-                  <span>Algorithm & Execution Mechanics</span>
-                </h3>
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 font-mono text-xs text-slate-800 leading-relaxed">
-                  {content.algorithmSteps.map((step, sIdx) => (
-                    <div key={sIdx}>{step}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Complexity Grid */}
-            {(content.timeComplexity || content.spaceComplexity) && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    ⏱️ Time Complexity
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-blue-100 text-blue-800">
+                    {q.difficulty}
                   </span>
-                  <p className="text-sm font-black text-violet-800 font-mono">
-                    {content.timeComplexity}
-                  </p>
+                  <span className="text-xs font-bold text-slate-500">{q.title}</span>
                 </div>
 
-                <div className="bg-white p-5 rounded-3xl border border-slate-200/90 shadow-2xs space-y-1">
-                  <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    💾 Space Complexity
-                  </span>
-                  <p className="text-sm font-black text-sky-800 font-mono">
-                    {content.spaceComplexity}
-                  </p>
-                </div>
-              </div>
-            )}
+                <h3 className="text-sm font-bold text-slate-900 leading-relaxed">{q.question}</h3>
 
-          </div>
-        )}
-
-        {/* ─── TAB: EXAM PREP ─────────────────────────────────────────────────── */}
-        {activeTab === "exam-prep" && (
-          <div className="space-y-6 animate-fade-in">
-            {/* Exam Notes */}
-            {content.examNotes && content.examNotes.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-amber-200/80 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-amber-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>📝</span>
-                  <span>Quick Exam Notes</span>
-                </h3>
-                <ul className="space-y-2 text-sm text-slate-700 font-medium">
-                  {content.examNotes.map((note, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-amber-500 font-bold">•</span>
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Key Takeaways & Common Mistakes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {content.keyTakeaways && content.keyTakeaways.length > 0 && (
-                <div className="bg-white p-6 rounded-3xl border border-emerald-200/80 shadow-2xs space-y-3">
-                  <h4 className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>✅</span>
-                    <span>Key Takeaways</span>
-                  </h4>
-                  <ul className="space-y-2 text-xs text-slate-700 font-medium">
-                    {content.keyTakeaways.map((takeaway, tIdx) => (
-                      <li key={tIdx} className="flex items-start gap-2">
-                        <span className="text-emerald-500 font-bold">•</span>
-                        <span>{takeaway}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {content.commonMistakes && content.commonMistakes.length > 0 && (
-                <div className="bg-white p-6 rounded-3xl border border-rose-200/80 shadow-2xs space-y-3">
-                  <h4 className="text-xs font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>⚠️</span>
-                    <span>Common Traps & Pitfalls</span>
-                  </h4>
-                  <ul className="space-y-2 text-xs text-slate-700 font-medium">
-                    {content.commonMistakes.map((mistake, mIdx) => (
-                      <li key={mIdx} className="flex items-start gap-2">
-                        <span className="text-rose-500 font-bold">•</span>
-                        <span>{mistake}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* Important Questions */}
-            {content.importantQuestions && content.importantQuestions.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-indigo-100 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>⭐</span>
-                  <span>Important University Questions</span>
-                </h3>
-                <div className="space-y-3">
-                  {content.importantQuestions.map((iq, iIdx) => (
-                    <div key={iIdx} className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {iq.question}</h4>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-indigo-700 border border-indigo-200 flex-shrink-0">
-                          {iq.marks} Marks
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-indigo-100/60">
-                        <strong className="text-indigo-900">Answer:</strong> {iq.answer}
-                      </p>
-                    </div>
+                <div className="space-y-2">
+                  {q.options.map((opt, i) => (
+                    <button
+                      key={i}
+                      disabled={chosen !== undefined}
+                      onClick={() => {
+                        const isCorrect = i === q.correctIdx;
+                        setPracticeAnswers((prev) => ({ ...prev, [q.id]: i }));
+                        setPracticeFeedback((prev) => ({ ...prev, [q.id]: isCorrect }));
+                      }}
+                      className={`w-full p-3.5 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
+                        chosen !== undefined
+                          ? i === q.correctIdx
+                            ? "bg-emerald-50 border-emerald-400 text-emerald-900"
+                            : chosen === i
+                            ? "bg-rose-50 border-rose-400 text-rose-900"
+                            : "bg-white border-slate-200 text-slate-400"
+                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      <span>{opt}</span>
+                      {chosen !== undefined && i === q.correctIdx && <span>✓ Correct</span>}
+                    </button>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {/* PYQs */}
-            {content.pyqs && content.pyqs.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-blue-100 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-blue-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>📜</span>
-                  <span>Previous Year Questions (PYQs)</span>
-                </h3>
-                <div className="space-y-3">
-                  {content.pyqs.map((pyq, iIdx) => (
-                    <div key={iIdx} className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {pyq.question}</h4>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-blue-700 border border-blue-200">
-                            {pyq.year} - {pyq.exam}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-blue-100/60">
-                        <strong className="text-blue-900">Answer:</strong> {pyq.answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── TAB 2: EXAMPLES & DRY RUN ────────────────────────────────────────── */}
-        {activeTab === "examples" && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                <span>💡</span>
-                <span>Step-by-Step Practical Examples</span>
-              </h3>
-
-              {content.examples && content.examples.length > 0 && (
-                <div className="space-y-4">
-                  {content.examples.map((ex, eIdx) => (
-                    <div key={eIdx} className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                      <div className="text-xs font-black text-violet-700 uppercase tracking-wider">Example #{eIdx + 1}</div>
-                      <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">{ex}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {content.dryRunSteps && content.dryRunSteps.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-sky-100 shadow-xs space-y-4">
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <span>👣</span>
-                  <span>Dry Run Steps</span>
-                </h3>
-                <div className="space-y-4">
-                  {content.dryRunSteps.map((step, sIdx) => (
-                    <div key={sIdx} className="p-3 rounded-xl bg-sky-50/50 border border-sky-100 text-sm text-slate-800">
-                      <strong>Step {sIdx + 1}:</strong> {step}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {content.dryRunTable && content.dryRunTable.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <span>📊</span>
-                  <span>Dry Run State Table</span>
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm text-left text-slate-700 border border-slate-200 rounded-xl overflow-hidden">
-                    <thead className="bg-slate-100 text-slate-900 font-bold">
-                      <tr>
-                        <th className="px-4 py-2 border-b border-slate-200">Step</th>
-                        <th className="px-4 py-2 border-b border-slate-200">Line</th>
-                        <th className="px-4 py-2 border-b border-slate-200">State / Variables</th>
-                        <th className="px-4 py-2 border-b border-slate-200">Explanation</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {content.dryRunTable.map((row, rIdx) => (
-                        <tr key={rIdx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-2">{row.step}</td>
-                          <td className="px-4 py-2 font-mono text-xs">{row.line}</td>
-                          <td className="px-4 py-2 font-mono text-xs text-sky-700">{row.state}</td>
-                          <td className="px-4 py-2 text-xs">{row.explanation}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ─── TAB 3: CODE ────────────────────────────────────────────────────────── */}
-        {activeTab === "code" && (
-          <div className="space-y-6 animate-fade-in">
-            <CodePlayground codeExamples={codeMap} />
-          </div>
-        )}
-
-        {/* ─── TAB 4: VISUALISATION (Only when relevant) ─────────────────────────── */}
-        {hasVisualization && activeTab === "visualisation" && (
-          <div className="space-y-6 animate-fade-in">
-            <SortingVisualizer topicTitle={topic.title} />
-          </div>
-        )}
-
-        {/* ─── TAB 5: PRACTICE & INTERVIEW ──────────────────────────────────────── */}
-        {activeTab === "practice" && (
-          <div className="space-y-6 animate-fade-in">
-            {content.interviewQuestions && content.interviewQuestions.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-indigo-100 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>💼</span>
-                  <span>Top Tech & FAANG Interview Questions</span>
-                </h3>
-                <div className="space-y-3">
-                  {content.interviewQuestions.map((iq, iIdx) => (
-                    <div key={iIdx} className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-xs font-black text-slate-900 leading-snug">Q: {iq.question}</h4>
-                        <div className="flex gap-1 flex-shrink-0">
-                          {(iq.companyTags || ["Google", "Amazon"]).map((comp, cIdx) => (
-                            <span key={cIdx} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-white text-indigo-700 border border-indigo-200">
-                              {comp}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white/80 p-3 rounded-xl border border-indigo-100/60">
-                        <strong className="text-indigo-900">Answer:</strong> {iq.answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {content.codingPractice && content.codingPractice.title && (
-              <div className="bg-white p-6 sm:p-8 rounded-3xl border border-emerald-100 shadow-xs space-y-4">
-                <h3 className="text-sm font-black text-emerald-900 uppercase tracking-wider flex items-center gap-2">
-                  <span>💻</span>
-                  <span>Coding Practice: {content.codingPractice.title}</span>
-                </h3>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                  <p className="text-sm font-bold text-slate-800">Problem Statement:</p>
-                  <p className="text-sm text-slate-700">{content.codingPractice.problemStatement}</p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-slate-900 text-slate-300 font-mono text-xs overflow-x-auto">
-                    <p className="font-bold text-sky-400 mb-1">Input:</p>
-                    {content.codingPractice.sampleInput}
-                  </div>
-                  <div className="p-4 rounded-xl bg-slate-900 text-slate-300 font-mono text-xs overflow-x-auto">
-                    <p className="font-bold text-emerald-400 mb-1">Output:</p>
-                    {content.codingPractice.sampleOutput}
-                  </div>
-                </div>
-                {content.codingPractice.starterCode && (
-                  <div>
-                     <p className="text-xs font-bold text-slate-600 mb-2">Starter Code:</p>
-                     <div className="p-4 rounded-xl bg-slate-900 text-sky-300 font-mono text-xs overflow-x-auto whitespace-pre-wrap">
-                       {content.codingPractice.starterCode}
-                     </div>
+                {chosen !== undefined && (
+                  <div
+                    className={`p-4 rounded-2xl border text-xs font-medium space-y-1 ${
+                      feedback ? "bg-emerald-50 border-emerald-200 text-emerald-950" : "bg-rose-50 border-rose-200 text-rose-950"
+                    }`}
+                  >
+                    <span className="font-bold">{feedback ? "🎉 Excellent!" : "⚠️ Concept Review:"}</span>
+                    <p>{q.explanation}</p>
                   </div>
                 )}
               </div>
-            )}
+            );
+          })()}
+        </div>
+      )}
 
-            <PracticePanel topicId={topicId} subjectId={subjectId} />
-          </div>
-        )}
-
-        {/* ─── TAB 6: NOTES ───────────────────────────────────────────────────────── */}
-        {activeTab === "notes" && (
-          <div className="space-y-6 animate-fade-in">
-            <NoteEditor topicId={topicId} topicTitle={topic.title} />
-          </div>
-        )}
-
-          </div>
-
-          {/* Right Action Sidebar (1 col) matching reference screenshot */}
-          <div className="space-y-6 lg:col-span-1">
-            {/* Card 1: Mark your progress */}
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4 sticky top-24">
-              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Mark your progress</h4>
-
-              {!completedState ? (
-                <button
-                  id="mark-topic-completed-btn-side"
-                  onClick={handleMarkComplete}
-                  disabled={markingCompleted}
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm"
-                >
-                  <span>✓ Mark as Read</span>
-                </button>
-              ) : (
-                <div className="w-full py-2 px-4 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs text-center border border-emerald-200">
-                  ✓ Marked as Read
+      {/* ── TAB 7: QUICK TEST (5 QUESTIONS TIMED EVALUATION) ───────────────── */}
+      {activeTab === "quick_test" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          {!testSubmitted ? (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-blue-100 text-blue-800">
+                    Topic Mini Test
+                  </span>
+                  <h2 className="text-base font-black text-slate-900 mt-1">
+                    5-Question Diagnostic Test
+                  </h2>
                 </div>
-              )}
-
-              <p className="text-[11px] text-slate-500 font-medium text-center">
-                After reading, test your understanding.
-              </p>
-
-              <Link
-                to={`/learn/${subjectId}/${topicId}/quiz`}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs text-center flex items-center justify-center gap-1.5 transition-colors shadow-sm"
-              >
-                <span>📝 Start Questions</span>
-              </Link>
-            </div>
-
-            {/* Card 2: Quick Links */}
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-3">
-              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Quick Links</h4>
-              <div className="space-y-2 text-xs font-bold text-slate-700">
-                <button
-                  onClick={() => window.print()}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
-                >
-                  <span>📥</span>
-                  <span>Download Notes (PDF)</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("notes")}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
-                >
-                  <span>📓</span>
-                  <span>Add to My Notes</span>
-                </button>
-                <button
-                  onClick={handleAskTutor}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
-                >
-                  <span>🤖</span>
-                  <span>Ask AI Tutor</span>
-                </button>
-                <Link
-                  to="/tutor"
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center gap-2 transition-colors"
-                >
-                  <span>💬</span>
-                  <span>View Discussions</span>
-                </Link>
+                <span className="text-xs font-bold text-slate-400">⏱️ Est: 5 mins</span>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* ─── COMPLETION & QUIZ CTA FOOTER ───────────────────────────────── */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200 shadow-md space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h3 className="text-base font-black text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                {completedState
-                  ? "🎉 You have completed this study module!"
-                  : "Done reading? Mark this topic as completed."}
+              {quickTestQuestions.map((q, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-slate-50/60 border border-slate-200/80 space-y-3">
+                  <h4 className="text-xs font-bold text-slate-900">
+                    Q{idx + 1}. {q.q}
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {q.options.map((opt, oIdx) => (
+                      <button
+                        key={oIdx}
+                        onClick={() => setTestSelectedAnswers((prev) => ({ ...prev, [idx]: oIdx }))}
+                        className={`p-3 rounded-xl border text-left text-xs font-semibold transition-all ${
+                          testSelectedAnswers[idx] === oIdx
+                            ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={handleQuickTestSubmit}
+                disabled={Object.keys(testSelectedAnswers).length < quickTestQuestions.length}
+                className="w-full py-3 rounded-xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50"
+              >
+                Submit Quick Test
+              </button>
+            </div>
+          ) : (
+            <div className="p-6 rounded-3xl bg-emerald-50/60 border border-emerald-200 space-y-4 text-center">
+              <span className="text-3xl">🏆</span>
+              <h3 className="text-lg font-black text-slate-900">
+                Diagnostic Test Completed!
               </h3>
+              <div className="text-2xl font-black text-emerald-700">
+                Score: {testScore} / {quickTestQuestions.length} ({Math.round((testScore / quickTestQuestions.length) * 100)}% Accuracy)
+              </div>
+              <p className="text-xs text-slate-600 font-medium max-w-sm mx-auto">
+                {testScore >= 4
+                  ? "Outstanding mastery! You have demonstrated a clear understanding of the core concepts."
+                  : "Good effort! Revise the weak areas below and retake the test to reach 100% mastery."}
+              </p>
+              <button
+                onClick={() => {
+                  setTestSubmitted(false);
+                  setTestSelectedAnswers({});
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+              >
+                Retake Test
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── TAB 8: NOTES & AI REVISION NOTES GENERATOR ─────────────────────── */}
+      {activeTab === "notes" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-black text-slate-900 uppercase tracking-wider">
+                Topic Revision Notes
+              </h2>
               <p className="text-xs text-slate-500 font-medium">
-                {completedState
-                  ? "Now test your understanding with the topic quiz to earn verified subject mastery."
-                  : "Marking as completed tracks your study streak and unlocks topic quizzes."}
+                Save personal definitions, exam tips, and AI generated summary notes.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 flex-shrink-0">
-              {!completedState ? (
-                <button
-                  id="mark-topic-completed-btn"
-                  onClick={handleMarkComplete}
-                  disabled={markingCompleted}
-                  className="px-5 py-2.5 rounded-2xl text-xs font-black text-white bg-slate-900 hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-2 shadow-sm"
-                >
-                  {markingCompleted ? "Saving..." : "✓ Mark as Completed"}
-                </button>
-              ) : (
-                <span className="px-4 py-2 rounded-xl text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1.5">
-                  <span>✓</span>
-                  <span>Completed</span>
-                </span>
-              )}
+            <button
+              onClick={() => handleCreateRevisionNotes(true)}
+              disabled={generatingRevision}
+              className="px-3.5 py-2 rounded-xl text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs flex items-center gap-1.5"
+            >
+              <span>✨</span>
+              <span>{generatingRevision ? "Generating..." : "Create AI Revision Notes"}</span>
+            </button>
+          </div>
 
-              <Link
-                to={`/learn/${subjectId}/${topicId}/quiz`}
-                className="btn-gradient px-5 py-2.5 rounded-2xl text-xs font-black text-white active:scale-95 transition-all flex items-center gap-2 shadow-sm"
+          {/* Add Personal Note Input */}
+          <form onSubmit={handleSavePersonalNote} className="space-y-2">
+            <textarea
+              value={newNoteText}
+              onChange={(e) => setNewNoteText(e.target.value)}
+              placeholder="Write a personal note, shortcut, or exam tip for this topic..."
+              rows={3}
+              className="w-full p-3.5 rounded-2xl text-xs border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+            />
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={!newNoteText.trim() || savingNote}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
               >
-                <span>Start Topic Quiz</span>
-                <span>→</span>
-              </Link>
+                Save Note
+              </button>
             </div>
+          </form>
+
+          {/* Saved Notes List */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-black uppercase text-slate-400">Saved Notes ({notesList.length})</h3>
+            {notesList.length === 0 ? (
+              <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-medium">
+                No personal notes saved yet. Type a note above or click "Create AI Revision Notes"!
+              </div>
+            ) : (
+              notesList.map((n) => (
+                <div key={n._id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">{n.title || "Note"}</span>
+                    <button
+                      onClick={() => handleDeleteNote(n._id)}
+                      className="text-[11px] text-rose-600 hover:text-rose-700 font-bold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap">{n.content}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
+      )}
 
-        {/* Next & Previous Topic Navigation Bar */}
-        <div className="flex items-center justify-between gap-4 pt-2">
-          {navigation?.prev ? (
-            <Link
-              to={`/learn/${subjectId}/${navigation.prev.topicId}`}
-              className="px-4 py-2 rounded-2xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2"
-            >
-              <span>←</span>
-              <span>Prev: {navigation.prev.title}</span>
-            </Link>
-          ) : (
-            <div />
-          )}
+      {/* ── TAB 9: EXAM ANSWER GENERATOR (2, 5, 10 MARKS) ──────────────────── */}
+      {activeTab === "exam_answer" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <span>🎓</span>
+                <span>University Exam Answer Generator</span>
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Generate structured university semester examination answers tailored for your university syllabus.
+              </p>
+            </div>
 
-          {navigation?.next ? (
-            <Link
-              to={`/learn/${subjectId}/${navigation.next.topicId}`}
-              className="px-4 py-2 rounded-2xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 ml-auto"
-            >
-              <span>Next: {navigation.next.title}</span>
-              <span>→</span>
-            </Link>
-          ) : (
-            <Link
-              to={`/learn/${subjectId}`}
-              className="px-4 py-2 rounded-2xl text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-2 ml-auto"
-            >
-              <span>Back to Subject Units</span>
-              <span>→</span>
-            </Link>
-          )}
+            {/* Marks Selector */}
+            <div className="flex items-center gap-2">
+              {[2, 5, 10].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => handleGenerateExamAnswer(m)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    selectedMarks === m
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {m} Marks
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap min-h-[160px]">
+            {examAnswerLoading ? (
+              <div className="flex items-center gap-2 text-slate-500">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
+                <span>Formatting {selectedMarks}-mark university answer structure...</span>
+              </div>
+            ) : (
+              examAnswerText || "Select 2, 5, or 10 marks above to generate a university-ready structured answer."
+            )}
+          </div>
         </div>
+      )}
+
+      {/* Persistent Floating Learning Companion Trigger Button */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => {
+            setCompanionInitialMode("beginner");
+            setIsCompanionOpen(true);
+          }}
+          className="px-4 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black shadow-xl hover:shadow-2xl transition-all flex items-center gap-2 border border-slate-700/80 group"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>🎓 Learning Companion</span>
+        </button>
       </div>
+
+      {/* Floating Learning Companion Drawer */}
+      <LearningCompanion
+        isOpen={isCompanionOpen}
+        onClose={() => setIsCompanionOpen(false)}
+        topicId={topicId}
+        topicTitle={topic.title}
+        subjectId={subjectId}
+        subjectName={breadcrumbs?.subject?.name || subjectId.toUpperCase()}
+        initialMode={companionInitialMode}
+      />
     </div>
   );
 };

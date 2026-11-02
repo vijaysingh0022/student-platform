@@ -1,299 +1,200 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import api from "../services/api.js";
-import MarkdownRenderer from "../components/MarkdownRenderer.jsx";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useSearchParams, useLocation } from "react-router-dom";
+import { BrainCircuit } from "lucide-react";
+import api, { getSkillGraph } from "../services/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
+// Modular Subcomponents
+import AITutorHero from "../components/tutor/AITutorHero.jsx";
+import SubjectTabs from "../components/tutor/SubjectTabs.jsx";
+import TutorModePanel from "../components/tutor/TutorModePanel.jsx";
+import ChatHeader from "../components/tutor/ChatHeader.jsx";
+import ChatMessage from "../components/tutor/ChatMessage.jsx";
+import TutorInput from "../components/tutor/TutorInput.jsx";
+import LearningContext from "../components/tutor/LearningContext.jsx";
+import PopularTopics from "../components/tutor/PopularTopics.jsx";
+import RecentConversations from "../components/tutor/RecentConversations.jsx";
+import RecommendedForYou from "../components/tutor/RecommendedForYou.jsx";
+
+// Initial recent chats matching reference UI
+const INITIAL_RECENT_CHATS = [
+  { id: "r1", title: "Explain Dijkstra's algorithm", time: "2 hours ago", subject: "DSA" },
+  { id: "r2", title: "Difference between BFS and DFS", time: "5 hours ago", subject: "DSA" },
+  { id: "r3", title: "Normalization in DBMS", time: "Yesterday", subject: "DBMS" },
+  { id: "r4", title: "What is virtual memory", time: "2 days ago", subject: "OS" },
+  { id: "r5", title: "Explain TCP 3-way handshake", time: "2 days ago", subject: "CN" },
+];
+
+// Typing Indicator Bubble
 const TypingIndicator = () => (
-  <div className="flex items-start gap-3 justify-start animate-fade-in">
-    <div
-      className="w-9 h-9 rounded-xl flex items-center justify-center text-sm flex-shrink-0"
-      style={{
-        background: "linear-gradient(135deg, #7c3aed, #0ea5e9)",
-        boxShadow: "0 0 15px rgba(124,58,237,0.3)",
-      }}
-    >
-      🤖
+  <div className="flex items-start gap-3 justify-start animate-in fade-in duration-200">
+    <div className="w-8 h-8 rounded-xl bg-[#0B1020] border border-slate-700/80 flex items-center justify-center text-white shrink-0 shadow-sm mt-0.5">
+      <BrainCircuit className="w-4 h-4 text-indigo-400 animate-pulse" />
     </div>
-    <div
-      className="px-5 py-3.5 rounded-2xl rounded-tl-sm flex gap-1.5 items-center bg-white border border-violet-200 shadow-sm"
-    >
-      <span className="text-xs font-bold text-violet-700 mr-2">
-        AI Tutor is formulating your answer...
-      </span>
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="w-2 h-2 rounded-full animate-bounce"
-          style={{
-            background: "#0ea5e9",
-            animationDelay: `${i * 150}ms`,
-          }}
-        />
-      ))}
+    <div className="px-4 py-3 rounded-2xl rounded-tl-xs bg-white border border-slate-200/90 shadow-2xs flex items-center gap-2">
+      <span className="text-xs font-bold text-slate-700">LearnX AI Tutor is formulating your answer</span>
+      <div className="flex items-center gap-1 ml-1">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-bounce"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
+      </div>
     </div>
   </div>
 );
 
-const MessageBubble = ({ msg, index, onQuickFollowUp }) => {
-  const isUser = msg.role === "user";
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(msg.text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div
-      className={`flex items-start gap-3 animate-fade-in-up ${
-        isUser ? "justify-end" : "justify-start"
-      }`}
-      style={{ animationDelay: `${index * 40}ms` }}
-    >
-      {/* AI Avatar */}
-      {!isUser && (
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-sm flex-shrink-0 mt-1 text-white shadow-sm"
-          style={{
-            background: "linear-gradient(135deg, #7c3aed, #0ea5e9)",
-          }}
-        >
-          🤖
-        </div>
-      )}
-
-      {/* Bubble Container */}
-      <div className={`max-w-[88%] md:max-w-[80%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-        {/* Author Tag */}
-        <div className="flex items-center gap-2 mb-1 px-1">
-          <span className="text-[11px] font-bold tracking-wide" style={{ color: isUser ? "#0284c7" : "#7c3aed" }}>
-            {isUser ? "YOU" : "STUDENTIQ AI TUTOR"}
-          </span>
-          {msg.time && (
-            <span className="text-[10px] text-slate-500 font-medium">
-              {msg.time}
-            </span>
-          )}
-        </div>
-
-        {/* Bubble Content */}
-        <div
-          className="rounded-2xl p-4 md:p-5 transition-all duration-200"
-          style={
-            isUser
-              ? {
-                  background: "linear-gradient(135deg, #7c3aed 0%, #0ea5e9 100%)",
-                  borderRadius: "1.25rem 0.25rem 1.25rem 1.25rem",
-                  color: "#ffffff",
-                  boxShadow: "0 4px 15px rgba(124,58,237,0.25)",
-                }
-              : {
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "0.25rem 1.25rem 1.25rem 1.25rem",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-                  color: "#1e293b",
-                }
-          }
-        >
-          {isUser ? (
-            <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-          ) : (
-            <MarkdownRenderer content={msg.text} />
-          )}
-        </div>
-
-        {/* AI Action Quick-Bar */}
-        {!isUser && msg.text && (
-          <div className="flex flex-wrap items-center gap-2 mt-2 px-1">
-            <button
-              onClick={handleCopy}
-              className="px-2.5 py-1 rounded-full text-[10px] font-bold transition-all duration-200 flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-700 hover:bg-slate-200"
-            >
-              {copied ? "✓ Copied" : "📋 Copy"}
-            </button>
-
-            {onQuickFollowUp && index === msg.totalMsgs - 1 && (
-              <>
-                <button onClick={() => onQuickFollowUp("Explain Simply")} className="quick-action-btn">👶 Explain Simply</button>
-                <button onClick={() => onQuickFollowUp("Give Real World Example")} className="quick-action-btn">🌍 Real World Example</button>
-                <button onClick={() => onQuickFollowUp("Show Visual")} className="quick-action-btn">📐 Show Visual</button>
-                <button onClick={() => onQuickFollowUp("Show Code")} className="quick-action-btn">💻 Show Code</button>
-                <button onClick={() => onQuickFollowUp("Dry Run")} className="quick-action-btn">👣 Dry Run</button>
-                <button onClick={() => onQuickFollowUp("Quiz Me")} className="quick-action-btn">❓ Quiz Me</button>
-                <button onClick={() => onQuickFollowUp("Give Interview Question")} className="quick-action-btn">💼 Interview Question</button>
-                <button onClick={() => onQuickFollowUp("Give Exam Answer")} className="quick-action-btn">📝 Exam Answer</button>
-                <button onClick={() => onQuickFollowUp("Give Short Notes")} className="quick-action-btn">📓 Short Notes</button>
-                <button onClick={() => onQuickFollowUp("Explain My Mistake")} className="quick-action-btn">⚠️ Explain My Mistake</button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* User Avatar */}
-      {isUser && (
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 mt-1 text-white bg-slate-800 shadow-sm"
-        >
-          YOU
-        </div>
-      )}
-    </div>
-  );
-};
-
-const TUTOR_TRACKS = [
-  { id: "All Subjects", label: "All Subjects", icon: "✨", color: "from-slate-700 to-slate-900" },
-  { id: "DSA", label: "DSA & Algos", icon: "⚡", color: "from-blue-600 to-indigo-600" },
-  { id: "DBMS", label: "DBMS & SQL", icon: "🗄️", color: "from-emerald-600 to-teal-600" },
-  { id: "OS", label: "Operating Systems", icon: "💻", color: "from-violet-600 to-purple-600" },
-  { id: "CN", label: "Computer Networks", icon: "🌐", color: "from-sky-600 to-cyan-600" },
-  { id: "OOPS", label: "OOPs & SOLID", icon: "🧩", color: "from-amber-600 to-orange-600" },
-  { id: "SYSTEM_DESIGN", label: "System Design", icon: "🏗️", color: "from-rose-600 to-pink-600" },
-  { id: "APTITUDE", label: "Aptitude & Math", icon: "🧠", color: "from-fuchsia-600 to-pink-600" },
-  { id: "WEB_DEV", label: "Web & DevOps", icon: "🚀", color: "from-emerald-600 to-green-600" },
-  { id: "MACHINE_LEARNING", label: "Machine Learning", icon: "🤖", color: "from-purple-600 to-indigo-700" },
-];
-
-const SUBJECT_SUGGESTIONS = {
-  "All Subjects": [
-    { label: "Binary Search Tree", query: "Explain Binary Search Tree operations and code in C++ with step-by-step logic." },
-    { label: "Normalization in DBMS", query: "Explain 1NF, 2NF, 3NF, and BCNF with a clear relational table example." },
-    { label: "TCP 3-Way Handshake", query: "Explain the TCP 3-Way Handshake step-by-step with packet diagrams." },
-    { label: "Deadlock Conditions", query: "Explain the 4 necessary conditions for deadlock in Operating Systems and Banker's Algorithm." },
-  ],
-  DSA: [
-    { label: "Graph BFS vs DFS", query: "Explain Breadth-First Search (BFS) vs Depth-First Search (DFS) with time/space complexity and C++ code." },
-    { label: "DP Knapsack Patterns", query: "How does Memoization differ from Tabulation in Dynamic Programming? Show with 0/1 Knapsack." },
-    { label: "Heap & Priority Queue", query: "Explain Min-Heap vs Max-Heap construction and heapify operation with O(log N) operations." },
-    { label: "Two Pointer & Sliding Window", query: "Explain Two-Pointer and Sliding Window techniques with common placement interview patterns." },
-  ],
-  DBMS: [
-    { label: "Normalization 1NF-BCNF", query: "Explain 1NF, 2NF, 3NF, and BCNF with a practical employee-department database table example." },
-    { label: "B+ Tree Indexing", query: "Why are B+ Trees predominantly preferred over standard B-Trees for database indexing and range queries?" },
-    { label: "ACID & Strict 2PL", query: "Explain ACID transaction properties and how Strict 2-Phase Locking (2PL) prevents cascading rollbacks." },
-    { label: "SQL Complex Joins", query: "Explain INNER JOIN, LEFT JOIN, FULL OUTER JOIN and GROUP BY with SQL examples and performance tips." },
-  ],
-  OS: [
-    { label: "Banker's Deadlock Algorithm", query: "Explain Banker's Algorithm for deadlock avoidance with resource allocation matrix and safe state check." },
-    { label: "Process vs Thread", query: "Explain Process vs Thread, PCB vs TCB, and what happens during a CPU Context Switch." },
-    { label: "Virtual Memory & Paging", query: "Explain Paging, Page Faults, TLB (Translation Lookaside Buffer), and Thrashing in Virtual Memory." },
-    { label: "Semaphores vs Mutex", query: "What is the difference between a Binary Semaphore and a Mutex Lock? Give a Producer-Consumer example." },
-  ],
-  CN: [
-    { label: "TCP 3-Way Handshake", query: "Explain the TCP 3-Way Handshake for connection establishment and 4-way handshake for termination." },
-    { label: "Subnetting & CIDR Math", query: "Explain how to calculate subnet mask, network ID, and usable host IPs for /26 and /28 CIDR prefixes." },
-    { label: "DNS Resolution Flow", query: "Trace step-by-step what happens from entering a URL in browser until DNS IP resolution." },
-    { label: "HTTPS & TLS 1.3 Handshake", query: "How does HTTPS establish secure encrypted communication? Explain the TLS 1.3 cryptographic handshake." },
-  ],
-  OOPS: [
-    { label: "Polymorphism & vtable", query: "Explain compile-time vs runtime polymorphism and how the vtable (virtual table) and vptr work under the hood in C++." },
-    { label: "SOLID Principles in Code", query: "Explain each of the 5 SOLID engineering principles with bad code vs refactored good code examples." },
-    { label: "Singleton & Factory Patterns", query: "Explain the Singleton Pattern (thread-safe double-checked locking) and Factory Pattern with practical code." },
-    { label: "Abstract Class vs Interface", query: "What is the exact difference between an Abstract Class and an Interface in Java/C++? When should you use which?" },
-  ],
-  SYSTEM_DESIGN: [
-    { label: "Horizontal vs Vertical Scaling", query: "Compare Horizontal Scaling vs Vertical Scaling, Load Balancer algorithms, and eliminating single points of failure." },
-    { label: "Cache Stampede & Redis", query: "What is Cache Stampede and Cache Avalanche? How do you prevent it using Redis distributed mutex locks?" },
-    { label: "CAP Theorem Trade-Offs", query: "Explain the CAP Theorem (Consistency vs Availability vs Partition Tolerance) with real-world examples (Cassandra vs MongoDB vs PostgreSQL)." },
-    { label: "Sharding & Consistent Hashing", query: "How does Database Sharding work, and how does Consistent Hashing with virtual vnodes solve cluster rebalancing?" },
-  ],
-  APTITUDE: [
-    { label: "Time & Work Short-Cuts", query: "Explain the standard short-cut formulas for Time & Work and Pipes & Cisterns with 2 solved examples." },
-    { label: "Relative Speed & Trains", query: "Explain relative speed calculation for trains moving in opposite directions vs same direction with step-by-step math." },
-    { label: "Combinatorics & Probability", query: "Explain Permutations (nPr) vs Combinations (nCr) shortcuts and probability tricks frequently asked in placement tests." },
-    { label: "Profit, Loss & Discount", query: "Explain Cost Price, Selling Price, Marked Price and Successive Discount calculations with speed-math shortcuts." },
-  ],
-  WEB_DEV: [
-    { label: "JS Event Loop & Microtasks", query: "Explain the JavaScript Event Loop, Call Stack, Microtask Queue (Promises), and Macrotask Queue (setTimeout) with execution order." },
-    { label: "REST Idempotency & HTTP Codes", query: "Which HTTP methods are Idempotent? Explain the difference between PUT and PATCH, and 200 vs 201 vs 401 vs 403 vs 404 codes." },
-    { label: "JWT Auth & Token Rotation", query: "Explain JSON Web Token (JWT) structure, access token vs refresh token rotation, and secure HTTP-only cookie storage." },
-    { label: "Docker Containers vs VMs", query: "Explain the architectural difference between Docker Containers (sharing host OS kernel) and Virtual Machines (Hypervisor)." },
-  ],
-  MACHINE_LEARNING: [
-    { label: "Supervised vs Unsupervised", query: "Explain the difference between Supervised, Unsupervised, and Reinforcement Learning with real-world use case examples." },
-    { label: "Bias-Variance Trade-off", query: "Explain Bias-Variance Trade-off, Overfitting vs Underfitting, and how Regularization (L1/L2) and Dropout help." },
-    { label: "Neural Net Backpropagation", query: "Explain how Backpropagation works in a Neural Network step-by-step — forward pass, loss calculation, gradient descent, and weight update." },
-    { label: "CNN & RNN Architectures", query: "Explain Convolutional Neural Networks (CNN) for images and Recurrent Neural Networks (RNN/LSTM) for sequences with architecture diagrams." },
-  ],
-};
-
-const Tutor = () => {
+export default function Tutor() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { user } = useAuth();
+  const studentName = user?.name ? user.name.split(" ")[0] : "Vijay";
+
+  // State Management
   const [activeSubject, setActiveSubject] = useState("All Subjects");
+  const [activeMode, setActiveMode] = useState("chat");
   const [activeTopic, setActiveTopic] = useState("");
-  const [messages, setMessages] = useState([
-    {
-      role: "ai",
-      time: "Just now",
-      text: `### 👋 Welcome to LearnX AI Academic Tutor!
-
-I'm your 24/7 personalized Computer Science Engineering placement & semester tutor. I specialize across all **9 core placement tracks**:
-* ⚡ **DSA**: Binary Search, Trees/BST, Dynamic Programming, Graphs, Heaps
-* 🗄️ **DBMS & SQL**: Normalization 1NF-BCNF, B+ Trees, ACID, Transactions, Indexing
-* 💻 **Operating Systems**: Processes, Semaphores, Deadlocks, Virtual Memory Paging
-* 🌐 **Computer Networks**: OSI, TCP 3-Way Handshake, Subnetting CIDR, DNS, HTTPS
-* 🧩 **OOPs & Design**: 4 Pillars, Polymorphism \`vtable\`, SOLID Principles, Patterns
-* 🏗️ **System Design**: HLD Scalability, Redis Caching, Sharding, CAP Theorem
-* 🧠 **Quantitative Aptitude**: Time-Work, Speed-Distance, Probability, Permutations
-* 🚀 **Web Dev & DevOps**: JS Event Loop, REST API Idempotency, JWT, Docker
-* 🤖 **Machine Learning & AI**: Regression, Neural Networks, CNN/RNN, Bias-Variance, Metrics
-
-Select a subject pill above or type your question below! 🚀`,
-    },
-  ]);
+  const [isHinglish, setIsHinglish] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
+  const [attachment, setAttachment] = useState(null);
+  const [isListening, setIsListening] = useState(false);
+  const [skillData, setSkillData] = useState(null);
+  const [recentConversations, setRecentConversations] = useState(INITIAL_RECENT_CHATS);
+
+  // Initial Welcome Message
+  const [messages, setMessages] = useState(() => {
+    const navTopic = location.state?.topicTitle || searchParams.get("topic") || "";
+    const navSubject = location.state?.subjectId || searchParams.get("subject") || "";
+    if (navTopic) {
+      return [
+        {
+          role: "ai",
+          time: "Just now",
+          text: `### Hi ${studentName}! 👋
+I see you're focusing on **${navTopic}**${navSubject ? ` in **${navSubject.toUpperCase()}**` : ""}.
+
+I am ready to help you:
+* **Master the core fundamentals** with real-world examples
+* **Break down common mistakes** and edge cases
+* **Solve practice questions** step-by-step
+
+Let's dive into **${navTopic}**!`,
+        },
+      ];
+    }
+    return [
+      {
+        role: "ai",
+        time: "Just now",
+        text: `### Hi ${studentName}! 👋
+I'm your **LearnX AI Tutor**. I can help you with:
+
+* **Concept explanations** (with examples)
+* **Code help** (debug, optimize, explain)
+* **Practice questions** (topic-wise)
+* **Interview preparation** (with company patterns)
+* **Personalized study plans**
+
+What would you like to learn today?`,
+      },
+    ];
+  });
+
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const hasAutoAsked = useRef(false);
 
+  // Auto-scroll on new message
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Read URL query parameter (from roadmap "Ask AI Tutor" buttons)
+  // Load real student telemetry from Skill Graph API
   useEffect(() => {
-    const q = searchParams.get("q") || searchParams.get("question");
-    const subject = searchParams.get("subject") || "";
-    const topic = searchParams.get("topic") || "";
-    if (subject) {
-      setActiveSubject(subject);
-    }
-    if (topic) {
-      setActiveTopic(topic);
-    }
+    const fetchTelemetry = async () => {
+      try {
+        const res = await getSkillGraph();
+        if (res.data) setSkillData(res.data);
+      } catch (err) {
+        console.warn("Telemetry warning:", err.message);
+      }
+    };
+    fetchTelemetry();
+  }, []);
+
+  // Handle URL query parameters or location.state (e.g. from Skill Graph, Roadmap or Test review links)
+  useEffect(() => {
+    const q = searchParams.get("q") || searchParams.get("question") || location.state?.initialPrompt;
+    const subject = searchParams.get("subject") || location.state?.subjectId || "";
+    const topic = searchParams.get("topic") || location.state?.topicTitle || "";
+
+    if (subject) setActiveSubject(subject);
+    if (topic) setActiveTopic(topic);
+
     if (q && !hasAutoAsked.current) {
       hasAutoAsked.current = true;
-      executeQuestion(q, subject, topic);
+      executeQuestion(q, subject || activeSubject, topic || activeTopic);
     }
-  }, [searchParams]);
+  }, [searchParams, location.state]);
 
-  const executeQuestion = async (questionText, subjectContext = activeSubject, topicContext = activeTopic) => {
+  // Core Question Execution Handler
+  const executeQuestion = async (
+    questionText,
+    subjectContext = activeSubject,
+    topicContext = activeTopic,
+    actionType = "explain"
+  ) => {
     if (!questionText.trim() || loading) return;
-    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-    const newMessages = [
-      ...messages,
-      { role: "user", text: questionText, time: now },
-    ];
+    let finalPrompt = questionText.trim();
+    if (attachment) {
+      finalPrompt = `[Attached Context: ${attachment.name}]\n${
+        attachment.content ? `\`\`\`\n${attachment.content}\n\`\`\`\n` : ""
+      }${finalPrompt}`;
+      setAttachment(null);
+    }
+
+    const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const newMessages = [...messages, { role: "user", text: finalPrompt, time: now }];
     setMessages(newMessages);
     setLoading(true);
 
+    // Track in Recent Conversations list
+    const truncatedTitle = finalPrompt.length > 36 ? `${finalPrompt.slice(0, 34)}…` : finalPrompt;
+    setRecentConversations((prev) => [
+      {
+        id: Date.now().toString(),
+        title: truncatedTitle,
+        time: "Just now",
+        subject: subjectContext,
+      },
+      ...prev.filter((c) => c.title !== truncatedTitle).slice(0, 4),
+    ]);
+
     try {
-      const historyForApi = newMessages.filter(m => m.role === "user" || m.role === "ai").slice(1);
-      
+      const historyForApi = newMessages
+        .filter((m) => m.role === "user" || m.role === "ai")
+        .slice(1);
+
       const { data } = await api.post("/tutor/ask", {
-        question: questionText,
+        question: finalPrompt,
         subject: subjectContext !== "All Subjects" ? subjectContext : undefined,
         topic: topicContext || undefined,
-        history: historyForApi
+        history: historyForApi,
+        action: actionType,
+        isHinglish,
       });
 
       setMessages((prev) => [
         ...prev,
-        { role: "ai", text: data.answer, time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) },
+        {
+          role: "ai",
+          text: data.answer,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
       ]);
     } catch (err) {
       setMessages((prev) => [
@@ -301,8 +202,8 @@ Select a subject pill above or type your question below! 🚀`,
         {
           role: "ai",
           time: now,
-          text: `⚠️ **Failed to get response**: ${
-            err.response?.data?.message || "Please check your network or API key."
+          text: `⚠️ **Unable to complete request**: ${
+            err.response?.data?.message || "Please check your network connection or API service configuration."
           }`,
         },
       ]);
@@ -311,181 +212,266 @@ Select a subject pill above or type your question below! 🚀`,
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if (!input.trim() || loading) return;
     const q = input.trim();
     setInput("");
-    await executeQuestion(q);
+    executeQuestion(q);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+  // Clear chat handler
+  const handleClearChat = () => {
+    setMessages([
+      {
+        role: "ai",
+        time: "Just now",
+        text: `### Chat Session Reset
+What CSE topic or coding challenge would you like to explore next?`,
+      },
+    ]);
+  };
+
+  // Regenerate last response handler
+  const handleRegenerate = () => {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+    if (lastUserMsg) {
+      executeQuestion(lastUserMsg.text);
     }
   };
 
-  const currentSuggestions = SUBJECT_SUGGESTIONS[activeSubject] || SUBJECT_SUGGESTIONS["All Subjects"];
-  const currentTrackObj = TUTOR_TRACKS.find((t) => t.id === activeSubject) || TUTOR_TRACKS[0];
+  // Mode Selection Handler
+  const handleSelectMode = (mode) => {
+    setActiveMode(mode.id);
+    const subStr = activeSubject !== "All Subjects" ? activeSubject : "CSE";
+
+    switch (mode.id) {
+      case "code":
+        executeQuestion(`Provide clean, optimized production code with Big-O time and space complexity for ${subStr}.`, activeSubject, activeTopic, "code");
+        break;
+      case "practice":
+        executeQuestion(`Give me 3 practice problems on ${subStr} with progressive hints and complexity benchmarks.`, activeSubject, activeTopic, "quiz");
+        break;
+      case "interview":
+        executeQuestion(`What are the top 3 technical interview questions asked at Tier-1 product companies on ${subStr}?`, activeSubject, activeTopic, "exam");
+        break;
+      case "planner":
+        executeQuestion(`Create a structured 7-day study plan to master ${subStr} from fundamentals to placement standard.`, activeSubject, activeTopic, "explain");
+        break;
+      case "visualizer":
+        executeQuestion(`Explain ${subStr} using ASCII architectural diagrams and step-by-step state traces.`, activeSubject, activeTopic, "example");
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Speech Recognition
+  const toggleListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Please type your query.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setIsListening(false);
+      };
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+
+      recognition.start();
+    } catch (err) {
+      console.warn("Speech recognition error:", err);
+      setIsListening(false);
+    }
+  };
+
+  // File Upload Handler
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachment({
+        name: file.name,
+        size: `${(file.size / 1024).toFixed(1)} KB`,
+        content: event.target?.result || "",
+      });
+    };
+    reader.readAsText(file);
+  };
+
+  // Dynamic Weak Topics for "Recommended for You"
+  const dynamicRecommendations = useMemo(() => {
+    if (skillData?.weakTopics && skillData.weakTopics.length > 0) {
+      return skillData.weakTopics.slice(0, 3).map((t, idx) => ({
+        title: t.title,
+        priority: idx === 0 ? "High Priority" : idx === 1 ? "Important" : "Focus",
+        priorityColor:
+          idx === 0
+            ? "bg-rose-50 text-rose-700 border-rose-200"
+            : idx === 1
+            ? "bg-amber-50 text-amber-700 border-amber-200"
+            : "bg-purple-50 text-purple-700 border-purple-200",
+        reason: `${t.masteryPercentage}% mastery • Below recommended placement benchmark`,
+        query: `Teach me ${t.title} step-by-step from scratch with clear mental models and solved problems.`,
+      }));
+    }
+    return [
+      {
+        title: "Dynamic Programming",
+        priority: "High Priority",
+        priorityColor: "bg-rose-50 text-rose-700 border-rose-200",
+        reason: "Many students find this challenging",
+        query: "Explain Dynamic Programming memoization vs tabulation with 0/1 Knapsack.",
+      },
+      {
+        title: "Linked Lists",
+        priority: "Important",
+        priorityColor: "bg-amber-50 text-amber-700 border-amber-200",
+        reason: "Strengthen fundamentals",
+        query: "Explain Fast & Slow Pointer technique in Linked Lists for cycle detection.",
+      },
+      {
+        title: "OS Process Scheduling",
+        priority: "Focus",
+        priorityColor: "bg-purple-50 text-purple-700 border-purple-200",
+        reason: "Improve conceptual clarity",
+        query: "Explain Round Robin vs SJF CPU scheduling with turn-around and waiting times.",
+      },
+    ];
+  }, [skillData]);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-5 flex flex-col" style={{ height: "calc(100vh - 80px)" }} id="tutor-page">
-      {/* Top Header Card */}
-      <div
-        className="rounded-2xl p-4 mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0 bg-gradient-to-r from-violet-100/90 via-purple-50 to-sky-100/90 border border-violet-200 shadow-sm"
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 text-white shadow-sm"
-            style={{
-              background: "linear-gradient(135deg, #7c3aed, #0ea5e9)",
-            }}
-          >
-            🤖
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-black text-slate-900 tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                AI Academic Tutor
-              </h2>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Active · 8 Placement Tracks</span>
-            </div>
-            <p className="text-xs text-slate-600 font-medium">
-              Step-by-step logic, code snippets, formulas & interview prep
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0B1220] py-4 sm:py-6 space-y-6 font-sans">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        className="hidden"
+        accept=".txt,.cpp,.java,.py,.c,.sql,.json,.md,.js,.ts"
+      />
 
-        {/* Selected subject indicator */}
-        <div className="flex flex-col items-start sm:items-end gap-1 self-start sm:self-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold text-slate-500">Context:</span>
-            <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-white border border-slate-200 text-slate-800 shadow-xs flex items-center gap-1.5">
-              <span>{currentTrackObj.icon}</span>
-              <span>{currentTrackObj.label}</span>
-            </span>
-          </div>
-          {activeTopic && (
-            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
-              <span className="text-slate-300">↳</span> Topic: <span className="text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full">{activeTopic}</span>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Add this CSS for quick action buttons */}
-      <style>{`
-        .quick-action-btn {
-          padding: 0.25rem 0.6rem;
-          border-radius: 9999px;
-          font-size: 0.65rem;
-          font-weight: 700;
-          transition: all 0.2s;
-          background-color: #f8fafc;
-          border: 1px solid #e2e8f0;
-          color: #334155;
-        }
-        .quick-action-btn:hover {
-          background-color: #f1f5f9;
-          border-color: #cbd5e1;
-        }
-      `}</style>
+      {/* ── 5. AI TUTOR HERO SECTION ── */}
+      <AITutorHero
+        onCapabilityClick={(query) => executeQuestion(query)}
+      />
 
-      {/* ── 8-SUBJECT SCROLLABLE TRACK PILL SELECTOR ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 scrollbar-thin shrink-0">
-        {TUTOR_TRACKS.map((t) => {
-          const isSelected = activeSubject === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveSubject(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all shrink-0 border ${
-                isSelected
-                  ? "bg-slate-900 text-white border-slate-900 shadow-sm scale-[1.02]"
-                  : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
-              <span className="text-sm">{t.icon}</span>
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {/* ── 6. SUBJECT NAVIGATION (Horizontal Bar) ── */}
+      <SubjectTabs
+        activeSubject={activeSubject}
+        onSelectSubject={(subj) => {
+          setActiveSubject(subj);
+          setActiveTopic("");
+        }}
+      />
 
-      {/* Messages Scroll Area */}
-      <div
-        className="flex-1 overflow-y-auto space-y-5 pr-2 mb-3 scrollbar-thin"
-        id="tutor-chat-messages"
-      >
-        {messages.map((msg, idx) => (
-          <MessageBubble
-            key={idx}
-            msg={{...msg, totalMsgs: messages.length}}
-            index={idx}
-            onQuickFollowUp={(q) => executeQuestion(q)}
+      {/* ── 7. MAIN AI WORKSPACE (3-COLUMN LAYOUT) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: AI Assistant Modes (3 cols) */}
+        <div className="lg:col-span-3 space-y-4">
+          <TutorModePanel
+            activeMode={activeMode}
+            onSelectMode={handleSelectMode}
+            activeSubject={activeSubject}
           />
-        ))}
-
-        {loading && <TypingIndicator />}
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Suggestion Starter Chips (Dynamic based on selected subject) */}
-      <div className="mb-3 flex flex-wrap items-center gap-2 flex-shrink-0">
-        <span className="text-[11px] font-black text-violet-900 flex items-center gap-1">
-          <span>⚡ {currentTrackObj.label} Doubts:</span>
-        </span>
-        {currentSuggestions.slice(0, 3).map((item, i) => (
-          <button
-            key={i}
-            onClick={() => executeQuestion(item.query)}
-            className="px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all text-left bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900 shadow-xs truncate max-w-[240px]"
-          >
-            {item.label} →
-          </button>
-        ))}
-      </div>
-
-      {/* Input Box Bar */}
-      <div
-        className="rounded-2xl p-2.5 flex items-end gap-2 flex-shrink-0 relative bg-white border border-slate-300 shadow-lg"
-      >
-        <div className="hidden sm:flex items-center self-center pl-2 pr-1 text-slate-400">
-          <span className="text-lg">{currentTrackObj.icon}</span>
         </div>
 
-        <textarea
-          id="tutor-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={`Ask about ${activeSubject !== "All Subjects" ? currentTrackObj.label : "any CSE topic"} (e.g. "Explain with code / formula")...`}
-          rows={1}
-          className="flex-1 bg-transparent px-2 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none resize-none max-h-32 font-medium"
-          style={{ minHeight: "40px" }}
-        />
+        {/* CENTER COLUMN: Main AI Conversation (6 cols) */}
+        <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col h-[740px] overflow-hidden">
+          {/* Header */}
+          <ChatHeader
+            isHinglish={isHinglish}
+            onToggleHinglish={() => setIsHinglish((prev) => !prev)}
+            onUploadClick={() => fileInputRef.current?.click()}
+            onClearChat={handleClearChat}
+            activeSubject={activeSubject}
+          />
 
-        <button
-          id="tutor-send-btn"
-          onClick={handleSend}
-          disabled={!input.trim() || loading}
-          className="btn-gradient px-4 py-2.5 rounded-xl text-sm font-black text-white flex items-center gap-1.5 disabled:opacity-40 flex-shrink-0 shadow-sm cursor-pointer"
-        >
-          {loading ? (
-            <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.3"/>
-              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            </svg>
-          ) : (
-            <>
-              Send <span>↑</span>
-            </>
-          )}
-        </button>
+          {/* Conversation Stream */}
+          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
+            {messages.map((msg, idx) => (
+              <ChatMessage
+                key={idx}
+                msg={msg}
+                index={idx}
+                totalMsgs={messages.length}
+                onQuickFollowUp={(followUp) =>
+                  executeQuestion(`${followUp} for the previous concept.`)
+                }
+                onRegenerate={handleRegenerate}
+                onSelectPrompt={(promptQuery) => executeQuestion(promptQuery)}
+                activeSubject={activeSubject}
+              />
+            ))}
+
+            {loading && <TypingIndicator />}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area + Quick Actions */}
+          <TutorInput
+            input={input}
+            setInput={setInput}
+            onSend={handleSend}
+            loading={loading}
+            attachment={attachment}
+            setAttachment={setAttachment}
+            onAttachClick={() => fileInputRef.current?.click()}
+            isListening={isListening}
+            toggleListening={toggleListening}
+            activeSubject={activeSubject}
+            activeTopic={activeTopic}
+            onTriggerAction={(actionQuery, actionId) =>
+              executeQuestion(actionQuery, activeSubject, activeTopic, actionId)
+            }
+          />
+        </div>
+
+        {/* RIGHT COLUMN: Personal Learning Context Panel (3 cols) */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Today's Learning + Quick Tools */}
+          <LearningContext
+            onQuickToolClick={(query) => executeQuestion(query)}
+            activeSubject={activeSubject}
+          />
+
+          {/* Popular Topics */}
+          <PopularTopics
+            onSelectTopic={(query, subject) => executeQuestion(query, subject)}
+          />
+
+          {/* Recent Conversations */}
+          <RecentConversations
+            conversations={recentConversations}
+            onSelectConversation={(chat) =>
+              executeQuestion(`Review: ${chat.title}`, chat.subject)
+            }
+          />
+        </div>
       </div>
+
+      {/* ── 10. PERSONALIZED RECOMMENDATIONS (Bottom Section) ── */}
+      <RecommendedForYou
+        recommendations={dynamicRecommendations}
+        onSelectRecommendation={(query) => executeQuestion(query)}
+      />
     </div>
   );
-};
-
-export default Tutor;
+}

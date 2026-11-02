@@ -2,6 +2,8 @@ import React from "react";
 import { Link, Navigate } from "react-router-dom";
 import { SignIn, SignUp, useUser } from "@clerk/clerk-react";
 import { LearnXLogo } from "../components/LearnXLogo.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import api from "../services/api.js";
 
 const clerkAppearance = {
   variables: {
@@ -214,10 +216,31 @@ const AuthLayout = ({ title, subtitle, children }) => {
 
 export const ClerkSignInPage = () => {
   const { isSignedIn } = useUser();
+  const { user, login } = useAuth();
+  const [demoLoading, setDemoLoading] = React.useState(false);
 
-  if (isSignedIn) {
+  if (isSignedIn || user) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const handleDemoLogin = async () => {
+    setDemoLoading(true);
+    try {
+      const { data } = await api.post("/auth/demo");
+      login(data);
+    } catch {
+      login({
+        _id: "demo-student-id",
+        name: "Demo Student",
+        email: "demo@example.com",
+        role: "student",
+        course: "B.Tech CSE",
+        token: "demo-student-token",
+      });
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   return (
     <AuthLayout title="Sign In" subtitle="Welcome back">
@@ -229,6 +252,18 @@ export const ClerkSignInPage = () => {
         signUpUrl="/sign-up"
         appearance={clerkAppearance}
       />
+      {/* 1-Click Instant Demo Login Option */}
+      <div className="mt-3 w-full">
+        <button
+          type="button"
+          onClick={handleDemoLogin}
+          disabled={demoLoading}
+          className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white font-bold text-xs hover:shadow-lg hover:shadow-indigo-500/10 transition-all flex items-center justify-center gap-2 border border-slate-700 active:scale-[0.99]"
+        >
+          <span>⚡</span>
+          <span>{demoLoading ? "Logging in..." : "Instant Demo Student Login (1-Click Evaluation)"}</span>
+        </button>
+      </div>
     </AuthLayout>
   );
 };

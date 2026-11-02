@@ -24,6 +24,8 @@ import AlgorithmVisualizerPage from "./pages/AlgorithmVisualizerPage.jsx";
 import CodingLabPage from "./pages/CodingLabPage.jsx";
 import MockInterviewPage from "./pages/MockInterviewPage.jsx";
 import ExamPrepPage from "./pages/ExamPrepPage.jsx";
+import CareerTwinPage from "./pages/CareerTwinPage.jsx";
+import RewardsPage from "./pages/RewardsPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -131,6 +133,10 @@ function App() {
               }
             />
             <Route
+              path="/tests"
+              element={<Navigate to="/test" replace />}
+            />
+            <Route
               path="/assessment"
               element={
                 <ProtectedRoute>
@@ -139,6 +145,22 @@ function App() {
                   </AppLayout>
                 </ProtectedRoute>
               }
+            />
+            <Route
+              path="/assessments"
+              element={<Navigate to="/test" replace />}
+            />
+            <Route
+              path="/achievements"
+              element={<Navigate to="/dashboard#achievements" replace />}
+            />
+            <Route
+              path="/analytics"
+              element={<Navigate to="/skill-graph" replace />}
+            />
+            <Route
+              path="/settings"
+              element={<Navigate to="/security" replace />}
             />
             <Route
               path="/test/:subject"
@@ -162,6 +184,16 @@ function App() {
 
             <Route
               path="/tutor"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Tutor />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/ai-tutor"
               element={
                 <ProtectedRoute>
                   <AppLayout>
@@ -237,21 +269,17 @@ function App() {
             <Route
               path="/algorithm-visualizer"
               element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AlgorithmVisualizerPage />
-                  </AppLayout>
-                </ProtectedRoute>
+                <AppLayout>
+                  <AlgorithmVisualizerPage />
+                </AppLayout>
               }
             />
             <Route
               path="/visualizer"
               element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <AlgorithmVisualizerPage />
-                  </AppLayout>
-                </ProtectedRoute>
+                <AppLayout>
+                  <AlgorithmVisualizerPage />
+                </AppLayout>
               }
             />
 
@@ -277,6 +305,17 @@ function App() {
             />
 
             <Route
+              path="/career-twin"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CareerTwinPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
               path="/skill-graph"
               element={
                 <ProtectedRoute>
@@ -293,6 +332,17 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <OfflineLearning />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/rewards"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RewardsPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

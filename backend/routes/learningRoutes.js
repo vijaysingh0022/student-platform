@@ -1,5 +1,5 @@
 import express from "express";
-import protect from "../middleware/auth.js";
+import protect, { optionalAuth } from "../middleware/auth.js";
 import {
   getSubjects,
   getSubjectHierarchy,
@@ -12,17 +12,24 @@ import {
   getFacultyLearningAnalytics,
   generateUnitRoadmap,
   searchCurriculum,
+  askLearningCompanion,
+  evaluateStudentAnswer,
+  generateExamAnswer,
+  generateRevisionNotes,
+  getBookmarks,
+  toggleBookmark,
+  updateTopicMastery,
 } from "../controllers/learningController.js";
 
 const router = express.Router();
 
 // Search across curriculum
-router.get("/search", protect, searchCurriculum);
+router.get("/search", optionalAuth, searchCurriculum);
 
 // Public / optional-auth routes for viewing curriculum
-router.get("/subjects", protect, getSubjects);
-router.get("/subjects/:subjectId", protect, getSubjectHierarchy);
-router.get("/topics/:topicId", protect, getTopicContent);
+router.get("/subjects", optionalAuth, getSubjects);
+router.get("/subjects/:subjectId", optionalAuth, getSubjectHierarchy);
+router.get("/topics/:topicId", optionalAuth, getTopicContent);
 
 // Unit Dynamic AI Roadmap generator
 router.post("/units/:unitId/roadmap", protect, generateUnitRoadmap);
@@ -30,6 +37,7 @@ router.post("/units/:unitId/roadmap", protect, generateUnitRoadmap);
 // Student progress & completion actions
 router.post("/topics/:topicId/read", protect, markTopicRead);
 router.post("/topics/:topicId/complete", protect, markTopicCompleted);
+router.post("/topics/:topicId/mastery", protect, updateTopicMastery);
 
 // Topic-specific quiz & evaluation
 router.get("/topics/:topicId/quiz", protect, getTopicQuiz);
@@ -40,5 +48,17 @@ router.get("/student/dashboard-summary", protect, getStudentLearningSummary);
 
 // Faculty analytics
 router.get("/faculty/analytics", protect, getFacultyLearningAnalytics);
+
+// AI Learning Companion & Voice Teacher
+router.post("/companion", optionalAuth, askLearningCompanion);
+router.post("/evaluate-answer", optionalAuth, evaluateStudentAnswer);
+
+// Exam Answer Generator & Revision Notes
+router.post("/exam-answer", optionalAuth, generateExamAnswer);
+router.post("/revision-notes", optionalAuth, generateRevisionNotes);
+
+// Learning Bookmarks
+router.get("/bookmarks", protect, getBookmarks);
+router.post("/bookmarks/toggle", protect, toggleBookmark);
 
 export default router;
