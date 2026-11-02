@@ -69,6 +69,98 @@ const TeacherDashboard = () => {
   const [mongoRoleFilter, setMongoRoleFilter] = useState("All");
   const [adminMetrics, setAdminMetrics] = useState(null);
 
+  // Admin Certificates Management state
+  const [adminCertificates, setAdminCertificates] = useState([]);
+  const [loadingAdminCerts, setLoadingAdminCerts] = useState(false);
+  const [certSearch, setCertSearch] = useState("");
+  const [certStatusFilter, setCertStatusFilter] = useState("All");
+  const [certMetrics, setCertMetrics] = useState({ totalIssued: 0, validCount: 0, revokedCount: 0 });
+
+  // Manual Certificate Issue Form state
+  const [showIssueModal, setShowIssueModal] = useState(false);
+  const [issueStudentEmail, setIssueStudentEmail] = useState("");
+  const [issueStudentName, setIssueStudentName] = useState("");
+  const [issueCourseName, setIssueCourseName] = useState("Web Development – Beginner Level");
+  const [issueDuration, setIssueDuration] = useState("40 Hours");
+  const [issueSkills, setIssueSkills] = useState("HTML & CSS, JavaScript, Responsive Design, Web Projects");
+  const [issuingCert, setIssuingCert] = useState(false);
+
+  // Revoke modal state
+  const [revokingCertId, setRevokingCertId] = useState(null);
+  const [revocationReason, setRevocationReason] = useState("");
+
+  const fetchAdminCertificates = async () => {
+    setLoadingAdminCerts(true);
+    try {
+      const { data } = await api.get(
+        `/certificates/admin/all?status=${encodeURIComponent(certStatusFilter)}&search=${encodeURIComponent(certSearch)}`
+      );
+      if (data && data.certificates) {
+        setAdminCertificates(data.certificates);
+        if (data.metrics) setCertMetrics(data.metrics);
+      }
+    } catch (err) {
+      console.warn("Failed to load admin certificates:", err.message);
+    } finally {
+      setLoadingAdminCerts(false);
+    }
+  };
+
+  const handleManualIssueSubmit = async (e) => {
+    e.preventDefault();
+    setIssuingCert(true);
+    try {
+      const { data } = await api.post("/certificates/admin/issue", {
+        studentEmail: issueStudentEmail.trim(),
+        studentName: issueStudentName.trim(),
+        courseName: issueCourseName.trim(),
+        courseDuration: issueDuration.trim(),
+        skills: issueSkills.split(",").map(s => s.trim()).filter(Boolean),
+      });
+
+      if (data && data.success) {
+        showToast("🎉 Certificate issued and registered in database!");
+        setShowIssueModal(false);
+        setIssueStudentEmail("");
+        setIssueStudentName("");
+        fetchAdminCertificates();
+      }
+    } catch (err) {
+      showToast("Error issuing certificate: " + (err.response?.data?.message || err.message));
+    } finally {
+      setIssuingCert(false);
+    }
+  };
+
+  const handleRevokeConfirm = async () => {
+    if (!revokingCertId) return;
+    try {
+      const { data } = await api.post(`/certificates/admin/${revokingCertId}/revoke`, {
+        reason: revocationReason || "Administrative decision",
+      });
+      if (data && data.success) {
+        showToast("Certificate revoked.");
+        setRevokingCertId(null);
+        setRevocationReason("");
+        fetchAdminCertificates();
+      }
+    } catch (err) {
+      showToast("Failed to revoke: " + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleReissueConfirm = async (certId) => {
+    try {
+      const { data } = await api.post(`/certificates/admin/${certId}/reissue`, {});
+      if (data && data.success) {
+        showToast("Certificate reinstated as Valid!");
+        fetchAdminCertificates();
+      }
+    } catch (err) {
+      showToast("Failed to reissue: " + (err.response?.data?.message || err.message));
+    }
+  };
+
   const fetchMongoUsers = async () => {
     setLoadingMongoUsers(true);
     try {
@@ -92,8 +184,10 @@ const TeacherDashboard = () => {
   useEffect(() => {
     if (activeTab === "all-users") {
       fetchMongoUsers();
+    } else if (activeTab === "certificates-admin") {
+      fetchAdminCertificates();
     }
-  }, [activeTab, mongoRoleFilter]);
+  }, [activeTab, mongoRoleFilter, certStatusFilter]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -270,6 +364,7 @@ ${student.department || "Computer Science & Engineering"}`;
   // Tab definitions
   const TABS = [
     { id: "overview", label: "Overview", icon: "📊" },
+    { id: "certificates-admin", label: "Certificates Manager", icon: "🎓" },
     { id: "all-users", label: "Registered Users (MongoDB)", icon: "🗄️" },
     { id: "curriculum-analytics", label: "Curriculum Analytics", icon: "📚" },
     { id: "weak-topics", label: "Weak Topics in Class", icon: "⚠️" },
@@ -1361,6 +1456,348 @@ ${student.department || "Computer Science & Engineering"}`;
       {activeTab === "security" && (
         <div className="space-y-6 animate-fade-in-up">
           <SecurityGovernance />
+        </div>
+      )}
+
+      {/* ── TAB: CERTIFICATES ADMIN MANAGER ── */}
+      {activeTab === "certificates-admin" && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 animate-fade-in-up">
+          {/* Header & Metrics */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 mb-2">
+                <span>🎓</span> Official Credential Authority
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Certificates Management & Verification Hub
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Issue manual credentials, monitor student completions, revoke fraudulent records, or re-issue corrected certificates.
+              </p>
+            </div>
+
+            {/* Quick Actions & Metrics */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Total Issued</div>
+                <div className="text-base font-extrabold text-slate-900">{certMetrics.totalIssued}</div>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                <div className="text-[10px] font-bold text-emerald-600 uppercase">Valid</div>
+                <div className="text-base font-extrabold text-emerald-800">{certMetrics.validCount}</div>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                <div className="text-[10px] font-bold text-rose-600 uppercase">Revoked</div>
+                <div className="text-base font-extrabold text-rose-800">{certMetrics.revokedCount}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(true)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-700 via-indigo-700 to-navy-900 hover:from-blue-600 hover:to-indigo-800 shadow-md shadow-indigo-900/20 flex items-center gap-1.5 ml-2"
+              >
+                <span>➕</span> Issue Certificate
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Filter Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+              <input
+                type="text"
+                value={certSearch}
+                onChange={(e) => setCertSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && fetchAdminCertificates()}
+                placeholder="Search by student name, email, course, or Certificate ID..."
+                className="w-full px-3 py-1.5 rounded-lg text-xs bg-white border border-slate-300 text-slate-900 focus:outline-none focus:border-indigo-600"
+              />
+              <button
+                type="button"
+                onClick={fetchAdminCertificates}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 shadow-xs flex-shrink-0"
+              >
+                Search
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-slate-600">Status:</span>
+              <select
+                value={certStatusFilter}
+                onChange={(e) => setCertStatusFilter(e.target.value)}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-indigo-600"
+              >
+                <option value="All">All Certificates</option>
+                <option value="Valid">Valid Only</option>
+                <option value="Revoked">Revoked Only</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={fetchAdminCertificates}
+                className="p-1.5 text-xs rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600"
+                title="Refresh Certificates list"
+              >
+                🔄 Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Table */}
+          {loadingAdminCerts ? (
+            <div className="py-16 text-center text-slate-400">
+              <div className="w-8 h-8 border-3 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs">Querying Certificates registry...</p>
+            </div>
+          ) : adminCertificates.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <span className="text-2xl mb-1 block">📜</span>
+              <p className="text-xs font-medium">No certificates found matching your criteria.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">Student</th>
+                    <th className="py-3 px-4">Course Completed</th>
+                    <th className="py-3 px-4">Certificate ID</th>
+                    <th className="py-3 px-4">Issue Date</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+                  {adminCertificates.map((c) => {
+                    const isRevoked = c.status === "Revoked";
+                    return (
+                      <tr key={c._id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900">{c.studentName}</div>
+                          <div className="text-[11px] text-slate-400 font-mono">{c.studentEmail}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-slate-800">{c.courseName}</div>
+                          <div className="text-[10px] text-slate-400">{c.courseDuration}</div>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-indigo-700">
+                          {c.certificateId}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500 font-mono text-[11px]">
+                          {new Date(c.issueDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border ${
+                              isRevoked
+                                ? "bg-rose-100 text-rose-800 border-rose-200"
+                                : "bg-emerald-100 text-emerald-800 border-emerald-200"
+                            }`}
+                          >
+                            {isRevoked ? "⚠️ Revoked" : "✓ Valid"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right space-x-2">
+                          <Link
+                            to={`/verify/${c.verificationToken || c.certificateId}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                          >
+                            Verify
+                          </Link>
+
+                          {isRevoked ? (
+                            <button
+                              type="button"
+                              onClick={() => handleReissueConfirm(c._id)}
+                              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+                            >
+                              Reinstate
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRevokingCertId(c._id);
+                                setRevocationReason("");
+                              }}
+                              className="px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                            >
+                              Revoke
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MODAL: MANUAL CERTIFICATE ISSUE ── */}
+      {showIssueModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 sm:p-8 shadow-2xl space-y-5 animate-scale-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <span>🎓</span> Issue Verified Certificate
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-lg p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleManualIssueSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Student Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={issueStudentEmail}
+                  onChange={(e) => setIssueStudentEmail(e.target.value)}
+                  placeholder="student@example.com"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Student Full Name (Displayed on Certificate)
+                </label>
+                <input
+                  type="text"
+                  value={issueStudentName}
+                  onChange={(e) => setIssueStudentName(e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Course Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={issueCourseName}
+                  onChange={(e) => setIssueCourseName(e.target.value)}
+                  placeholder="e.g. Web Development – Beginner Level"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Course Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={issueDuration}
+                    onChange={(e) => setIssueDuration(e.target.value)}
+                    placeholder="40 Hours"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Completion Status
+                  </label>
+                  <input
+                    type="text"
+                    disabled
+                    value="100% Completed"
+                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-500 font-semibold cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Skills Badges (Comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={issueSkills}
+                  onChange={(e) => setIssueSkills(e.target.value)}
+                  placeholder="HTML & CSS, JavaScript, Responsive Design, Web Projects"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowIssueModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={issuingCert}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/20 disabled:opacity-50"
+                >
+                  {issuingCert ? "Registering..." : "Issue & Register Certificate"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: REVOKE REASON ── */}
+      {revokingCertId && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 space-y-4 shadow-2xl animate-scale-in">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <span className="text-rose-600">⚠️</span> Revoke Certificate
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Revoking will mark this credential invalid on the public QR verification registry. Please supply an official audit reason.
+            </p>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Reason for Revocation
+              </label>
+              <textarea
+                rows={3}
+                value={revocationReason}
+                onChange={(e) => setRevocationReason(e.target.value)}
+                placeholder="e.g. Assessment academic integrity violation or incorrect student name"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-rose-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRevokingCertId(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRevokeConfirm}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-xs"
+              >
+                Confirm Revocation
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

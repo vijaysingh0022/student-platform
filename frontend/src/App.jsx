@@ -26,6 +26,8 @@ import MockInterviewPage from "./pages/MockInterviewPage.jsx";
 import ExamPrepPage from "./pages/ExamPrepPage.jsx";
 import CareerTwinPage from "./pages/CareerTwinPage.jsx";
 import RewardsPage from "./pages/RewardsPage.jsx";
+import MyCertificatesPage from "./pages/MyCertificatesPage.jsx";
+import VerifyCertificatePage from "./pages/VerifyCertificatePage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -347,6 +349,21 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route
+              path="/certificates"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <MyCertificatesPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Public Certificate QR Verification Page */}
+            <Route path="/verify/:tokenOrId" element={<VerifyCertificatePage />} />
+            <Route path="/verify" element={<VerifyCertificatePage />} />
 
             {/* Admin Portal Protected Routes */}
             <Route

@@ -26,6 +26,7 @@ import skillGraphRoutes from "./routes/skillGraphRoutes.js";
 import codingRoutes from "./routes/codingRoutes.js";
 import interviewRoutes from "./routes/interviewRoutes.js";
 import examPrepRoutes from "./routes/examPrepRoutes.js";
+import certificateRoutes from "./routes/certificateRoutes.js";
 import {
   enterpriseSecurityHeaders,
   rateLimiter,
@@ -96,6 +97,7 @@ app.use("/api/skillgraph", skillGraphRoutes);
 app.use("/api/coding", codingRoutes);
 app.use("/api/interview", interviewRoutes);
 app.use("/api/exam-prep", examPrepRoutes);
+app.use("/api/certificates", certificateRoutes);
 
 // Alias mounts for direct REST conventions requested by prompt
 app.use("/api/subjects", learningRoutes);

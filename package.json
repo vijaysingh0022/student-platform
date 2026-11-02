@@ -22,7 +22,8 @@
     "mongoose": "^8.4.0",
     "multer": "^2.3.0",
     "openai": "^4.52.0",
-    "pdf-parse": "^1.1.1"
+    "pdf-parse": "^1.1.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
