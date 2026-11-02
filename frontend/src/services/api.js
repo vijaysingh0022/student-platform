@@ -366,6 +366,23 @@ export const evaluateSimilarQuestion = async (data, config = {}) => {
   return api.post("/exam-prep/copilot/evaluate-similar", data, config);
 };
 
+// ─── Real AI Interactive Interview & Learning System ─────────────────────────
+export const startCopilotInterview = async (data, config = {}) => {
+  return api.post("/exam-prep/copilot/interview/start", data, config);
+};
+
+export const evaluateInterviewTurn = async (sessionId, data, config = {}) => {
+  return api.post(`/exam-prep/copilot/interview/${sessionId}/evaluate-turn`, data, config);
+};
+
+export const submitInterviewFollowUpTurn = async (sessionId, data, config = {}) => {
+  return api.post(`/exam-prep/copilot/interview/${sessionId}/submit-followup`, data, config);
+};
+
+export const completeCopilotInterview = async (sessionId, config = {}) => {
+  return api.post(`/exam-prep/copilot/interview/${sessionId}/complete`, {}, config);
+};
+
 // ─── AI Career Twin ───────────────────────────────────────────────────────────
 export const getCareerTwin = async (config = {}) => {
   return api.get("/career-twin", config);

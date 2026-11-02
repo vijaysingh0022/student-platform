@@ -9,6 +9,7 @@ import {
   getStudentLearningSummary,
 } from "../services/api";
 import ExamCopilotDrawer from "../components/exam/ExamCopilotDrawer.jsx";
+import RealAIInterviewModal from "../components/interview/RealAIInterviewModal.jsx";
 import {
   BookOpen,
   FileText,
@@ -48,6 +49,14 @@ import {
 
 // Test modes definition
 const EXAM_MODES = [
+  {
+    id: "interview",
+    name: "AI Oral Interview",
+    icon: "🎤",
+    desc: "Real AI examiner: Voice/text viva defense with Socratic teaching.",
+    btnLabel: "Start Interview 🎙️",
+    btnTheme: "purple",
+  },
   {
     id: "exam",
     name: "Exam Mode",
@@ -265,6 +274,7 @@ export default function ExamPrepPage() {
   // AI Exam Copilot State
   const [copilotOpen, setCopilotOpen] = useState(false);
   const [copilotContext, setCopilotContext] = useState({});
+  const [realInterviewOpen, setRealInterviewOpen] = useState(false);
 
   const handleOpenCopilot = (questionObj = null, explicitUserAns = null) => {
     const q = questionObj || questions[currentQIndex] || {};
@@ -390,6 +400,10 @@ export default function ExamPrepPage() {
   }, [inTest, activeMode, timeLeft, testCompleted]);
 
   const handleStartTest = (modeToUse = activeMode) => {
+    if (modeToUse === "interview") {
+      setRealInterviewOpen(true);
+      return;
+    }
     if (questions.length === 0) {
       showToast("No questions available for the selected filters.");
       return;
@@ -837,7 +851,9 @@ export default function ExamPrepPage() {
                             }
                           }}
                           className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
-                            mode.btnTheme === "blue"
+                            mode.btnTheme === "purple"
+                              ? "bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/60"
+                              : mode.btnTheme === "blue"
                               ? "bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60"
                               : mode.btnTheme === "amber"
                               ? "bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/60"
@@ -1995,6 +2011,20 @@ export default function ExamPrepPage() {
         onClose={() => setCopilotOpen(false)}
         questionContext={copilotContext}
         onMistakeAdded={() => fetchStudentData()}
+      />
+
+      {/* ================= REAL AI INTERACTIVE INTERVIEW MODAL ================= */}
+      <RealAIInterviewModal
+        isOpen={realInterviewOpen}
+        onClose={() => setRealInterviewOpen(false)}
+        initialContext={{
+          subjectName: currentSubjectObj?.name || "Computer Networks",
+          topicName: "IP Subnetting & CIDR",
+        }}
+        onCompleteSession={() => {
+          fetchStudentData();
+          fetchHistory();
+        }}
       />
     </div>
   );

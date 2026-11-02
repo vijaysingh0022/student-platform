@@ -5,6 +5,7 @@ import {
   toggleMistakeBookItem,
   evaluateSimilarQuestion,
 } from "../../services/api";
+import { RealAIInterviewModal } from "../interview/RealAIInterviewModal.jsx";
 import {
   Sparkles,
   X,
@@ -32,6 +33,7 @@ import {
   Sliders,
   ChevronRight,
   CheckCircle2,
+  Mic,
 } from "lucide-react";
 
 export const ExamCopilotDrawer = ({
@@ -71,6 +73,9 @@ export const ExamCopilotDrawer = ({
   // Mini Quiz interactive state
   const [quizAnswers, setQuizAnswers] = useState({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  // Real AI Live Interview Modal
+  const [realInterviewModalOpen, setRealInterviewModalOpen] = useState(false);
 
   // Copy feedback
   const [copiedText, setCopiedText] = useState(false);
@@ -360,6 +365,35 @@ export const ExamCopilotDrawer = ({
           {/* Home Screen: Quick Actions Grid */}
           {!activeAction && (
             <div className="space-y-4">
+              {/* Highlighted Banner: Start Real AI Interview */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] uppercase font-black tracking-widest text-indigo-200">
+                      LIVE ORAL DEFENSE & VIVA
+                    </span>
+                  </div>
+                  <span className="text-xs">🎙️ ⌨️</span>
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    Start Real AI Interview on Topic
+                  </h4>
+                  <p className="text-[11px] text-indigo-100 leading-snug mt-0.5">
+                    Live voice or text examination with AI examiner Prof. Vance. Think → Answer → AI evaluates → AI asks follow-up → AI teaches weaknesses.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRealInterviewModalOpen(true)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-indigo-700 font-extrabold text-xs shadow-md transition flex items-center justify-center gap-2"
+                >
+                  <Mic className="w-4 h-4 text-indigo-600" />
+                  <span>Start AI Interview Session →</span>
+                </button>
+              </div>
+
               <div>
                 <h4 className="text-xs font-bold text-slate-800 mb-1">How can I help you with this question?</h4>
                 <p className="text-[11px] text-slate-500">Choose a focused exam assistance mode below:</p>
@@ -939,6 +973,19 @@ export const ExamCopilotDrawer = ({
           </div>
         </div>
       </div>
+
+      {/* Real AI Interview Full Screen Interactive Modal */}
+      <RealAIInterviewModal
+        isOpen={realInterviewModalOpen}
+        onClose={() => setRealInterviewModalOpen(false)}
+        initialContext={{
+          subjectName: questionContext?.subjectName || "Computer Networks",
+          topicName: questionContext?.topicName || "IP Subnetting & CIDR",
+        }}
+        onCompleteSession={() => {
+          if (onMistakeAdded) onMistakeAdded();
+        }}
+      />
     </div>
   );
 };
