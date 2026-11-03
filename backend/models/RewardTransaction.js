@@ -18,6 +18,7 @@ const rewardTransactionSchema = new mongoose.Schema(
       required: true,
       enum: [
         "TOPIC_COMPLETED",
+        "VIDEO_COMPLETED",
         "QUIZ_COMPLETED",
         "QUIZ_HIGH_SCORE",
         "CODING_SOLVED",

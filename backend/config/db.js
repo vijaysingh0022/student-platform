@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import Question from "../models/Question.js";
 import User from "../models/User.js";
+import Video from "../models/Video.js";
 import { Subject, Unit, Chapter, Topic } from "../models/Curriculum.js";
 import TopicQuestion from "../models/TopicQuestion.js";
 import { PLACEMENT_QUESTIONS } from "../seed/placementQuestionsData.js";
+import { INITIAL_TOPIC_VIDEOS } from "../seed/topicVideosData.js";
 import {
   CURRICULUM_SUBJECTS,
   CURRICULUM_UNITS,
@@ -77,6 +79,19 @@ export const autoSeed = async () => {
       await TopicQuestion.deleteMany({});
       await TopicQuestion.insertMany(TOPIC_QUESTIONS);
       console.log(`✅ Auto-seeded ${TOPIC_QUESTIONS.length} topic-specific diagnostic questions`);
+    }
+
+    // 5. Video Learning Initial Seed
+    const videoCount = await Video.countDocuments();
+    if (videoCount < INITIAL_TOPIC_VIDEOS.length) {
+      for (const vData of INITIAL_TOPIC_VIDEOS) {
+        await Video.findOneAndUpdate(
+          { topicId: vData.topicId },
+          { $set: vData },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      }
+      console.log(`✅ Auto-seeded ${INITIAL_TOPIC_VIDEOS.length} topic tutorial videos`);
     }
   } catch (err) {
     console.warn("Auto-seed info:", err.message);

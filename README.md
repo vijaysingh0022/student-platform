@@ -116,7 +116,7 @@ Interactive step-by-step visualizers to develop algorithmic intuition:
 - **Digital Career Avatar**: Models the student's skills against real engineering profiles at companies like Google, Amazon, Microsoft, TCS, Infosys, and startups.
 - **Gap & Deficit Matrix**: Identifies missing technical competencies, frameworks, and system design concepts required for target roles.
 - **Resume Keyword Optimizer**: Highlights missing keywords in student projects to clear ATS screening.
-- **Salary & Readiness Forecast**: Predicts interview clearing probability based on continuous test and coding performance.
+- **Salary & Readiness Forecast**: Predicts interview clearing probability based on continuous test and coding performance
 
 ---
 

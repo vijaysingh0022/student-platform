@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getSubjectCurriculum } from "../services/api.js";
+import { getSubjectCurriculum, getSubjectVideoStats } from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
 
 const SubjectCurriculumPage = () => {
@@ -9,6 +9,7 @@ const SubjectCurriculumPage = () => {
   const { learningVersion } = useAppState();
 
   const [data, setData] = useState(null);
+  const [videoStats, setVideoStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [expandedUnits, setExpandedUnits] = useState({});
 
@@ -17,9 +18,15 @@ const SubjectCurriculumPage = () => {
     const fetchCurriculum = async () => {
       setLoading(true);
       try {
-        const res = await getSubjectCurriculum(subjectId);
+        const [res, statsRes] = await Promise.all([
+          getSubjectCurriculum(subjectId),
+          getSubjectVideoStats(subjectId).catch(() => ({ data: null })),
+        ]);
         if (isMounted) {
           setData(res.data);
+          if (statsRes?.data?.videoProgressMap) {
+            setVideoStats(statsRes.data.videoProgressMap);
+          }
           // Default expand all units
           const expanded = {};
           (res.data.units || []).forEach((u) => {
@@ -268,64 +275,89 @@ const SubjectCurriculumPage = () => {
 
                           {/* Topics List */}
                           <div className="grid grid-cols-1 gap-2.5">
-                            {chapter.topics.map((topic) => (
-                              <div
-                                key={topic.topicId}
-                                className="group p-4 rounded-2xl border border-slate-100 hover:border-violet-200 bg-slate-50/40 hover:bg-violet-50/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
-                              >
-                                <div className="space-y-1 flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-black text-slate-400">
-                                      #{topic.topicNumber}
+                            {chapter.topics.map((topic) => {
+                              const vProg = videoStats[topic.topicId];
+                              const vCompleted = vProg?.isCompleted || (vProg?.completionPercentage >= 90);
+                              const vPct = vProg?.completionPercentage || 0;
+
+                              return (
+                                <div
+                                  key={topic.topicId}
+                                  className="group p-4 rounded-2xl border border-slate-100 hover:border-violet-200 bg-slate-50/40 hover:bg-violet-50/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                                >
+                                  <div className="space-y-1.5 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs font-black text-slate-400">
+                                        #{topic.topicNumber}
+                                      </span>
+                                      <Link
+                                        to={`/learn/${subject.subjectId}/${topic.topicId}`}
+                                        className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors"
+                                      >
+                                        {topic.title}
+                                      </Link>
+
+                                      {/* Video Indicator Pill */}
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-violet-100 text-violet-800 border border-violet-200">
+                                        <span>🎥</span>
+                                        <span>Video {vCompleted ? "✓" : vPct > 0 ? `${vPct}%` : "Available"}</span>
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 font-medium line-clamp-1">
+                                      {topic.summary || topic.subtopics?.join(" • ")}
+                                    </p>
+
+                                    {/* Video Progress Bar preview */}
+                                    {vPct > 0 && (
+                                      <div className="flex items-center gap-2 pt-0.5">
+                                        <div className="w-24 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                          <div
+                                            className={`h-full ${vCompleted ? "bg-emerald-500" : "bg-violet-600"}`}
+                                            style={{ width: `${vPct}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-[10px] font-semibold text-slate-500">
+                                          {vCompleted ? "Completed" : `${vPct}% Watched`}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Topic Badges & Action CTA */}
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[11px] font-semibold text-slate-400 hidden md:inline">
+                                      ⏱️ {topic.estimatedMinutes}m
                                     </span>
+
+                                    {getStatusBadge(topic)}
+
+                                    {/* Watch Video Button */}
                                     <Link
                                       to={`/learn/${subject.subjectId}/${topic.topicId}`}
-                                      className="text-sm font-black text-slate-900 group-hover:text-violet-700 transition-colors"
+                                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition-all shadow-xs flex items-center gap-1"
                                     >
-                                      {topic.title}
+                                      <span>🎥</span>
+                                      <span>{vPct > 0 && !vCompleted ? "Continue Watching" : "Watch Video"}</span>
+                                    </Link>
+
+                                    {/* [Practice] */}
+                                    <Link
+                                      to={`/learn/${subject.subjectId}/${topic.topicId}?tab=practice`}
+                                      className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-all shadow-xs hidden sm:block"
+                                    >
+                                      📝 Practice
+                                    </Link>
+
+                                    <Link
+                                      to={`/learn/${subject.subjectId}/${topic.topicId}`}
+                                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs ml-1"
+                                    >
+                                      Study →
                                     </Link>
                                   </div>
-                                  <p className="text-xs text-slate-500 font-medium line-clamp-1">
-                                    {topic.summary || topic.subtopics?.join(" • ")}
-                                  </p>
                                 </div>
-
-                                {/* Topic Badges & Action CTA */}
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <span className="text-[11px] font-semibold text-slate-400 hidden md:inline">
-                                    ⏱️ {topic.estimatedMinutes}m
-                                  </span>
-
-                                  {getStatusBadge(topic)}
-
-                                  {/* [Practice] */}
-                                  <Link
-                                    to={`/learn/${subject.subjectId}/${topic.topicId}?tab=practice`}
-                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-all shadow-xs hidden sm:block"
-                                  >
-                                    📝 Practice
-                                  </Link>
-
-                                  {/* [Ask AI] */}
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      handleAskTutor(e, topic.title, subject.name);
-                                    }}
-                                    className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all shadow-xs hidden sm:block"
-                                  >
-                                    🤖 Ask AI
-                                  </button>
-
-                                  <Link
-                                    to={`/learn/${subject.subjectId}/${topic.topicId}`}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-violet-600 hover:bg-violet-700 transition-colors shadow-xs ml-1"
-                                  >
-                                    Study →
-                                  </Link>
-                                </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       ))}

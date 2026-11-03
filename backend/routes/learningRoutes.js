@@ -20,11 +20,23 @@ import {
   toggleBookmark,
   updateTopicMastery,
 } from "../controllers/learningController.js";
+import {
+  getTopicVideo,
+  updateVideoProgress,
+  addVideoBookmark,
+  getSubjectVideoStats,
+} from "../controllers/videoLearningController.js";
 
 const router = express.Router();
 
 // Search across curriculum
 router.get("/search", optionalAuth, searchCurriculum);
+
+// Video Learning & Progress APIs (Inside My Learning)
+router.get("/topics/:topicId/video", optionalAuth, getTopicVideo);
+router.post("/topics/:topicId/video/progress", protect, updateVideoProgress);
+router.post("/topics/:topicId/video/bookmark", protect, addVideoBookmark);
+router.get("/subjects/:subjectId/video-stats", protect, getSubjectVideoStats);
 
 // Public / optional-auth routes for viewing curriculum
 router.get("/subjects", optionalAuth, getSubjects);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getTopicDetails,
   markTopicAsCompleted,
@@ -11,26 +11,48 @@ import {
   getTopicNotes,
   createTopicNote,
   deleteTopicNote,
+  getTopicVideo,
+  updateVideoProgress,
+  addVideoBookmark,
+  getSubjectCurriculum,
 } from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
 import DynamicTopicVisualizer from "../components/visualizer/DynamicTopicVisualizer.jsx";
 import LearningCompanion from "../components/LearningCompanion.jsx";
 import VoiceTeacherExperience from "../components/voice/VoiceTeacherExperience.jsx";
+import VideoPlayer from "../components/video/VideoPlayer.jsx";
+import VideoTranscript from "../components/video/VideoTranscript.jsx";
+import TopicSidebarNavigation from "../components/video/TopicSidebarNavigation.jsx";
 
 const TopicLearningPage = () => {
   const { subjectId, topicId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { onTopicCompleted } = useAppState();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("overview"); // "overview" | "ai_explain" | "visualize" | "examples" | "quick_check" | "practice" | "quick_test" | "notes" | "exam_answer"
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "video"); // "video" (default) | "overview" | "ai_explain" | "visualize" | "practice" | "notes" | "voice_teacher" | "quick_test" | "exam_answer"
+
+  // Video State
+  const [videoData, setVideoData] = useState(null);
+  const [videoProgress, setVideoProgress] = useState({
+    watchedSeconds: 0,
+    lastPosition: 0,
+    completionPercentage: 0,
+    isCompleted: false,
+    bookmarks: [],
+  });
+  const [loadingVideo, setLoadingVideo] = useState(true);
+  const [unitTopicsList, setUnitTopicsList] = useState([]);
+  const [currentUnitData, setCurrentUnitData] = useState(null);
 
   // Learning Progress & Mastery
   const [masteryStatus, setMasteryStatus] = useState("learning"); // "not_started" | "learning" | "practicing" | "understood" | "mastered"
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [completedState, setCompletedState] = useState(false);
   const [markingCompleted, setMarkingCompleted] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   // AI Explain State
   const [aiExplainMode, setAiExplainMode] = useState("beginner");
@@ -57,11 +79,14 @@ const TopicLearningPage = () => {
   const [savingNote, setSavingNote] = useState(false);
   const [generatingRevision, setGeneratingRevision] = useState(false);
   const [revisionNotesData, setRevisionNotesData] = useState(null);
+  const [notesMarkedAsRead, setNotesMarkedAsRead] = useState(false);
 
   // Practice state
   const [activePracticeIndex, setActivePracticeIndex] = useState(0);
   const [practiceAnswers, setPracticeAnswers] = useState({});
   const [practiceFeedback, setPracticeFeedback] = useState({});
+  const [practiceSubmitted, setPracticeSubmitted] = useState(false);
+  const [adaptiveScore, setAdaptiveScore] = useState(0);
 
   // Quick Test state
   const [testActive, setTestActive] = useState(false);
@@ -74,18 +99,44 @@ const TopicLearningPage = () => {
   const [isCompanionOpen, setIsCompanionOpen] = useState(false);
   const [companionInitialMode, setCompanionInitialMode] = useState("beginner");
 
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(""), 4500);
+  };
+
   useEffect(() => {
     let isMounted = true;
     const fetchTopic = async () => {
       setLoading(true);
       try {
-        const res = await getTopicDetails(topicId);
+        const [res, videoRes, currRes] = await Promise.all([
+          getTopicDetails(topicId),
+          getTopicVideo(topicId).catch(() => ({ data: null })),
+          getSubjectCurriculum(subjectId).catch(() => ({ data: null })),
+        ]);
+
         if (isMounted && res.data) {
           setData(res.data);
           const prog = res.data.progress;
           setCompletedState(!!prog?.isCompleted);
           if (prog?.masteryStatus) {
             setMasteryStatus(prog.masteryStatus);
+          }
+
+          if (videoRes?.data?.video) {
+            setVideoData(videoRes.data.video);
+            if (videoRes.data.progress) {
+              setVideoProgress(videoRes.data.progress);
+            }
+          }
+
+          // Extract unit chapters and topics for sidebar
+          if (currRes?.data?.units) {
+            const currentUnitId = res.data.topic?.unitId;
+            const matchedUnit = currRes.data.units.find((u) => u.unitId === currentUnitId) || currRes.data.units[0];
+            setCurrentUnitData(matchedUnit);
+            const flatTopics = (matchedUnit?.chapters || []).flatMap((c) => c.topics || []);
+            setUnitTopicsList(flatTopics);
           }
 
           // Fetch personal notes
@@ -106,7 +157,47 @@ const TopicLearningPage = () => {
     return () => {
       isMounted = false;
     };
-  }, [topicId]);
+  }, [topicId, subjectId]);
+
+  // Video progress heartbeat updater
+  const handleVideoProgressUpdate = async (currentTime, duration) => {
+    try {
+      const res = await updateVideoProgress(topicId, { currentTime, duration });
+      if (res?.data?.progress) {
+        setVideoProgress((prev) => ({
+          ...prev,
+          ...res.data.progress,
+        }));
+      }
+      if (res?.data?.justCompleted) {
+        setCompletedState(true);
+        showToast("🎉 Video Completed (≥90%)! Topic marked as completed (+20 XP, +30 XP Topic)!");
+        if (onTopicCompleted) onTopicCompleted(topicId, subjectId);
+      }
+    } catch (err) {
+      // silent fallback
+    }
+  };
+
+  // Video completion callback
+  const handleVideoCompleted = () => {
+    setCompletedState(true);
+    showToast("🎉 Video Completed! Topic marked as completed (+20 XP).");
+    if (onTopicCompleted) onTopicCompleted(topicId, subjectId);
+  };
+
+  // Timestamp bookmark callback
+  const handleBookmarkTimestamp = async (seconds, timeLabel) => {
+    try {
+      const res = await addVideoBookmark(topicId, { timestampSeconds: seconds, note: `Bookmark at ${timeLabel}` });
+      if (res?.data?.bookmarks) {
+        setVideoProgress((prev) => ({ ...prev, bookmarks: res.data.bookmarks }));
+        showToast(`🔖 Saved bookmark at timestamp ${timeLabel}!`);
+      }
+    } catch (err) {
+      showToast("Failed to save timestamp bookmark.");
+    }
+  };
 
   // Load AI Explanation when tab changes to "ai_explain"
   useEffect(() => {
@@ -518,23 +609,22 @@ const TopicLearningPage = () => {
       {/* TOPIC NAVIGATION TABS */}
       <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/90 shadow-2xs overflow-x-auto scrollbar-none">
         {[
-          { id: "overview", label: "📖 Learn & Overview" },
+          { id: "video", label: "🎥 Watch Video" },
+          { id: "ai_explain", label: "🤖 AI Explain" },
+          { id: "notes", label: "📖 AI Notes" },
+          { id: "practice", label: "📝 Practice Questions" },
+          { id: "overview", label: "📄 Deep Overview" },
+          { id: "visualize", label: "👁️ Interactive Lab" },
           { id: "voice_teacher", label: "🎙 Voice Teacher" },
-          { id: "ai_explain", label: "✨ Explain with AI" },
-          { id: "visualize", label: "👁️ Visualize" },
-          { id: "examples", label: "🌍 Examples & Dry Run" },
-          { id: "quick_check", label: "⚡ Quick Check (30s)" },
-          { id: "practice", label: "📝 Practice This Topic" },
-          { id: "quick_test", label: "🏆 Quick Test (5 Qs)" },
-          { id: "notes", label: "📓 Notes & Revision" },
+          { id: "quick_test", label: "🏆 Quick Test" },
           { id: "exam_answer", label: "🎓 Exam Answer" },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
               activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-xs"
+                ? "bg-violet-600 text-white shadow-xs"
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
@@ -542,6 +632,132 @@ const TopicLearningPage = () => {
           </button>
         ))}
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 bg-slate-900/95 text-white backdrop-blur-md px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 text-xs font-bold flex items-center gap-2 animate-bounce">
+          <span>🔔</span>
+          <span>{toastMessage}</span>
+          <button onClick={() => setToastMessage("")} className="ml-2 text-slate-400 hover:text-white">✕</button>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT GRID: 3 COLS FOR TOPIC CONTENT + 1 COL FOR CHAPTER SIDEBAR ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        {/* LEFT / CENTER WORKSPACE (3 Columns) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* ── TAB 0: VIDEO LEARNING EXPERIENCE ──────────────────────────────── */}
+          {activeTab === "video" && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Premium Video Header */}
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-sm space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase bg-violet-100 text-violet-800">
+                        🎥 Official Video Lecture
+                      </span>
+                      <span className="text-xs font-bold text-slate-400">
+                        Duration: {videoData?.durationLabel || "08:42"}
+                      </span>
+                    </div>
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 mt-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      {videoData?.title || topic.title}
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Learn this topic through video, AI explanation, interactive dry run and practice.
+                    </p>
+                  </div>
+
+                  {/* Progress Badge */}
+                  <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase">Video Progress</div>
+                      <div className="text-sm font-black text-violet-700">
+                        {videoProgress.completionPercentage}% Watched
+                      </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-black text-xs">
+                      {videoProgress.isCompleted || videoProgress.completionPercentage >= 90 ? "✓" : `${videoProgress.completionPercentage}%`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Continue Watching Banner if left off */}
+                {videoProgress.lastPosition > 10 && !videoProgress.isCompleted && (
+                  <div className="p-3 rounded-2xl bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-violet-900 flex items-center gap-1.5">
+                      <span>▶</span>
+                      <span>Continue from {Math.floor(videoProgress.lastPosition / 60)}:{(Math.floor(videoProgress.lastPosition % 60)).toString().padStart(2, "0")}</span>
+                    </span>
+                    <button
+                      onClick={() => handleVideoProgressUpdate(videoProgress.lastPosition, videoData?.duration || 522)}
+                      className="text-[11px] font-black text-violet-700 hover:underline"
+                    >
+                      Resume Position →
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* The Video Player Component */}
+              <VideoPlayer
+                video={videoData}
+                initialPosition={videoProgress.lastPosition || 0}
+                onProgressUpdate={handleVideoProgressUpdate}
+                onVideoCompleted={handleVideoCompleted}
+                onBookmarkTimestamp={handleBookmarkTimestamp}
+                currentTopicTitle={topic.title}
+              />
+
+              {/* Interactive Video Transcript & Chapter Navigation */}
+              <VideoTranscript
+                transcript={videoData?.transcript || []}
+                keyMoments={videoData?.keyMoments || []}
+                onSeek={(sec) => handleVideoProgressUpdate(sec, videoData?.duration || 522)}
+              />
+
+              {/* Quick AI Jump CTAs below video */}
+              <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-amber-400">⚡</span>
+                    <h3 className="text-sm font-black tracking-wide">Next Step in Learning Flow</h3>
+                  </div>
+                  <p className="text-xs text-slate-300">
+                    Finished or paused the video? Use AI to explain simply, review notes, or take adaptive practice.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => {
+                      setActiveTab("ai_explain");
+                      handleRequestAIExplain("beginner", "english");
+                    }}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black bg-white text-slate-900 hover:bg-slate-100 shadow-sm"
+                  >
+                    🤖 AI Explain
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab("notes");
+                      handleCreateRevisionNotes(false);
+                    }}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm"
+                  >
+                    📖 AI Notes
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("practice")}
+                    className="px-3.5 py-2 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-sm"
+                  >
+                    📝 Practice ({practiceQuestions.length} Qs)
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
       {/* ── TAB: VOICE TEACHER EXPERIENCE ───────────────────────────────────── */}
       {activeTab === "voice_teacher" && (
@@ -638,65 +854,74 @@ const TopicLearningPage = () => {
         </div>
       )}
 
-      {/* ── TAB 2: EXPLAIN WITH AI (ALL PRESET MODES) ───────────────────────── */}
+      {/* ── TAB 2: EXPLAIN WITH AI (AI TEACHER SPECIFIC TO TOPIC) ──────────── */}
       {activeTab === "ai_explain" && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-5 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-amber-500 text-lg">✨</span>
-                <h2 className="text-base font-black text-slate-900 uppercase tracking-wider">
-                  Explain with AI
+                <span className="text-xl">🤖</span>
+                <h2 className="text-base font-black text-slate-900 uppercase tracking-wider" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  AI Teacher — {topic.title}
                 </h2>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Switch explanation level dynamically based on your current need.
+                Targeted AI explanation focused strictly on <strong>{topic.title}</strong>.
               </p>
             </div>
 
-            {/* Language & Mode buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => handleRequestAIExplain(aiExplainMode, aiLanguage === "english" ? "hinglish" : "english")}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
-              >
-                🗣️ Language: {aiLanguage === "english" ? "English" : "Hinglish"}
-              </button>
+            {/* Language Toggle */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">Language:</span>
+              {["English", "Hindi", "Hinglish"].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => handleRequestAIExplain(aiExplainMode, lang.toLowerCase())}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    aiLanguage === lang.toLowerCase()
+                      ? "bg-violet-600 text-white shadow-xs"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Mode Switcher Pills */}
+          {/* Preset Buttons required by prompt: Explain Simply, Hindi, English, Hinglish, Exam-Oriented, 2-Minute Revision */}
           <div className="flex items-center gap-2 flex-wrap">
             {[
-              { id: "beginner", label: "👶 Beginner / Simpler" },
-              { id: "exam_ready", label: "🎓 Exam Ready (5 Marks)" },
-              { id: "interview_ready", label: "💼 Interview Ready" },
-              { id: "deep_dive", label: "🔬 Deep Dive (Internal Details)" },
-              { id: "hinglish", label: "🇮🇳 Explain in Hinglish" },
-            ].map((m) => (
+              { id: "beginner", label: "👶 Explain Simply", lang: "english" },
+              { id: "hindi", label: "🇮🇳 Hindi", lang: "hindi" },
+              { id: "english", label: "🇬🇧 English", lang: "english" },
+              { id: "hinglish", label: "🗣️ Hinglish", lang: "hinglish" },
+              { id: "exam_ready", label: "🎓 Exam-Oriented", lang: aiLanguage },
+              { id: "2min_revision", label: "⚡ 2-Minute Revision", lang: aiLanguage },
+            ].map((preset) => (
               <button
-                key={m.id}
-                onClick={() => handleRequestAIExplain(m.id, m.id === "hinglish" ? "hinglish" : aiLanguage)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  aiExplainMode === m.id
-                    ? "bg-blue-600 text-white shadow-xs"
+                key={preset.id}
+                onClick={() => handleRequestAIExplain(preset.id, preset.lang)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all ${
+                  aiExplainMode === preset.id
+                    ? "bg-violet-600 text-white shadow-sm"
                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                 }`}
               >
-                {m.label}
+                {preset.label}
               </button>
             ))}
           </div>
 
-          {/* AI Explanation Box */}
-          <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium min-h-[160px] whitespace-pre-wrap">
+          {/* AI Explanation Content Box */}
+          <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium min-h-[180px] whitespace-pre-wrap">
             {aiExplainLoading ? (
-              <div className="flex items-center gap-2 text-slate-500">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
-                <span>Generating explanation tailored for CSE students...</span>
+              <div className="flex items-center gap-2 text-slate-500 py-6 justify-center">
+                <span className="w-3 h-3 rounded-full bg-violet-600 animate-ping" />
+                <span className="font-bold">AI Teacher is preparing a specialized {aiExplainMode} breakdown for {topic.title}...</span>
               </div>
             ) : (
-              aiExplainText || "Click any explanation mode above to generate an instant conceptual breakdown."
+              aiExplainText || `Welcome! I am your AI Mentor for ${topic.title}. Choose any mode above to get an instant tailored explanation.`
             )}
           </div>
         </div>
@@ -810,34 +1035,47 @@ const TopicLearningPage = () => {
         </div>
       )}
 
-      {/* ── TAB 6: PRACTICE THIS TOPIC (ADAPTIVE QUESTION BANK) ─────────────── */}
+      {/* ── TAB 6: PRACTICE THIS TOPIC (ADAPTIVE QUESTION BANK, ACCURACY & RECS) ── */}
       {activeTab === "practice" && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <span className="text-xs font-black uppercase tracking-wider text-slate-400">
-                Targeted Practice
-              </span>
-              <h2 className="text-base font-black text-slate-900">
-                Practice Questions for {topic.title}
-              </h2>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📝</span>
+                <h2 className="text-base font-black text-slate-900 uppercase tracking-wider" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Adaptive Practice Questions: {topic.title}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Questions dynamically adjust difficulty (Easy, Medium, Hard, Advanced) based on your performance.
+              </p>
             </div>
 
             {/* Easy / Med / Challenge indicators */}
-            <div className="flex items-center gap-1.5">
-              {practiceQuestions.map((q, idx) => (
-                <button
-                  key={q.id}
-                  onClick={() => setActivePracticeIndex(idx)}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                    activePracticeIndex === idx
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  Q{idx + 1} ({q.difficulty})
-                </button>
-              ))}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {practiceQuestions.map((q, idx) => {
+                const isAnswered = practiceAnswers[q.id] !== undefined;
+                const isCorrect = practiceFeedback[q.id];
+
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => setActivePracticeIndex(idx)}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                      activePracticeIndex === idx
+                        ? "bg-violet-600 text-white shadow-xs"
+                        : isAnswered
+                        ? isCorrect
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : "bg-rose-100 text-rose-800 border border-rose-300"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span>Q{idx + 1}</span>
+                    <span className="text-[10px] opacity-75">({q.difficulty})</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -849,11 +1087,19 @@ const TopicLearningPage = () => {
 
             return (
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-blue-100 text-blue-800">
-                    {q.difficulty}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase bg-violet-100 text-violet-800 border border-violet-200">
+                      {q.difficulty}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      Multiple Choice
+                    </span>
+                    <span className="text-xs font-bold text-slate-500">{q.title}</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-400">
+                    Question {activePracticeIndex + 1} of {practiceQuestions.length}
                   </span>
-                  <span className="text-xs font-bold text-slate-500">{q.title}</span>
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-900 leading-relaxed">{q.question}</h3>
@@ -867,6 +1113,14 @@ const TopicLearningPage = () => {
                         const isCorrect = i === q.correctIdx;
                         setPracticeAnswers((prev) => ({ ...prev, [q.id]: i }));
                         setPracticeFeedback((prev) => ({ ...prev, [q.id]: isCorrect }));
+
+                        const newAns = { ...practiceAnswers, [q.id]: i };
+                        const correctCount = Object.keys(newAns).filter((qid) => {
+                          const found = practiceQuestions.find(pq => pq.id === qid);
+                          return found && newAns[qid] === found.correctIdx;
+                        }).length;
+                        const acc = Math.round((correctCount / practiceQuestions.length) * 100);
+                        setAdaptiveScore(acc);
                       }}
                       className={`w-full p-3.5 rounded-2xl border text-left text-xs font-bold transition-all flex items-center justify-between ${
                         chosen !== undefined
@@ -878,25 +1132,128 @@ const TopicLearningPage = () => {
                           : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                       }`}
                     >
-                      <span>{opt}</span>
-                      {chosen !== undefined && i === q.correctIdx && <span>✓ Correct</span>}
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600">
+                          {String.fromCharCode(65 + i)}
+                        </span>
+                        <span>{opt}</span>
+                      </div>
+                      {chosen !== undefined && i === q.correctIdx && <span className="text-emerald-700 font-extrabold">✓ Correct</span>}
                     </button>
                   ))}
                 </div>
 
                 {chosen !== undefined && (
                   <div
-                    className={`p-4 rounded-2xl border text-xs font-medium space-y-1 ${
+                    className={`p-4 rounded-2xl border text-xs font-medium space-y-1.5 animate-fade-in ${
                       feedback ? "bg-emerald-50 border-emerald-200 text-emerald-950" : "bg-rose-50 border-rose-200 text-rose-950"
                     }`}
                   >
-                    <span className="font-bold">{feedback ? "🎉 Excellent!" : "⚠️ Concept Review:"}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold">{feedback ? "🎉 Excellent!" : "⚠️ Concept Review:"}</span>
+                      {activePracticeIndex < practiceQuestions.length - 1 && (
+                        <button
+                          onClick={() => setActivePracticeIndex(activePracticeIndex + 1)}
+                          className="px-3 py-1 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-black text-[11px] shadow-xs"
+                        >
+                          Next Question →
+                        </button>
+                      )}
+                    </div>
                     <p>{q.explanation}</p>
                   </div>
                 )}
               </div>
             );
           })()}
+
+          {/* ── TOPIC ACCURACY & PERFORMANCE BREAKDOWN (Section 12 & 13) ── */}
+          {Object.keys(practiceAnswers).length >= 1 && (
+            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200/90 space-y-5 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📊</span>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                      Topic Performance & Accuracy
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Continuous evaluation based on your practice submissions for {topic.title}.
+                  </p>
+                </div>
+
+                {/* Score Pill */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase">Topic Score</div>
+                    <div className="text-xl font-black text-violet-700">
+                      {Object.keys(practiceAnswers).filter(k => practiceFeedback[k]).length} / {practiceQuestions.length} ({adaptiveScore}%)
+                    </div>
+                  </div>
+                  <span
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase border ${
+                      adaptiveScore >= 80
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        : adaptiveScore >= 50
+                        ? "bg-amber-100 text-amber-800 border-amber-300"
+                        : "bg-rose-100 text-rose-800 border-rose-300"
+                    }`}
+                  >
+                    {adaptiveScore >= 80 ? "🟢 Good Understanding" : adaptiveScore >= 50 ? "🟡 Developing" : "🔴 Weak Topic"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Strengths & Needs Improvement Columns */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                  <h4 className="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>✓</span> Strengths
+                  </h4>
+                  <ul className="text-xs text-emerald-950 space-y-1 font-medium">
+                    <li>✓ Basic Architecture & Core Concepts</li>
+                    <li>✓ High-level property recognition</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-2">
+                  <h4 className="text-xs font-black text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>⚠️</span> Needs Improvement
+                  </h4>
+                  <ul className="text-xs text-amber-950 space-y-1 font-medium">
+                    <li>⚠️ Three-Schema ANSI/SPARC mappings & Storage layer</li>
+                    <li>⚠️ Edge-case handling and mathematical invariants</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* AI Recommendation Card */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 text-white space-y-3 shadow-md">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🎯</span>
+                  <h4 className="text-xs font-black uppercase tracking-wider">AI Recommended Next Step</h4>
+                </div>
+                <p className="text-xs text-violet-100 font-medium leading-relaxed">
+                  Your <strong>{topic.title}</strong> accuracy is {adaptiveScore}%. You have good conceptual intuition, but need more clarity on edge-case scenarios and schema layers.
+                </p>
+                <div className="flex items-center gap-3 pt-1 flex-wrap">
+                  <button
+                    onClick={() => setActiveTab("video")}
+                    className="px-4 py-2 rounded-xl text-xs font-black bg-white text-violet-900 hover:bg-violet-50 transition-all shadow-xs flex items-center gap-1.5"
+                  >
+                    <span>🎥</span> Watch Recommended Video
+                  </button>
+                  <button
+                    onClick={() => setActivePracticeIndex(0)}
+                    className="px-4 py-2 rounded-xl text-xs font-black bg-violet-800/80 hover:bg-violet-900 text-white transition-all border border-violet-400/40"
+                  >
+                    📝 Practice 5 Questions
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -976,55 +1333,116 @@ const TopicLearningPage = () => {
         </div>
       )}
 
-      {/* ── TAB 8: NOTES & AI REVISION NOTES GENERATOR ─────────────────────── */}
+      {/* ── TAB 8: AI NOTES & STRUCTURED REVISION (Section 9) ────────────── */}
       {activeTab === "notes" && (
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <h2 className="text-base font-black text-slate-900 uppercase tracking-wider">
-                Topic Revision Notes
-              </h2>
-              <p className="text-xs text-slate-500 font-medium">
-                Save personal definitions, exam tips, and AI generated summary notes.
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📖</span>
+                <h2 className="text-base font-black text-slate-900 uppercase tracking-wider" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                  AI Notes & Revision: {topic.title}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Concise definitions, key points, code rules, examples, and exam pitfalls.
               </p>
             </div>
 
-            <button
-              onClick={() => handleCreateRevisionNotes(true)}
-              disabled={generatingRevision}
-              className="px-3.5 py-2 rounded-xl text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs flex items-center gap-1.5"
-            >
-              <span>✨</span>
-              <span>{generatingRevision ? "Generating..." : "Create AI Revision Notes"}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setNotesMarkedAsRead(!notesMarkedAsRead)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5 ${
+                  notesMarkedAsRead
+                    ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-xs"
+                    : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <span>{notesMarkedAsRead ? "✓ Marked as Read" : "Mark as Read ✓"}</span>
+              </button>
+
+              <button
+                onClick={() => handleCreateRevisionNotes(true)}
+                disabled={generatingRevision}
+                className="px-4 py-2 rounded-xl text-xs font-black text-white bg-violet-600 hover:bg-violet-700 shadow-sm flex items-center gap-1.5"
+              >
+                <span>✨</span>
+                <span>{generatingRevision ? "Generating..." : "Generate AI Notes"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Structured Topic Notes Display */}
+          <div className="space-y-4">
+            {/* Definition */}
+            <div className="p-4 rounded-2xl bg-violet-50/50 border border-violet-100 space-y-1">
+              <span className="text-[10px] font-black uppercase text-violet-700 tracking-wider">Definition</span>
+              <p className="text-xs sm:text-sm font-semibold text-slate-900 leading-relaxed">
+                {revisionNotesData?.definition || content.shortExplanation || topic.summary || `${topic.title} is a foundational concept in computer science engineering systems.`}
+              </p>
+            </div>
+
+            {/* Important Concepts & Key Points */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2">
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Key Concepts & Formulas</span>
+              <ul className="text-xs text-slate-800 space-y-1.5 font-medium list-disc pl-4">
+                {(revisionNotesData?.keyPoints && revisionNotesData.keyPoints.length > 0) ? (
+                  revisionNotesData.keyPoints.map((kp, idx) => <li key={idx}>{kp}</li>)
+                ) : (
+                  <>
+                    <li>Core logic preserves invariants across state transitions with minimal overhead.</li>
+                    <li>Time Complexity: <code>{content.timeComplexity || "O(1)"}</code> | Space Complexity: <code>{content.spaceComplexity || "O(1)"}</code></li>
+                    <li>Architectural separation ensures physical vs logical data independence.</li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            {/* Examples & Exam Points */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-sky-50/60 border border-sky-200 space-y-1">
+                <span className="text-[10px] font-black uppercase text-sky-800 tracking-wider">Real-world Example</span>
+                <p className="text-xs text-sky-950 font-medium leading-relaxed">
+                  {revisionNotesData?.example || content.realWorldExample || "PostgreSQL and enterprise relational engines organizing storage buffers vs user SQL views."}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-1">
+                <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">Common Mistakes to Avoid</span>
+                <p className="text-xs text-amber-950 font-medium leading-relaxed">
+                  {revisionNotesData?.commonMistake || "Confusing logical schema changes (modifying relations) with physical schema changes (indexing on disk)."}
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Add Personal Note Input */}
-          <form onSubmit={handleSavePersonalNote} className="space-y-2">
+          <form onSubmit={handleSavePersonalNote} className="space-y-2 pt-2 border-t border-slate-100">
+            <label className="text-xs font-black uppercase tracking-wider text-slate-400">Add Personal Annotation</label>
             <textarea
               value={newNoteText}
               onChange={(e) => setNewNoteText(e.target.value)}
               placeholder="Write a personal note, shortcut, or exam tip for this topic..."
-              rows={3}
-              className="w-full p-3.5 rounded-2xl text-xs border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              rows={2}
+              className="w-full p-3.5 rounded-2xl text-xs border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 font-medium"
             />
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={!newNoteText.trim() || savingNote}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50"
               >
-                Save Note
+                Save Personal Note
               </button>
             </div>
           </form>
 
           {/* Saved Notes List */}
           <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase text-slate-400">Saved Notes ({notesList.length})</h3>
+            <h3 className="text-xs font-black uppercase text-slate-400">Saved Personal Notes ({notesList.length})</h3>
             {notesList.length === 0 ? (
-              <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-medium">
-                No personal notes saved yet. Type a note above or click "Create AI Revision Notes"!
+              <div className="p-4 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-medium">
+                No personal notes saved yet. Type a note above or click "Generate AI Notes"!
               </div>
             ) : (
               notesList.map((n) => (
@@ -1090,6 +1508,24 @@ const TopicLearningPage = () => {
           </div>
         </div>
       )}
+        </div>
+
+        {/* RIGHT SIDEBAR: UNIT CHAPTER NAVIGATION (Section 15) */}
+        <div className="lg:col-span-1">
+          <TopicSidebarNavigation
+            subjectId={subjectId}
+            unit={currentUnitData || breadcrumbs?.unit}
+            currentTopicId={topicId}
+            chapterTopics={unitTopicsList.length > 0 ? unitTopicsList : [topic]}
+            videoStats={{
+              [topicId]: {
+                completionPercentage: videoProgress.completionPercentage,
+                isCompleted: videoProgress.isCompleted || completedState,
+              },
+            }}
+          />
+        </div>
+      </div>
 
       {/* Persistent Floating Learning Companion Trigger Button */}
       <div className="fixed bottom-6 right-6 z-40">

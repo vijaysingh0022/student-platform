@@ -200,6 +200,23 @@ export const toggleLearningBookmark = async (payload, config = {}) => {
   return api.post("/learning/bookmarks/toggle", payload, config);
 };
 
+// ─── Video Learning APIs (Inside My Learning) ──────────────────────────────
+export const getTopicVideo = async (topicId, config = {}) => {
+  return api.get(`/learning/topics/${topicId}/video`, config);
+};
+
+export const updateVideoProgress = async (topicId, payload, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/video/progress`, payload, config);
+};
+
+export const addVideoBookmark = async (topicId, payload, config = {}) => {
+  return api.post(`/learning/topics/${topicId}/video/bookmark`, payload, config);
+};
+
+export const getSubjectVideoStats = async (subjectId, config = {}) => {
+  return api.get(`/learning/subjects/${subjectId}/video-stats`, config);
+};
+
 // Topic Mastery
 export const updateTopicMastery = async (topicId, payload, config = {}) => {
   return api.post(`/learning/topics/${topicId}/mastery`, payload, config);
