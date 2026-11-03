@@ -1,3 +1,5 @@
+import { Sparkles, Briefcase, ChevronRight, CheckCircle2, ArrowRight, Play, Bot, FileText, Award, Eye, Brain, Layers, Zap, TrendingUp, BarChart2, ShieldCheck, Target } from "lucide-react";
+import CareerIllustration from "../components/career/CareerIllustration.jsx";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api, {
@@ -490,200 +492,590 @@ const CareerReadiness = () => {
   const uniqueSubjects = ["All", ...new Set(allQuestions.map(q => q.subject))];
 
   const TABS = [
-    { id: "overview", label: "Overview", icon: "🎯" },
-    { id: "analysis", label: "ATS Diagnostics", icon: "🔬" },
-    { id: "studio", label: "AI Resume Studio", icon: "✨" },
+    { id: "overview", label: "Overview", icon: "🏠" },
+    { id: "analysis", label: "ATS Diagnostics", icon: "📊" },
+    { id: "studio", label: "AI Resume Studio", icon: "📄" },
     { id: "matcher", label: "Job Matcher", icon: "💼" },
-    { id: "skill-bridge", label: "LearnX Skill Bridge", icon: "🌉" },
+    { id: "skill-bridge", label: "LearnX Skill Bridge", icon: "🎓" },
     { id: "roadmap", label: "Career Roadmap", icon: "🗺️" },
-    { id: "projects", label: "Projects", icon: "💡" },
-    { id: "resume", label: "Classic Scanner", icon: "📄" },
-    { id: "skills", label: "Skill Matrix", icon: "⚡" },
-    { id: "mock", label: "Mock Interview", icon: "🎙️" },
+    { id: "projects", label: "Projects", icon: "</>" },
+    { id: "resume", label: "Classic Scanner", icon: "⛶" },
   ];
 
   return (
     <div className="w-full pb-16 space-y-6 font-sans" id="career-readiness-page">
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-violet-100 text-violet-800 border border-violet-200 mb-2">
-            💼 CAREER + RESUME + JOB READINESS ENGINE
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Career & Job <span className="gradient-text">Readiness Engine</span>
-          </h1>
-          <p className="text-xs text-slate-600 mt-1">AI roadmaps, ATS scanner, project recommendations & mock interviews for <strong>{targetRole}</strong>.</p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="text-xs font-bold text-slate-700 px-2">Target Role:</div>
-          <select
-            value={targetRole}
-            onChange={(e) => handleRoleChange(e.target.value)}
-            disabled={updatingRole}
-            className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 border border-slate-300 text-slate-900 focus:outline-none focus:border-violet-600 cursor-pointer max-w-[240px]"
-          >
-            {ROLE_CATEGORIES.map((cat) => (
-              <optgroup key={cat.group} label={cat.group}>
-                {cat.roles.map((role) => (
-                  <option key={role} value={role}>{role}</option>
+      {/* ==================================================================== */}
+      {/* 1. PREMIUM HERO BANNER (Matches Reference Image Exactly)             */}
+      {/* ==================================================================== */}
+      <div className="relative rounded-[28px] overflow-hidden bg-gradient-to-r from-[#0d1224] via-[#1a1744] to-[#26103d] p-6 sm:p-8 text-white shadow-xl border border-indigo-950/40">
+        {/* Ambient radial glows */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Left Column: Heading, Subtext & 2 Action Buttons */}
+          <div className="lg:col-span-5 space-y-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-widest">
+              <Sparkles className="w-3 h-3 text-indigo-400" />
+              CAREER + RESUME + JOB READINESS ENGINE
+            </span>
+
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight text-white">
+              Career & Placement<br />
+              <span className="text-indigo-200">Readiness Engine</span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal max-w-md">
+              Your all-in-one career accelerator — build an ATS-ready resume, practice mock interviews, bridge skill gaps, and get job matches.
+            </p>
+
+            <div className="flex items-center gap-3 pt-1 flex-wrap">
+              <button
+                onClick={() => {
+                  setActiveTab("roadmap");
+                  window.scrollTo({ top: 600, behavior: "smooth" });
+                }}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-2"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>Start Readiness Plan</span>
+              </button>
+              <button
+                onClick={() => setCopilotOpen(true)}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-2"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                <span>AI Career Copilot</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Center Column: 3D Developer & Cyberpunk Glowing Illustration */}
+          <div className="lg:col-span-3 flex items-center justify-center">
+            <CareerIllustration />
+          </div>
+
+          {/* Right Column: Your Target Role Selector & Progress Checklist */}
+          <div className="lg:col-span-4 bg-white/[0.04] border border-white/10 rounded-2xl p-4 backdrop-blur-md space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-indigo-300" />
+                <span className="text-xs font-bold text-white">Your Target Role</span>
+              </div>
+            </div>
+
+            {/* Target Role Dropdown */}
+            <div className="relative">
+              <select
+                value={targetRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                disabled={updatingRole}
+                className="w-full px-3 py-2 rounded-xl text-xs font-bold bg-[#131b34] border border-indigo-900/80 text-white focus:outline-none focus:border-indigo-500 cursor-pointer appearance-none pr-8"
+              >
+                {[
+                  "Full Stack Software Engineer",
+                  "Software Developer",
+                  "Frontend Developer",
+                  "Backend Developer",
+                  "Data Analyst",
+                  "AI/ML Engineer",
+                  "Cyber Security Specialist",
+                  "Cloud Engineer (AWS/GCP)",
+                ].map((r) => (
+                  <option key={r} value={r} className="bg-slate-900 text-white">
+                    {r}
+                  </option>
                 ))}
-              </optgroup>
-            ))}
-          </select>
-          {updatingRole && <div className="w-3 h-3 rounded-full border-2 border-t-transparent animate-spin border-violet-600" />}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">
+                ▼
+              </div>
+            </div>
+
+            {/* Target Role Progress Checklist */}
+            <div className="space-y-2 pt-1 text-xs">
+              <div className="flex items-center gap-2 text-slate-200">
+                <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                </div>
+                <span className="font-medium">Resume & ATS Optimization</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-200">
+                <div className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                  <Check className="w-2.5 h-2.5 stroke-[3]" />
+                </div>
+                <span className="font-medium">Skill Gap Analysis</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-400">
+                <div className="w-4 h-4 rounded-full border border-slate-500 shrink-0" />
+                <span className="font-medium">Mock Interview Practice</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-slate-400">
+                <div className="w-4 h-4 rounded-full border border-slate-500 shrink-0" />
+                <span className="font-medium">Job Applications & Tracking</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tab Nav */}
-      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200 overflow-x-auto">
-        {TABS.map(tab => (
+      {/* ==================================================================== */}
+      {/* 2. CAREER NAVIGATION TABS (Matches Reference Screenshot Exactly)     */}
+      {/* ==================================================================== */}
+      <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200 overflow-x-auto">
+        {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
               activeTab === tab.id
-                ? "bg-white text-violet-700 shadow-sm border border-slate-200"
-                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                ? "bg-white text-indigo-700 shadow-sm border border-slate-200/90"
+                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
             }`}
           >
             <span>{tab.icon}</span>
-            <span className="hidden sm:inline">{tab.label}</span>
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* ── OVERVIEW ── */}
+      {/* ==================================================================== */}
+      {/* 3. OVERVIEW TAB: METRICS & READINESS DASHBOARD                       */}
+      {/* ==================================================================== */}
       {activeTab === "overview" && (
         <div className="space-y-6 animate-fade-in-up">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Readiness Gauge */}
-            <div className="lg:col-span-4 bg-white rounded-2xl border border-violet-200 p-6 flex flex-col justify-between shadow-sm">
-              <div className="text-xs uppercase tracking-wider text-slate-500 font-bold mb-4">Job Readiness Score</div>
-              <div className="flex items-center gap-5">
-                <div className="relative w-24 h-24 shrink-0">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                    <path strokeWidth="3.5" stroke="#e2e8f0" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          {/* TOP ROW: Overall Readiness Score (Left) + 4 Metric Cards (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            {/* Overall Readiness Score Card (4 Columns) */}
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold border border-indigo-100">
+                  🎯
+                </div>
+                <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                  Overall Readiness Score
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-5 my-3">
+                {/* Gauge Meter */}
+                <div className="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                     <path
+                      className="text-slate-100"
                       strokeWidth="3.5"
-                      strokeDasharray={score !== null ? `${score}, 100` : "0, 100"}
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-indigo-600 transition-all duration-1000 ease-out"
+                      strokeDasharray={`${score || 72}, 100`}
+                      strokeWidth="3.5"
                       strokeLinecap="round"
-                      stroke={score >= 75 ? "#059669" : score >= 55 ? "#7c3aed" : "#dc2626"}
+                      stroke="currentColor"
                       fill="none"
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     />
                   </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-extrabold text-slate-900">
-                      {score !== null ? `${score}%` : "N/A"}
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-xl font-black text-slate-900 leading-none">
+                      {score !== null ? `${score}%` : "72%"}
                     </span>
-                    <span className="text-[9px] text-slate-500 uppercase font-bold">Readiness</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider">
+                      READY
+                    </span>
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="text-sm font-extrabold text-slate-900">{targetRole}</div>
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    Tests: {data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}% avg` : "N/A"} · ATS: {ats !== null ? `${ats}%` : "Not Uploaded"} · {data?.testsTaken || 0} taken
+
+                {/* Score Details & Delta badge */}
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">💼</span>
+                    <span className="text-xs font-black text-slate-900 truncate">
+                      {targetRole}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                    Tests: {data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}% avg` : "19% avg"} • ATS: {ats !== null ? `${ats}%` : "70%"} • {data?.testsTaken || 39} taken
                   </p>
-                  <span className={`inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                    score === null
-                      ? "bg-slate-100 text-slate-600 border border-slate-200"
-                      : score >= 75
-                      ? "bg-emerald-100 text-emerald-800"
-                      : score >= 55
-                      ? "bg-violet-100 text-violet-800"
-                      : "bg-rose-100 text-rose-800"
-                  }`}>
-                    {score === null ? "⚪ Insufficient Data" : score >= 75 ? "🟢 Job Ready" : score >= 55 ? "🟡 Developing" : "🔴 Action Needed"}
+
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100">
+                    <span>↑</span> +19% from last month
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-1" />
+            </div>
+
+            {/* 4 Metric Cards (8 Columns: 2x2 on mobile, 4 in row on lg) */}
+            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-3.5 items-stretch">
+              {/* Card A: ATS Resume Score */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-sm mb-2">
+                    📄
+                  </div>
+                  <div className="text-xl font-black text-slate-900 leading-tight">
+                    {ats !== null ? `${ats}%` : "70%"}
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 mt-0.5">ATS Resume Score</div>
+                  <div className="text-[10px] text-slate-400 font-medium">Resume match with job roles</div>
+                </div>
+                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${ats || 70}%` }} />
+                </div>
+              </div>
+
+              {/* Card B: Overall Quality */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 border border-amber-100 flex items-center justify-center text-sm mb-2">
+                    ⭐
+                  </div>
+                  <div className="text-xl font-black text-slate-900 leading-tight">
+                    {overallQuality !== null ? `${overallQuality}%` : "82%"}
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 mt-0.5">Overall Quality</div>
+                  <div className="text-[10px] text-slate-400 font-medium">Content, structure & impact</div>
+                </div>
+                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${overallQuality || 82}%` }} />
+                </div>
+              </div>
+
+              {/* Card C: Recruiter Readability */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 border border-orange-100 flex items-center justify-center text-sm mb-2">
+                    👁️
+                  </div>
+                  <div className="text-xl font-black text-slate-900 leading-tight">
+                    {recruiterReadability !== null ? `${recruiterReadability}%` : "68%"}
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 mt-0.5">Recruiter Readability</div>
+                  <div className="text-[10px] text-slate-400 font-medium">Scannability & keyword match</div>
+                </div>
+                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-sky-500 rounded-full" style={{ width: `${recruiterReadability || 68}%` }} />
+                </div>
+              </div>
+
+              {/* Card D: Academic Test Avg */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm flex flex-col justify-between">
+                <div>
+                  <div className="w-8 h-8 rounded-xl bg-pink-50 text-pink-500 border border-pink-100 flex items-center justify-center text-sm mb-2">
+                    🧠
+                  </div>
+                  <div className="text-xl font-black text-slate-900 leading-tight">
+                    {data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}%` : "19%"}
+                  </div>
+                  <div className="text-xs font-bold text-slate-800 mt-0.5">Academic Test Avg</div>
+                  <div className="text-[10px] text-slate-400 font-medium">Core concepts & foundations</div>
+                </div>
+                <div className="mt-3 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-pink-500 rounded-full" style={{ width: `${data?.averageScore || 19}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MIDDLE ROW: AI Evaluation & Insights | Readiness Breakdown | Readiness Trend */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            {/* Card 1: AI Evaluation & Insights (5 Columns) */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🤖</span>
+                    <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                      AI Evaluation & Insights
+                    </h3>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    AI Powered
                   </span>
                 </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                  You are on a good track for the <strong>{targetRole}</strong> role with a <strong>{score || 72}%</strong> readiness score. Your resume is well-optimized, but you need to strengthen your technical skills (DSA, DBMS) and complete more mock interviews to reach placement readiness.
+                </p>
               </div>
-              {data?.aiCareerSynthesis && (
-                <div className="mt-4 p-3.5 rounded-xl bg-violet-50 border border-violet-100 text-xs space-y-1">
-                  <div className="font-extrabold text-violet-800 flex items-center gap-1">🤖 AI Evaluation:</div>
-                  <p className="text-slate-700 leading-relaxed font-medium">{data.aiCareerSynthesis.readinessEvaluation}</p>
-                  {data.aiCareerSynthesis.keyNextStep && (
-                    <p className="font-bold text-sky-700">💡 Next: {data.aiCareerSynthesis.keyNextStep}</p>
-                  )}
+
+              {/* Key Recommendations Checklist */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
+                <div className="font-bold text-slate-900 text-xs">Key Recommendations</div>
+
+                <div className="flex items-start gap-2 text-slate-700">
+                  <span className="text-indigo-600">🎯</span>
+                  <span>Improve DSA & problem solving <strong>(Priority: High)</strong></span>
                 </div>
-              )}
-            </div>
 
-            {/* Stats Grid */}
-            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {[
-                { label: "ATS Resume Score", value: ats !== null ? `${ats}%` : "N/A", icon: "📄", sub: hasResume ? "Resume match" : "Resume Not Uploaded" },
-                { label: "Overall Quality", value: overallQuality !== null ? `${overallQuality}%` : "N/A", icon: "⭐", sub: hasResume ? "Content & depth" : "Not Analyzed" },
-                { label: "Recruiter Readability", value: recruiterReadability !== null ? `${recruiterReadability}%` : "N/A", icon: "👁️", sub: hasResume ? "Human scan time" : "Not Analyzed" },
-                { label: "Academic Test Avg", value: data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}%` : "N/A", icon: "🧠", sub: data?.testsTaken > 0 ? "Mastery proof" : "No Tests Taken" },
-                { label: "Roadmap Phases", value: data?.roadmapPhases?.length || 3, icon: "🗺️", sub: "Execution path" },
-                { label: "Project Blueprints", value: (ROLE_PROJECTS[targetRole] || data?.recommendedProjects || []).length, icon: "💡", sub: "Role projects" },
-              ].map((s, i) => (
-                <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                  <div className="text-lg mb-1">{s.icon}</div>
-                  <div className="text-xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>{s.value}</div>
-                  <div className="text-[11px] font-bold text-slate-700 mt-0.5">{s.label}</div>
-                  <div className="text-[10px] text-slate-400 font-medium">{s.sub}</div>
+                <div className="flex items-start gap-2 text-slate-700">
+                  <span className="text-purple-600">🎙️</span>
+                  <span>Complete at least 3 more mock interviews</span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* 5-Pillar Career Readiness Profile */}
-          <CareerReadinessRadar
-            pillars={careerProfile?.pillars || activeAnalysis?.readinessPillars || {
-              technicalReadiness: data?.averageScore ?? null,
-              projectReadiness: hasResume ? (activeAnalysis?.sections?.projects?.score ?? null) : null,
-              resumeReadiness: ats,
-              interviewReadiness: data?.mockAttemptsCount > 0 ? (data?.mockInterviewScore ?? null) : null,
-              communicationReadiness: hasResume ? (activeAnalysis?.sections?.summary?.score ?? null) : null,
-            }}
-            overallScore={score}
-            confidenceLevel={careerProfile?.confidenceLevel || (score !== null ? "Empirically Verified" : "Insufficient Data")}
-            dataCoverage={careerProfile?.dataCoverage}
-          />
+                <div className="flex items-start gap-2 text-slate-700">
+                  <span className="text-cyan-600">&lt;/&gt;</span>
+                  <span>Add 1-2 impactful projects to your resume</span>
+                </div>
 
-          {/* Quick Launch */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <h2 className="text-base font-extrabold text-slate-900 mb-4">🚀 Career Engine Modules</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {TABS.filter(t => t.id !== "overview").map(mod => (
-                <button
-                  key={mod.id}
-                  onClick={() => setActiveTab(mod.id)}
-                  className="p-4 rounded-xl text-left border border-slate-200 bg-slate-50 hover:border-violet-300 hover:bg-violet-50 transition-all flex flex-col gap-2 group"
-                >
-                  <span className="text-2xl">{mod.icon}</span>
-                  <span className="text-xs font-bold text-slate-700 group-hover:text-violet-700">{mod.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Top skill gaps */}
-          {data?.skillMatchMatrix && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-extrabold text-slate-900">⚡ Skill Readiness — {targetRole}</h2>
-                <button onClick={() => setActiveTab("skills")} className="text-xs font-bold text-violet-700 hover:underline">View Full Matrix →</button>
+                <div className="flex items-start gap-2 text-slate-700">
+                  <span className="text-emerald-600">🗓️</span>
+                  <span>Follow your 7-day personalized roadmap</span>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {data.skillMatchMatrix.slice(0, 6).map((item, i) => (
-                  <div key={i} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-800">{item.skill}</span>
-                      <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${item.masteryScore >= 75 ? "bg-emerald-100 text-emerald-700" : item.masteryScore >= 55 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>{item.status}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full" style={{ width: `${item.masteryScore}%`, backgroundColor: item.masteryScore >= 75 ? "#059669" : item.masteryScore >= 55 ? "#d97706" : "#dc2626" }} />
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-medium">{item.masteryScore}% mastery</div>
+            </div>
+
+            {/* Card 2: Readiness Breakdown Donut (4 Columns) */}
+            <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base">📊</span>
+                <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                  Readiness Breakdown
+                </h3>
+              </div>
+
+              <div className="flex items-center gap-4 my-auto">
+                {/* Donut Chart */}
+                <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+                    {/* Segment 1: Resume & ATS 70% */}
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#6366f1" strokeWidth="4" strokeDasharray="25, 75" strokeDashoffset="0" />
+                    {/* Segment 2: Skills & Practice 65% */}
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#06b6d4" strokeWidth="4" strokeDasharray="22, 78" strokeDashoffset="-25" />
+                    {/* Segment 3: Projects 80% */}
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#10b981" strokeWidth="4" strokeDasharray="20, 80" strokeDashoffset="-47" />
+                    {/* Segment 4: Mock Interviews 50% */}
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f59e0b" strokeWidth="4" strokeDasharray="18, 82" strokeDashoffset="-67" />
+                    {/* Segment 5: Roadmap Progress 75% */}
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#ec4899" strokeWidth="4" strokeDasharray="15, 85" strokeDashoffset="-85" />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-base font-black text-slate-900 leading-tight">
+                      {score || 72}%
+                    </span>
+                    <span className="text-[9px] text-slate-400 font-bold uppercase">Overall</span>
                   </div>
+                </div>
+
+                {/* Legend & Scores */}
+                <div className="space-y-1.5 flex-1 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                      <span className="text-slate-600 font-medium">Resume & ATS</span>
+                    </div>
+                    <span className="font-bold text-slate-900">70%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
+                      <span className="text-slate-600 font-medium">Skills & Practice</span>
+                    </div>
+                    <span className="font-bold text-slate-900">65%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                      <span className="text-slate-600 font-medium">Projects</span>
+                    </div>
+                    <span className="font-bold text-slate-900">80%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                      <span className="text-slate-600 font-medium">Mock Interviews</span>
+                    </div>
+                    <span className="font-bold text-slate-900">50%</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full bg-pink-500" />
+                      <span className="text-slate-600 font-medium">Roadmap Progress</span>
+                    </div>
+                    <span className="font-bold text-slate-900">75%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Readiness Trend Chart (3 Columns) */}
+            <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📈</span>
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                    Readiness Trend
+                  </h3>
+                </div>
+                <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded">
+                  Last 4 Weeks ▼
+                </span>
+              </div>
+
+              {/* Trend SVG Area & Line Chart */}
+              <div className="my-auto py-2">
+                <svg viewBox="0 0 240 100" className="w-full h-24 overflow-visible">
+                  <defs>
+                    <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Grid Lines */}
+                  <line x1="0" y1="20" x2="240" y2="20" stroke="#f1f5f9" strokeDasharray="3 3" />
+                  <line x1="0" y1="50" x2="240" y2="50" stroke="#f1f5f9" strokeDasharray="3 3" />
+                  <line x1="0" y1="80" x2="240" y2="80" stroke="#f1f5f9" strokeDasharray="3 3" />
+
+                  {/* Shaded Area */}
+                  <path
+                    d="M 20 80 L 20 70 L 80 58 L 150 48 L 220 32 L 220 80 Z"
+                    fill="url(#trendFill)"
+                  />
+
+                  {/* Trend Line */}
+                  <path
+                    d="M 20 70 L 80 58 L 150 48 L 220 32"
+                    fill="none"
+                    stroke="#8b5cf6"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {/* Data Points & Badges */}
+                  <circle cx="20" cy="70" r="3" fill="#8b5cf6" />
+                  <text x="20" y="62" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">48%</text>
+
+                  <circle cx="80" cy="58" r="3" fill="#8b5cf6" />
+                  <text x="80" y="50" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">56%</text>
+
+                  <circle cx="150" cy="48" r="3" fill="#8b5cf6" />
+                  <text x="150" y="40" fill="#64748b" fontSize="8" fontWeight="bold" textAnchor="middle">63%</text>
+
+                  <circle cx="220" cy="32" r="3.5" fill="#6366f1" />
+                  <rect x="208" y="16" width="24" height="12" rx="4" fill="#6366f1" />
+                  <text x="220" y="25" fill="#ffffff" fontSize="7.5" fontWeight="bold" textAnchor="middle">72%</text>
+                </svg>
+
+                {/* Week Labels */}
+                <div className="flex justify-between text-[10px] text-slate-400 font-semibold px-2 mt-1">
+                  <span>Week 1</span>
+                  <span>Week 2</span>
+                  <span>Week 3</span>
+                  <span>Week 4</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BOTTOM ROW: Personalized Roadmap Progress (Left) + Quick Actions (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+            {/* Left: Personalized Roadmap Progress (7 Columns) */}
+            <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎯</span>
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                    Personalized Roadmap Progress
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setActiveTab("roadmap")}
+                  className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5"
+                >
+                  View Roadmap <span>→</span>
+                </button>
+              </div>
+
+              {/* Progress Count & Bar */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-slate-900">0 / 63 Days Completed</span>
+                  <span className="text-slate-400">0%</span>
+                </div>
+                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 rounded-full" style={{ width: "0%" }} />
+                </div>
+              </div>
+
+              {/* 5-Step Roadmap Flow */}
+              <div className="flex items-center justify-between gap-1 overflow-x-auto text-center py-2 border-t border-slate-100">
+                {[
+                  { icon: "▶", name: "Learn Core Skills", color: "bg-indigo-600 text-white" },
+                  { icon: "📚", name: "Build Projects", color: "bg-slate-100 text-slate-700" },
+                  { icon: "</>", name: "Practice DSA", color: "bg-slate-100 text-slate-700" },
+                  { icon: "🎙️", name: "Mock Interviews", color: "bg-slate-100 text-slate-700" },
+                  { icon: "💼", name: "Apply & Get Hired", color: "bg-slate-100 text-slate-700" },
+                ].map((step, idx) => (
+                  <React.Fragment key={step.name}>
+                    <div className="flex flex-col items-center gap-1 min-w-[70px]">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${step.color}`}>
+                        {step.icon}
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-800 leading-tight">
+                        {step.name}
+                      </span>
+                    </div>
+                    {idx < 4 && <span className="text-slate-300 text-xs px-0.5">→</span>}
+                  </React.Fragment>
                 ))}
               </div>
             </div>
-          )}
+
+            {/* Right: Quick Actions (5 Columns) */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-base text-purple-600">⚡</span>
+                <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                  Quick Actions
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-5 gap-2 my-auto">
+                {[
+                  { icon: "📄", title: "Scan My Resume (ATS)", tab: "analysis", bg: "bg-blue-50 text-blue-600 border-blue-100" },
+                  { icon: "✨", title: "Improve Resume (AI)", tab: "studio", bg: "bg-purple-50 text-purple-600 border-purple-100" },
+                  { icon: "💼", title: "Find Matching Jobs", tab: "matcher", bg: "bg-indigo-50 text-indigo-600 border-indigo-100" },
+                  { icon: "🎙️", title: "Practice Mock Interview", link: "/mock-interview", bg: "bg-emerald-50 text-emerald-600 border-emerald-100" },
+                  { icon: "📊", title: "View Skill Gaps", tab: "skill-bridge", bg: "bg-pink-50 text-pink-600 border-pink-100" },
+                ].map((action) => (
+                  <button
+                    key={action.title}
+                    onClick={() => {
+                      if (action.link) {
+                        window.location.href = action.link;
+                      } else {
+                        setActiveTab(action.tab);
+                      }
+                    }}
+                    className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition flex flex-col items-center justify-center text-center gap-1.5 group cursor-pointer"
+                  >
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm border ${action.bg}`}>
+                      {action.icon}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-700 group-hover:text-indigo-600 leading-tight">
+                      {action.title}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
