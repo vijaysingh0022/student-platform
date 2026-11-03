@@ -308,7 +308,7 @@ export default function CareerTwinPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 text-slate-900">
+    <div className="w-full pb-16 space-y-8 text-slate-900 font-sans">
 
       {/* ═══════════════════════════════════════════════════════════
           HERO — Identity + Score + CTA

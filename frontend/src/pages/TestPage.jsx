@@ -305,7 +305,7 @@ const CommandCenter = ({ onStartTest }) => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 pb-24 px-1 text-slate-900">
+    <div className="w-full space-y-7 pb-24 text-slate-900 font-sans">
       {/* Test Config Modal */}
       <TestConfigModal
         isOpen={configModal.isOpen}
@@ -931,7 +931,7 @@ const TestInterface = ({ testConfig, onExit }) => {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-1 space-y-4">
+      <div className="w-full space-y-4">
         <button onClick={onExit} className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           Exit Assessment
@@ -974,7 +974,7 @@ const TestInterface = ({ testConfig, onExit }) => {
       : { label: "Needs Targeted Revision", color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200" };
 
     return (
-      <div className="max-w-7xl mx-auto px-1 pb-24 space-y-6">
+      <div className="w-full pb-24 space-y-6">
         <button
           onClick={() => { setTestResult(null); onExit(); }}
           className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors"
@@ -1139,7 +1139,7 @@ const TestInterface = ({ testConfig, onExit }) => {
   const timerColor = secondsRemaining < 120 ? "text-rose-600" : secondsRemaining < 300 ? "text-amber-600" : "text-slate-900";
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 pb-24 px-1 text-slate-900">
+    <div className="w-full space-y-5 pb-24 text-slate-900 font-sans">
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

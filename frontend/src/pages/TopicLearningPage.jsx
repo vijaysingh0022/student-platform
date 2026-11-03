@@ -485,7 +485,7 @@ const TopicLearningPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 py-6 px-4 sm:px-6 lg:px-8 space-y-6 animate-fade-in">
+    <div className="w-full text-slate-800 space-y-6 pb-16 animate-fade-in">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-2 text-xs font-bold text-slate-400 flex-wrap">
         <Link to="/learn" className="hover:text-blue-600 transition-colors">

@@ -76,7 +76,7 @@ const OfflineLearning = () => {
   };
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 font-sans text-slate-900">
+    <div className="w-full pb-16 space-y-6 font-sans text-slate-900">
       {/* ── TOP SEARCH & OFFLINE QUICK SEARCH TRIGGER BAR ── */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-2">
         <div

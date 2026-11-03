@@ -408,7 +408,7 @@ const CareerReadiness = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6" id="career-readiness-page">
+    <div className="w-full pb-16 space-y-6 font-sans" id="career-readiness-page">
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">

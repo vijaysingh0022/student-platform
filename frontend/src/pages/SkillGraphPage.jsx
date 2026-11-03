@@ -1747,7 +1747,7 @@ export default function SkillGraphPage() {
   const activeDomain = subjects.find((s) => s.id === selectedDomainId) || subjects.find((s) => s.id === "dbms") || subjects[0];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0B1220] py-6 px-4 sm:px-6 lg:px-8 space-y-6 font-sans">
+    <div className="w-full text-[#0B1220] space-y-6 pb-16 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
 
         {/* ── 1. SOPHISTICATED HEADER WITH VIEW TOGGLES & METADATA ────────────── */}

@@ -358,7 +358,7 @@ What CSE topic or coding challenge would you like to explore next?`,
   }, [skillData]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0B1220] py-4 sm:py-6 space-y-6 font-sans">
+    <div className="w-full text-[#0B1220] pb-16 space-y-6 font-sans">
       {/* Hidden File Input */}
       <input
         type="file"

@@ -115,7 +115,7 @@ const RewardsPage = () => {
   const settings          = data?.settings || {};
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-7 font-sans text-slate-900">
+    <div className="w-full pb-16 space-y-7 font-sans text-slate-900">
 
       {/* ══════════════════════════════════════════════════════════════
           1. HERO — Learning Rewards Header

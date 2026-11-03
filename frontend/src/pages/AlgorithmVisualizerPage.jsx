@@ -186,7 +186,7 @@ const AlgorithmVisualizerPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="w-full pb-16">
       <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
         {/* Header Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">

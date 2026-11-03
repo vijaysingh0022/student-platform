@@ -127,8 +127,8 @@ const SubjectCurriculumPage = () => {
   const { subject, units, stats } = data;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+    <div className="w-full space-y-8 animate-fade-in pb-16">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
           <Link to="/learn" className="hover:text-violet-600 transition-colors">

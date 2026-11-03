@@ -247,7 +247,7 @@ export const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-16 px-1 text-slate-900 font-sans">
+    <div className="w-full space-y-6 pb-16 text-slate-900 font-sans">
       {/* ── 1. DASHBOARD HEADER ── */}
       <DashboardHeader
         firstName={firstName}

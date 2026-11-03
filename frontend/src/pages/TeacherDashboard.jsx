@@ -376,7 +376,7 @@ ${student.department || "Computer Science & Engineering"}`;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6" id="teacher-dashboard-page">
+    <div className="w-full pb-16 space-y-6 font-sans" id="teacher-dashboard-page">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl bg-slate-900 text-white text-xs font-bold shadow-2xl flex items-center gap-2 border border-slate-700 animate-bounce">

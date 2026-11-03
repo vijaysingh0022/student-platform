@@ -264,7 +264,7 @@ export const RoadmapPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 px-1 text-slate-900">
+    <div className="w-full space-y-6 pb-20 text-slate-900 font-sans">
 
       {/* ──────────────────────────────────────────────────────────────────────
           1. HERO ROW: ADAPTIVE STUDY PLANNER + YOUR GOAL CARD

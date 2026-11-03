@@ -424,7 +424,7 @@ const TopicQuizPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="w-full pb-16">
       <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
         {/* Breadcrumb & Question Count Selector */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
