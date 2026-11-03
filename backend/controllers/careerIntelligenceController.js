@@ -18,8 +18,12 @@ export const getCareerIntelligenceProfile = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // Fetch latest Resume Analysis
-    const latestAnalysis = await ResumeAnalysis.findOne({ user: userId, isArchived: false })
+    // Fetch latest Resume Analysis (strictly belonging to userId, unarchived, real score)
+    const latestAnalysis = await ResumeAnalysis.findOne({
+      user: userId,
+      isArchived: false,
+      overallQualityScore: { $gt: 0 },
+    })
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -30,34 +34,80 @@ export const getCareerIntelligenceProfile = async (req, res) => {
       TopicProgress.find({ user: userId }).lean(),
     ]);
 
-    const targetRole = latestAnalysis?.targetRole || careerProfile?.targetRole || "Full Stack Software Engineer";
+    const targetRole = careerProfile?.targetRole || latestAnalysis?.targetRole || "Full Stack Software Engineer";
 
-    // Calculate dynamic 5-Pillar Career Readiness
-    const academicAvg = testResults.length > 0
-      ? Math.round(testResults.reduce((acc, t) => acc + (t.scorePercent || 70), 0) / testResults.length)
-      : 74;
+    // ── Calculate Verified Evidence-Based 5-Pillar Career Readiness ──
+    const hasResume = Boolean(latestAnalysis && latestAnalysis.rawText && latestAnalysis.overallQualityScore > 0);
+    const hasAssessments = testResults.length > 0;
+    const hasMockInterview = Boolean(careerProfile?.mockAttemptsCount && careerProfile.mockAttemptsCount > 0);
 
-    const completedTopicsCount = topicsProgress.filter((p) => p.isCompleted).length;
-    const technicalReadiness = Math.min(96, Math.max(50, Math.round(academicAvg * 0.6 + Math.min(40, completedTopicsCount * 2))));
-    const resumeReadiness = latestAnalysis?.overallQualityScore || careerProfile?.atsScore || 68;
-    const projectReadiness = latestAnalysis?.sections?.projects?.score || 72;
-    const communicationReadiness = latestAnalysis?.sections?.summary?.score || 75;
-    const interviewReadiness = careerProfile?.mockInterviewScore || 70;
+    // Pillar 1: Academic / Technical Competence (ONLY from real tests & completed curriculum)
+    let technicalReadiness = null;
+    if (hasAssessments) {
+      const academicAvg = Math.round(testResults.reduce((acc, t) => acc + (t.scorePercent || 0), 0) / testResults.length);
+      const completedTopicsCount = topicsProgress.filter((p) => p.isCompleted).length;
+      technicalReadiness = Math.min(100, Math.max(0, Math.round(academicAvg * 0.7 + Math.min(30, completedTopicsCount * 2))));
+    }
 
-    const overallReadinessScore = Math.round(
-      technicalReadiness * 0.3 +
-      projectReadiness * 0.25 +
-      resumeReadiness * 0.2 +
-      interviewReadiness * 0.15 +
-      communicationReadiness * 0.1
-    );
+    // Pillar 2: Project Depth (ONLY from real parsed resume projects)
+    let projectReadiness = null;
+    if (hasResume && latestAnalysis.sections?.projects?.score !== undefined) {
+      projectReadiness = latestAnalysis.sections.projects.score;
+    }
+
+    // Pillar 3: ATS Resume Readiness (ONLY from real analyzed resume)
+    let resumeReadiness = null;
+    if (hasResume) {
+      resumeReadiness = latestAnalysis.atsCompatibilityScore || latestAnalysis.overallQualityScore;
+    }
+
+    // Pillar 4: Interview Readiness (ONLY from actual completed mock interviews)
+    let interviewReadiness = null;
+    if (hasMockInterview) {
+      interviewReadiness = careerProfile.mockInterviewScore || 0;
+    }
+
+    // Pillar 5: Communication & Clarity (ONLY from real resume summary & language analysis)
+    let communicationReadiness = null;
+    if (hasResume && latestAnalysis.sections?.summary?.score !== undefined) {
+      communicationReadiness = latestAnalysis.sections.summary.score;
+    }
+
+    // Weighted Overall Readiness Score across AVAILABLE evidence only
+    const validPillars = [];
+    if (technicalReadiness !== null) validPillars.push({ score: technicalReadiness, weight: 0.35 });
+    if (projectReadiness !== null) validPillars.push({ score: projectReadiness, weight: 0.25 });
+    if (resumeReadiness !== null) validPillars.push({ score: resumeReadiness, weight: 0.20 });
+    if (interviewReadiness !== null) validPillars.push({ score: interviewReadiness, weight: 0.10 });
+    if (communicationReadiness !== null) validPillars.push({ score: communicationReadiness, weight: 0.10 });
+
+    let overallReadinessScore = null;
+    let confidenceLevel = "No Verified Data";
+
+    if (validPillars.length > 0) {
+      const totalWeight = validPillars.reduce((sum, p) => sum + p.weight, 0);
+      const weightedSum = validPillars.reduce((sum, p) => sum + p.score * p.weight, 0);
+      overallReadinessScore = Math.round(weightedSum / totalWeight);
+
+      if (validPillars.length >= 4) {
+        confidenceLevel = "High (Comprehensive Multi-Pillar Evidence)";
+      } else if (validPillars.length >= 2) {
+        confidenceLevel = "Moderate (Partial Evidence — Complete More Pillars)";
+      } else {
+        confidenceLevel = "Initial (Limited Evidence)";
+      }
+    } else {
+      confidenceLevel = "Insufficient Data";
+    }
 
     res.json({
       success: true,
       profile: {
         targetRole,
+        hasResume,
         overallReadinessScore,
-        confidenceLevel: testResults.length > 3 ? "High (Empirically Verified)" : "Calibrated (Based on Resume & Initial Diagnostics)",
+        confidenceLevel,
+        dataCoverage: `${validPillars.length}/5 Pillars Measured`,
         pillars: {
           technicalReadiness,
           projectReadiness,
@@ -65,7 +115,7 @@ export const getCareerIntelligenceProfile = async (req, res) => {
           interviewReadiness,
           communicationReadiness,
         },
-        resumeAnalysis: latestAnalysis || null,
+        resumeAnalysis: hasResume ? latestAnalysis : null,
         careerProfile: careerProfile || null,
       },
     });
@@ -326,8 +376,11 @@ export const deleteResumeData = async (req, res) => {
       return res.status(404).json({ success: false, message: "Resume record not found or unauthorized." });
     }
 
-    // Reset CareerProfile resume text
-    await CareerProfile.findOneAndUpdate({ user: userId }, { $set: { resumeText: "", atsScore: 65 } });
+    // Reset CareerProfile resume text and ATS score
+    await CareerProfile.findOneAndUpdate(
+      { user: userId },
+      { $set: { resumeText: "", atsScore: null } }
+    );
 
     res.json({ success: true, message: "Resume and analysis data permanently deleted." });
   } catch (err) {

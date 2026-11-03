@@ -1,22 +1,31 @@
 import React from "react";
 
 export const ResumeAnalysisCard = ({ analysis, onOpenStudio, onRunJobMatch }) => {
-  if (!analysis) {
+  if (!analysis || !analysis.overallQualityScore) {
     return (
-      <div className="p-8 text-center bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-3">
-        <span className="text-3xl block">📄</span>
-        <h3 className="text-sm font-black text-slate-800">No Resume Analyzed Yet</h3>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto">
-          Upload your resume in PDF or DOCX format above to get section-by-section ATS scoring and skill gap mapping.
+      <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
+        <span className="text-4xl block">📄</span>
+        <h3 className="text-base font-black text-slate-800">Resume Not Uploaded</h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+          Upload your resume to unlock AI-powered resume analysis, ATS diagnostics, job matching and personalized recommendations.
         </p>
+        <div className="pt-2">
+          <a
+            href="#career-resume-uploader"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs shadow-sm transition-all"
+          >
+            <span>📁 Upload Resume</span>
+            <span>→</span>
+          </a>
+        </div>
       </div>
     );
   }
 
   const {
-    overallQualityScore = 72,
-    atsCompatibilityScore = 68,
-    recruiterReadabilityScore = 75,
+    overallQualityScore = null,
+    atsCompatibilityScore = null,
+    recruiterReadabilityScore = null,
     sections = {},
     strengths = [],
     weaknesses = [],

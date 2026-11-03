@@ -97,9 +97,9 @@ const resumeAnalysisSchema = new mongoose.Schema(
     targetRole: { type: String, default: "Full Stack Software Engineer", index: true },
 
     // Comprehensive Scores (0 - 100)
-    overallQualityScore: { type: Number, default: 72 },
-    atsCompatibilityScore: { type: Number, default: 68 },
-    recruiterReadabilityScore: { type: Number, default: 75 },
+    overallQualityScore: { type: Number, default: 0 },
+    atsCompatibilityScore: { type: Number, default: 0 },
+    recruiterReadabilityScore: { type: Number, default: 0 },
     scoringMethodologyNote: {
       type: String,
       default: "Scored using LearnX AI Rubrics (Impact, Hard Skill Density, Formatting, Measurable Metrics). Internal LearnX benchmarking, not an official corporate ATS pass guarantee.",

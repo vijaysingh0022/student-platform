@@ -406,9 +406,10 @@ export const getCareerDashboard = async (req, res) => {
       .flat()
       .filter((s) => typeof s === "number");
 
-    const overallAvgScore = allTestedScores.length > 0
+    const hasAssessments = allTestedScores.length > 0;
+    const overallAvgScore = hasAssessments
       ? Math.round(allTestedScores.reduce((a, b) => a + b, 0) / allTestedScores.length)
-      : 50;
+      : null;
 
     const academicScore = relevantSubjectScores.length > 0
       ? Math.round(relevantSubjectScores.reduce((a, b) => a + b, 0) / relevantSubjectScores.length)
@@ -425,75 +426,98 @@ export const getCareerDashboard = async (req, res) => {
     });
     const roadmapExecutionRate = totalRoadmapDays > 0 ? Math.round((totalCompletedDays / totalRoadmapDays) * 100) : 0;
 
-    // 3. Resume ATS Score
-    const resumeTextLower = (profile.resumeText || "").toLowerCase();
-    const atsScore = profile.atsScore || (profile.resumeText ? 65 : 45);
+    // 3. Resume ATS Score (STRICT: ONLY if resume exists and is non-empty)
+    const hasResume = Boolean(profile.resumeText && profile.resumeText.trim().length >= 40);
+    const atsScore = hasResume && typeof profile.atsScore === "number" ? profile.atsScore : null;
 
     // 4. Mock Interview Performance
     const mockInterviewScore = profile.mockInterviewScore || 0;
     const mockAttemptsCount = profile.mockAttemptsCount || 0;
+    const hasMock = mockAttemptsCount > 0;
 
-    // 5. Total Dynamic Job Readiness Score
-    const assessmentBreadthScore = Math.min(100, testResults.length * 15);
-    const mockComponentScore = mockAttemptsCount > 0 ? mockInterviewScore : (academicScore * 0.7);
+    // 5. Total Dynamic Job Readiness Score (Evidence-Based with NO fake numbers)
+    const validWeightedComponents = [];
+    if (academicScore !== null) {
+      validWeightedComponents.push({ score: academicScore, weight: 0.40 });
+    }
+    if (atsScore !== null) {
+      validWeightedComponents.push({ score: atsScore, weight: 0.30 });
+    }
+    if (roadmapExecutionRate > 0) {
+      validWeightedComponents.push({ score: roadmapExecutionRate, weight: 0.15 });
+    }
+    if (hasMock) {
+      validWeightedComponents.push({ score: mockInterviewScore, weight: 0.15 });
+    }
 
-    const jobReadinessScore = Math.min(
-      99,
-      Math.max(
-        25,
-        Math.round(
-          academicScore * 0.35 +
-          atsScore * 0.25 +
-          (roadmapExecutionRate > 0 ? roadmapExecutionRate : academicScore * 0.6) * 0.15 +
-          mockComponentScore * 0.15 +
-          assessmentBreadthScore * 0.10
-        )
-      )
-    );
+    let jobReadinessScore = null;
+    if (validWeightedComponents.length > 0) {
+      const sumWeight = validWeightedComponents.reduce((acc, c) => acc + c.weight, 0);
+      const sumScore = validWeightedComponents.reduce((acc, c) => acc + c.score * c.weight, 0);
+      jobReadinessScore = Math.round(sumScore / sumWeight);
+    }
 
-    // 6. Dynamic Skill Match Matrix
+    // 6. Dynamic Skill Match Matrix (Pure Evidence based on actual tests + verified resume)
+    const resumeTextLower = (hasResume ? profile.resumeText : "").toLowerCase();
+
     const skillMatchMatrix = roleData.requiredSkills.map((skill) => {
-      let score = 40;
+      let score = null;
+      let matchedEvidence = false;
       const skillLower = skill.toLowerCase();
 
       // Match topic names
       for (const [topName, topData] of Object.entries(topicScoreMap)) {
         if (skillLower.includes(topName.toLowerCase()) || topName.toLowerCase().includes(skillLower)) {
-          score = Math.max(score, topData.percent);
+          score = Math.max(score || 0, topData.percent);
+          matchedEvidence = true;
         }
       }
 
-      // Match subject domain averages
+      // Match subject domain averages from real tests
+      const checkSubj = (subj) => {
+        const avg = getSubjAvg(subj, null);
+        if (avg !== null) {
+          score = Math.max(score || 0, avg);
+          matchedEvidence = true;
+        }
+      };
+
       if (skillLower.includes("dbms") || skillLower.includes("sql") || skillLower.includes("postgres") || skillLower.includes("database")) {
-        score = Math.max(score, getSubjAvg("DBMS", 45));
+        checkSubj("DBMS");
       } else if (skillLower.includes("dsa") || skillLower.includes("algorithm") || skillLower.includes("graph") || skillLower.includes("tree") || skillLower.includes("complexity")) {
-        score = Math.max(score, getSubjAvg("DSA", 45));
+        checkSubj("DSA");
       } else if (skillLower.includes("os") || skillLower.includes("concurrency") || skillLower.includes("process") || skillLower.includes("thread")) {
-        score = Math.max(score, getSubjAvg("OS", 45));
+        checkSubj("OS");
       } else if (skillLower.includes("react") || skillLower.includes("javascript") || skillLower.includes("node") || skillLower.includes("web") || skillLower.includes("rest api")) {
-        score = Math.max(score, getSubjAvg("WEB_DEV", 45));
+        checkSubj("WEB_DEV");
       } else if (skillLower.includes("system design") || skillLower.includes("scalability") || skillLower.includes("microservice") || skillLower.includes("cache") || skillLower.includes("redis")) {
-        score = Math.max(score, getSubjAvg("SYSTEM_DESIGN", 45));
+        checkSubj("SYSTEM_DESIGN");
       } else if (skillLower.includes("network") || skillLower.includes("tcp") || skillLower.includes("http")) {
-        score = Math.max(score, getSubjAvg("CN", 45));
+        checkSubj("CN");
       } else if (skillLower.includes("oop") || skillLower.includes("solid") || skillLower.includes("design pattern")) {
-        score = Math.max(score, getSubjAvg("OOPS", 45));
+        checkSubj("OOPS");
       } else if (skillLower.includes("machine learning") || skillLower.includes("pytorch") || skillLower.includes("llm") || skillLower.includes("ai")) {
-        score = Math.max(score, getSubjAvg("MACHINE_LEARNING", 45));
+        checkSubj("MACHINE_LEARNING");
       }
 
-      // Check if keyword is found in student's uploaded resume
+      // Check if keyword is found in student's verified uploaded resume
       const keywords = skillLower.split(/[\s/,&]+/);
-      const inResume = keywords.some((k) => k.length > 2 && resumeTextLower.includes(k));
-      if (inResume) {
-        score = Math.min(99, score + 12);
-      }
+      const inResume = hasResume && keywords.some((k) => k.length > 2 && resumeTextLower.includes(k));
+
+      const displayScore = score !== null ? score : (inResume ? 60 : 0);
+      const status = score === null && !inResume
+        ? "Not Assessed"
+        : displayScore >= 75
+        ? "Job Ready"
+        : displayScore >= 55
+        ? "Developing"
+        : "Action Needed";
 
       return {
         skill,
-        masteryScore: score,
+        masteryScore: score !== null ? score : null,
         inResume,
-        status: score >= 75 ? "Job Ready" : score >= 55 ? "Developing" : "Action Needed",
+        status,
       };
     });
 
@@ -570,42 +594,52 @@ Respond strictly in valid JSON format:
 
     // AI Career Readiness Evaluation Synthesis
     let aiCareerSynthesis = null;
-    try {
-      const openai = getAIClient();
-      const model = getAIModel();
-      const prompt = `Act as a Senior Director of Engineering evaluating a Computer Science student for the role of "${targetRole}".
+    if (jobReadinessScore !== null || testResults.length > 0 || hasResume) {
+      try {
+        const openai = getAIClient();
+        const model = getAIModel();
+        const prompt = `Act as a Senior Director of Engineering evaluating a Computer Science student for the role of "${targetRole}".
 STUDENT METRICS:
-- Overall Job Readiness Score: ${jobReadinessScore}%
-- Academic Test Average: ${overallAvgScore}% across ${testResults.length} assessments
-- Resume ATS Score: ${atsScore}%
+- Overall Job Readiness Score: ${jobReadinessScore !== null ? `${jobReadinessScore}%` : "Not enough data"}
+- Academic Test Average: ${overallAvgScore !== null ? `${overallAvgScore}% across ${testResults.length} assessments` : "No assessments completed yet"}
+- Resume ATS Score: ${atsScore !== null ? `${atsScore}%` : "No resume uploaded yet"}
 - Completed 7-Day Roadmap Milestones: ${totalCompletedDays}/${totalRoadmapDays} days
-- Mock Interview Practice: ${mockAttemptsCount} questions answered (Avg score: ${mockInterviewScore}%)
+- Mock Interview Practice: ${mockAttemptsCount} questions answered
 - Target Role Required Skills: ${roleData.requiredSkills.join(", ")}
 
 Respond strictly in valid JSON format:
 {
-  "readinessEvaluation": "2-sentence executive summary of job readiness for ${targetRole} directly referencing the student's actual test results, resume match, and roadmap progress.",
+  "readinessEvaluation": "2-sentence executive summary of job readiness for ${targetRole} directly referencing the student's actual evidence.",
   "keyNextStep": "Top priority action item to increase candidate placement odds."
 }`;
 
-      const aiRes = await openai.chat.completions.create({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.4,
-      });
+        const aiRes = await openai.chat.completions.create({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.4,
+        });
 
-      const raw = aiRes.choices[0]?.message?.content || "";
-      const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
-      aiCareerSynthesis = JSON.parse(clean);
-    } catch (aiErr) {
+        const raw = aiRes.choices[0]?.message?.content || "";
+        const clean = raw.trim().replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+        aiCareerSynthesis = JSON.parse(clean);
+      } catch (aiErr) {
+        aiCareerSynthesis = {
+          readinessEvaluation: hasResume
+            ? `Resume uploaded for ${targetRole}. Complete diagnostic assessments to calculate your verified Job Readiness score.`
+            : `Upload your resume and complete assessments for ${targetRole} to calculate your verified Job Readiness profile.`,
+          keyNextStep: !hasResume ? "Upload your resume in the AI Resume & ATS section." : "Take a core technical assessment (DSA / DBMS).",
+        };
+      }
+    } else {
       aiCareerSynthesis = {
-        readinessEvaluation: `Your current Job Readiness Score for ${targetRole} is ${jobReadinessScore}%. Based on your ${testResults.length} assessments and ATS resume profile, continue targeting your critical gaps.`,
-        keyNextStep: `Focus on mastering required skills: ${roleData.requiredSkills.slice(0, 2).join(", ")}.`,
+        readinessEvaluation: `No assessment or resume data on file yet for ${targetRole}. Upload your resume or take a test to start tracking placement readiness.`,
+        keyNextStep: "Upload your resume or take your first diagnostic assessment.",
       };
     }
 
     res.json({
       targetRole,
+      hasResume,
       jobReadinessScore,
       atsScore,
       testsTaken: testResults.length,
@@ -613,11 +647,13 @@ Respond strictly in valid JSON format:
       completedRoadmapDays: totalCompletedDays,
       mockInterviewScore,
       mockAttemptsCount,
-      resumeText: profile.resumeText,
+      resumeText: hasResume ? profile.resumeText : "",
       roadmapPhases: roleData.roadmapPhases,
       recommendedProjects: roleData.projects,
       skillMatchMatrix,
       mockQuestions,
+      aiCareerSynthesis,
+    });
       aiCareerSynthesis,
       availableRoles: Object.keys(ROLE_BENCHMARKS),
     });

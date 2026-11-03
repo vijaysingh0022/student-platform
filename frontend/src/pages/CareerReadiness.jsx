@@ -440,8 +440,16 @@ const CareerReadiness = () => {
     );
   }
 
-  const score = data?.jobReadinessScore || 72;
-  const ats = data?.atsScore || 65;
+  const hasResume = Boolean(
+    (activeAnalysis && activeAnalysis.overallQualityScore > 0) ||
+    (data?.resumeText && data.resumeText.trim().length >= 40)
+  );
+
+  const score = careerProfile?.overallReadinessScore ?? data?.jobReadinessScore ?? null;
+  const ats = hasResume ? (activeAnalysis?.atsCompatibilityScore ?? data?.atsScore ?? null) : null;
+  const overallQuality = hasResume ? (activeAnalysis?.overallQualityScore ?? null) : null;
+  const recruiterReadability = hasResume ? (activeAnalysis?.recruiterReadabilityScore ?? null) : null;
+
   const allQuestions = customQuestions || data?.mockQuestions || [];
   const filteredQuestions = mockSubjectFilter === "All" ? allQuestions : allQuestions.filter(q => q.subject === mockSubjectFilter);
   const uniqueSubjects = ["All", ...new Set(allQuestions.map(q => q.subject))];
@@ -524,7 +532,7 @@ const CareerReadiness = () => {
                     <path strokeWidth="3.5" stroke="#e2e8f0" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     <path
                       strokeWidth="3.5"
-                      strokeDasharray={`${score}, 100`}
+                      strokeDasharray={score !== null ? `${score}, 100` : "0, 100"}
                       strokeLinecap="round"
                       stroke={score >= 75 ? "#059669" : score >= 55 ? "#7c3aed" : "#dc2626"}
                       fill="none"
@@ -532,17 +540,27 @@ const CareerReadiness = () => {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-extrabold text-slate-900">{score}%</span>
+                    <span className="text-xl font-extrabold text-slate-900">
+                      {score !== null ? `${score}%` : "N/A"}
+                    </span>
                     <span className="text-[9px] text-slate-500 uppercase font-bold">Readiness</span>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <div className="text-sm font-extrabold text-slate-900">{targetRole}</div>
                   <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    Tests: {data?.averageScore}% avg · ATS: {ats}% · {data?.testsTaken || 0} taken
+                    Tests: {data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}% avg` : "N/A"} · ATS: {ats !== null ? `${ats}%` : "Not Uploaded"} · {data?.testsTaken || 0} taken
                   </p>
-                  <span className={`inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${score >= 75 ? "bg-emerald-100 text-emerald-800" : score >= 55 ? "bg-violet-100 text-violet-800" : "bg-rose-100 text-rose-800"}`}>
-                    {score >= 75 ? "🟢 Job Ready" : score >= 55 ? "🟡 Developing" : "🔴 Action Needed"}
+                  <span className={`inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                    score === null
+                      ? "bg-slate-100 text-slate-600 border border-slate-200"
+                      : score >= 75
+                      ? "bg-emerald-100 text-emerald-800"
+                      : score >= 55
+                      ? "bg-violet-100 text-violet-800"
+                      : "bg-rose-100 text-rose-800"
+                  }`}>
+                    {score === null ? "⚪ Insufficient Data" : score >= 75 ? "🟢 Job Ready" : score >= 55 ? "🟡 Developing" : "🔴 Action Needed"}
                   </span>
                 </div>
               </div>
@@ -560,12 +578,12 @@ const CareerReadiness = () => {
             {/* Stats Grid */}
             <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { label: "ATS Resume Score", value: `${activeAnalysis?.atsCompatibilityScore || ats}%`, icon: "📄", sub: "Resume match" },
-                { label: "Overall Quality", value: `${activeAnalysis?.overallQualityScore || 74}%`, icon: "⭐", sub: "Content & depth" },
-                { label: "Recruiter Readability", value: `${activeAnalysis?.recruiterReadabilityScore || 72}%`, icon: "👁️", sub: "Human scan time" },
-                { label: "Academic Test Avg", value: `${data?.averageScore || 0}%`, icon: "🧠", sub: "Mastery proof" },
+                { label: "ATS Resume Score", value: ats !== null ? `${ats}%` : "N/A", icon: "📄", sub: hasResume ? "Resume match" : "Resume Not Uploaded" },
+                { label: "Overall Quality", value: overallQuality !== null ? `${overallQuality}%` : "N/A", icon: "⭐", sub: hasResume ? "Content & depth" : "Not Analyzed" },
+                { label: "Recruiter Readability", value: recruiterReadability !== null ? `${recruiterReadability}%` : "N/A", icon: "👁️", sub: hasResume ? "Human scan time" : "Not Analyzed" },
+                { label: "Academic Test Avg", value: data?.averageScore !== null && data?.averageScore !== undefined ? `${data.averageScore}%` : "N/A", icon: "🧠", sub: data?.testsTaken > 0 ? "Mastery proof" : "No Tests Taken" },
                 { label: "Roadmap Phases", value: data?.roadmapPhases?.length || 3, icon: "🗺️", sub: "Execution path" },
-                { label: "Project Blueprints", value: data?.recommendedProjects?.length || 4, icon: "💡", sub: "Role projects" },
+                { label: "Project Blueprints", value: (ROLE_PROJECTS[targetRole] || data?.recommendedProjects || []).length, icon: "💡", sub: "Role projects" },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                   <div className="text-lg mb-1">{s.icon}</div>
@@ -579,15 +597,16 @@ const CareerReadiness = () => {
 
           {/* 5-Pillar Career Readiness Profile */}
           <CareerReadinessRadar
-            pillars={activeAnalysis?.readinessPillars || {
-              technicalReadiness: data?.averageScore || 75,
-              projectReadiness: 70,
-              resumeReadiness: activeAnalysis?.atsCompatibilityScore || ats,
-              interviewReadiness: 65,
-              communicationReadiness: activeAnalysis?.recruiterReadabilityScore || 72,
+            pillars={careerProfile?.pillars || activeAnalysis?.readinessPillars || {
+              technicalReadiness: data?.averageScore ?? null,
+              projectReadiness: hasResume ? (activeAnalysis?.sections?.projects?.score ?? null) : null,
+              resumeReadiness: ats,
+              interviewReadiness: data?.mockAttemptsCount > 0 ? (data?.mockInterviewScore ?? null) : null,
+              communicationReadiness: hasResume ? (activeAnalysis?.sections?.summary?.score ?? null) : null,
             }}
             overallScore={score}
-            confidenceLevel={activeAnalysis ? "High (Full AI Scan)" : "Estimated"}
+            confidenceLevel={careerProfile?.confidenceLevel || (score !== null ? "Empirically Verified" : "Insufficient Data")}
+            dataCoverage={careerProfile?.dataCoverage}
           />
 
           {/* Quick Launch */}
@@ -876,7 +895,7 @@ const CareerReadiness = () => {
             <div className="space-y-4">
               {/* FILE UPLOAD */}
               {resumeMode === "upload" && (
-                <div className="space-y-4">
+                <div className="space-y-4" id="career-resume-uploader">
                   <label className="block cursor-pointer">
                     <div className={`p-8 rounded-2xl border-2 border-dashed text-center flex flex-col items-center justify-center transition-all ${uploadingResume ? "border-violet-400 bg-violet-50 animate-pulse" : "border-violet-200 bg-violet-50/40 hover:bg-violet-50 hover:border-violet-400"}`}>
                       <div className="w-14 h-14 rounded-2xl bg-white border border-violet-200 flex items-center justify-center text-3xl shadow-sm mb-3">
@@ -1083,28 +1102,48 @@ const CareerReadiness = () => {
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(data?.skillMatchMatrix || []).map((item, i) => (
-              <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 hover:border-violet-200 transition-all">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-slate-900">{item.skill}</span>
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${item.masteryScore >= 75 ? "bg-emerald-100 text-emerald-800" : item.masteryScore >= 55 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>{item.status}</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div className="h-2 rounded-full transition-all" style={{ width: `${item.masteryScore}%`, backgroundColor: item.masteryScore >= 75 ? "#059669" : item.masteryScore >= 55 ? "#d97706" : "#dc2626" }} />
+            {(data?.skillMatchMatrix || []).map((item, i) => {
+              const hasScore = typeof item.masteryScore === "number" && item.masteryScore !== null;
+              return (
+                <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 hover:border-violet-200 transition-all">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900">{item.skill}</span>
+                    <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                      !hasScore
+                        ? "bg-slate-200 text-slate-700"
+                        : item.masteryScore >= 75
+                        ? "bg-emerald-100 text-emerald-800"
+                        : item.masteryScore >= 55
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-rose-100 text-rose-800"
+                    }`}>
+                      {item.status}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
-                    <span>{item.masteryScore}% mastery</span><span>Target: 75%+</span>
+                  <div className="space-y-1">
+                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-2 rounded-full transition-all"
+                        style={{
+                          width: hasScore ? `${item.masteryScore}%` : "0%",
+                          backgroundColor: !hasScore ? "#cbd5e1" : item.masteryScore >= 75 ? "#059669" : item.masteryScore >= 55 ? "#d97706" : "#dc2626",
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+                      <span>{hasScore ? `${item.masteryScore}% mastery` : "Not Assessed"}</span>
+                      <span>Target: 75%+</span>
+                    </div>
                   </div>
+                  <Link
+                    to={`/tutor?q=${encodeURIComponent(`I need to improve my ${item.skill} for ${targetRole} interviews. Current status: ${hasScore ? `${item.masteryScore}%` : "Not yet tested"}. Give me a focused 2-week study plan with daily tasks and practice problems.`)}`}
+                    className="block text-center py-1.5 rounded-lg text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-all"
+                  >
+                    {!hasScore ? "📝 Take Practice Quiz →" : item.masteryScore < 75 ? "📚 Get Improvement Plan →" : "✅ Keep Practicing →"}
+                  </Link>
                 </div>
-                <Link
-                  to={`/tutor?q=${encodeURIComponent(`I need to improve my ${item.skill} for ${targetRole} interviews. Current mastery: ${item.masteryScore}%. Give me a focused 2-week study plan with daily tasks and practice problems.`)}`}
-                  className="block text-center py-1.5 rounded-lg text-[11px] font-extrabold text-violet-700 bg-violet-50 border border-violet-200 hover:bg-violet-100 transition-all"
-                >
-                  {item.masteryScore < 75 ? "📚 Get Improvement Plan →" : "✅ Keep Practicing →"}
-                </Link>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="p-4 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-between">
             <div>

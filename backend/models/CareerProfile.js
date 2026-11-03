@@ -13,7 +13,7 @@ const careerProfileSchema = new mongoose.Schema(
     },
     atsScore: {
       type: Number,
-      default: 68,
+      default: null,
     },
     savedProjects: [
       {

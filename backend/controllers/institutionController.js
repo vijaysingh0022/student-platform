@@ -459,12 +459,21 @@ export const getStudentDirectory = async (req, res) => {
 
       const analysis = analyzeStudentAssessments(tests, student);
 
-      const atsScore = career?.atsScore || 68;
+      const hasResume = Boolean(career?.resumeText && career.resumeText.trim().length >= 40);
+      const atsScore = hasResume && typeof career?.atsScore === "number" ? career.atsScore : null;
       const targetRole = career?.targetRole || "Full Stack Software Engineer";
 
-      // Readiness score calculation
+      // Readiness score calculation: evidence-based
       const testCoverageBonus = Math.min(30, analysis.effectiveTests.length * 10);
-      const readinessScore = Math.min(98, Math.max(38, Math.round(analysis.avgScore * 0.4 + atsScore * 0.35 + testCoverageBonus)));
+      let readinessScore = null;
+      if (analysis.effectiveTests.length > 0 || atsScore !== null) {
+        const parts = [];
+        if (analysis.avgScore > 0) parts.push({ score: analysis.avgScore, weight: 0.6 });
+        if (atsScore !== null) parts.push({ score: atsScore, weight: 0.4 });
+        const sumW = parts.reduce((a, b) => a + b.weight, 0);
+        const sumS = parts.reduce((a, b) => a + b.score * b.weight, 0);
+        readinessScore = Math.min(98, Math.max(25, Math.round(sumS / sumW + (testCoverageBonus * 0.2))));
+      }
 
       let status = "🟢 Job Ready";
       if (readinessScore < 55) status = "🔴 Action Needed";
@@ -514,11 +523,20 @@ export const getStudentDrilldown = async (req, res) => {
 
     const analysis = analyzeStudentAssessments(tests, student);
 
-    const atsScore = career?.atsScore || 68;
+    const hasResume = Boolean(career?.resumeText && career.resumeText.trim().length >= 40);
+    const atsScore = hasResume && typeof career?.atsScore === "number" ? career.atsScore : null;
     const targetRole = career?.targetRole || "Full Stack Software Engineer";
     const testCoverageBonus = Math.min(30, analysis.effectiveTests.length * 10);
-    const readinessScore = Math.min(98, Math.max(38, Math.round(analysis.avgScore * 0.4 + atsScore * 0.35 + testCoverageBonus)));
-    const placementOdds = Math.min(96, Math.max(40, Math.round(readinessScore * 0.95 + (student.attendanceRate >= 80 ? 5 : 0))));
+    let readinessScore = null;
+    if (analysis.effectiveTests.length > 0 || atsScore !== null) {
+      const parts = [];
+      if (analysis.avgScore > 0) parts.push({ score: analysis.avgScore, weight: 0.6 });
+      if (atsScore !== null) parts.push({ score: atsScore, weight: 0.4 });
+      const sumW = parts.reduce((a, b) => a + b.weight, 0);
+      const sumS = parts.reduce((a, b) => a + b.score * b.weight, 0);
+      readinessScore = Math.min(98, Math.max(25, Math.round(sumS / sumW + (testCoverageBonus * 0.2))));
+    }
+    const placementOdds = readinessScore !== null ? Math.min(96, Math.max(40, Math.round(readinessScore * 0.95 + (student.attendanceRate >= 80 ? 5 : 0)))) : null;
 
     res.json({
       student: {
@@ -594,7 +612,7 @@ Perform a 360-degree academic and career evaluation for student:
 - Academic Average: ${analysis.avgScore}%
 - Attendance: ${student.attendanceRate || 85}%
 - Target Role: ${career?.targetRole || "Full Stack Software Engineer"}
-- ATS Resume Score: ${career?.atsScore || 68}%
+- ATS Resume Score: ${career?.resumeText && career.resumeText.length >= 40 && typeof career?.atsScore === "number" ? `${career.atsScore}%` : "Not Uploaded"}
 - Strong Topics: ${analysis.strengths.map((s) => `${s.topic} (${s.accuracy}%)`).join(", ")}
 - Weak / Gap Topics: ${analysis.weaknesses.map((w) => `${w.topic} (${w.errorRate}% error)`).join(", ")}
 
