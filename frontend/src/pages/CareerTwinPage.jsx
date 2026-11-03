@@ -349,28 +349,14 @@ export default function CareerTwinPage() {
             </div>
           </div>
 
-          {/* Right: Score Ring */}
+          {/* Right: Score Display */}
           <div className="flex items-center gap-8 shrink-0">
-            <div className="flex flex-col items-center">
-              {/* Score circle */}
-              <div className="relative w-32 h-32 sm:w-36 sm:h-36">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
-                  <circle
-                    cx="60" cy="60" r="50" fill="none"
-                    stroke={score >= 70 ? '#6366f1' : score >= 50 ? '#f59e0b' : '#ef4444'}
-                    strokeWidth="10"
-                    strokeDasharray={`${(score / 100) * 314} 314`}
-                    strokeLinecap="round"
-                    className="transition-all duration-1000"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl sm:text-4xl font-black text-white">
-                    <AnimatedScore value={score} />
-                  </span>
-                  <span className="text-xs text-slate-400 font-medium">/ 100</span>
-                </div>
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 min-w-[140px]">
+              <div className="flex items-baseline gap-1">
+                <span className="text-4xl sm:text-5xl font-black text-white">
+                  <AnimatedScore value={score} />
+                </span>
+                <span className="text-xs text-slate-400 font-medium">/ 100</span>
               </div>
               <div className="mt-2 text-center">
                 <div className="text-xs font-bold text-slate-300">Career Readiness</div>
