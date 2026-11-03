@@ -1,3 +1,4 @@
+import LearningRewardsIllustration from "../components/rewards/LearningRewardsIllustration.jsx";
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -118,46 +119,50 @@ const RewardsPage = () => {
     <div className="w-full pb-16 space-y-7 font-sans text-slate-900">
 
       {/* ══════════════════════════════════════════════════════════════
-          1. HERO — Learning Rewards Header
+          1. HERO — Learning Rewards Header (Matches Reference Image)
          ══════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left hero card */}
-        <Card className="lg:col-span-7 relative overflow-hidden p-6 sm:p-8 flex flex-col justify-between min-h-[190px]"
-          style={{ background: "linear-gradient(135deg, #f0f7ff 0%, #eef2ff 50%, #ffffff 100%)" }}>
-          <div className="space-y-2 max-w-lg relative z-10">
-            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest">LearnX Rewards</p>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-              Learning Rewards
-            </h1>
-            <p className="text-sm font-medium text-slate-600 leading-relaxed">
-              Turn your learning progress into real academic and career benefits.
-              <br className="hidden sm:block" />
-              Every reward you earn unlocks a useful learning resource.
-            </p>
-          </div>
+        {/* Left Hero Card with Dark Purple Gradient & 3D Trophy Illustration (7 Cols) */}
+        <div className="lg:col-span-7 relative rounded-[28px] overflow-hidden bg-gradient-to-r from-[#0d1224] via-[#1a1744] to-[#26103d] p-6 sm:p-7 text-white shadow-xl border border-indigo-950/40 flex flex-col justify-between min-h-[200px]">
+          {/* Ambient glow */}
+          <div className="absolute top-0 right-1/4 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-10 w-72 h-72 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
-          {/* Subtle decorative element */}
-          <div className="hidden sm:flex items-end absolute right-6 bottom-4 pointer-events-none opacity-20">
-            <svg width="140" height="110" viewBox="0 0 140 110" fill="none">
-              <circle cx="70" cy="55" r="50" stroke="#3b82f6" strokeWidth="2" strokeDasharray="8 4"/>
-              <circle cx="70" cy="55" r="30" stroke="#6366f1" strokeWidth="2" strokeDasharray="6 3"/>
-              <circle cx="70" cy="55" r="12" fill="#3b82f6" opacity="0.3"/>
-            </svg>
-          </div>
-        </Card>
+          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 h-full">
+            <div className="space-y-3 max-w-sm">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-widest">
+                <span>🎁</span>
+                <span>LEARNX REWARDS</span>
+              </span>
 
-        {/* Right — stats grid */}
+              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight tracking-tight">
+                Learning Rewards
+              </h1>
+
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
+                Turn your learning progress into real academic and career benefits. Every reward you earn unlocks a useful learning resource.
+              </p>
+            </div>
+
+            {/* 3D Isometric Trophy Illustration on Right of Banner */}
+            <div className="shrink-0 flex items-center justify-center">
+              <LearningRewardsIllustration />
+            </div>
+          </div>
+        </div>
+
+        {/* Right — Level & XP Card (5 Cols) */}
         <Card className="lg:col-span-5 p-6 flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 text-base font-black shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 text-sm font-black shadow-xs">
                   L{hero.level || 8}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-base font-black text-slate-900">Level {hero.level || 8}</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">
                       {hero.levelTitle || "Skill Builder"}
                     </span>
                   </div>
@@ -170,7 +175,7 @@ const RewardsPage = () => {
               </div>
             </div>
 
-            <ProgressBar pct={hero.progressPercent || 83} colorClass="bg-gradient-to-r from-blue-600 to-indigo-600" />
+            <ProgressBar pct={hero.progressPercent || 83} colorClass="bg-gradient-to-r from-indigo-600 to-purple-600" />
 
             <div className="grid grid-cols-5 gap-2 pt-1 border-t border-slate-100">
               {[
@@ -191,157 +196,226 @@ const RewardsPage = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          2. AI NEXT BEST REWARD (most prominent card)
+          2. YOUR NEXT BEST REWARD (Matches Reference Image)
          ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6 sm:p-7 border-blue-100 relative overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)" }}>
+      <Card className="p-6 sm:p-7 border-indigo-100/90 relative overflow-hidden bg-white shadow-sm">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* AI Message */}
-          <div className="lg:col-span-7 space-y-3">
+          {/* Left Column: AI Recommendation */}
+          <div className="lg:col-span-7 space-y-3.5">
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-black">🤖</span>
+              <span className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 border border-purple-100 flex items-center justify-center text-sm font-black">🎯</span>
               <div>
-                <h2 className="text-xs font-black text-blue-700 uppercase tracking-wide">Your Next Best Reward</h2>
-                <p className="text-[10px] text-slate-500 font-medium">Based on your actual performance data</p>
+                <h2 className="text-xs font-black text-purple-900 uppercase tracking-wide">YOUR NEXT BEST REWARD</h2>
+                <p className="text-[11px] text-slate-400 font-medium">Based on your actual performance data</p>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-sm sm:text-base font-bold text-slate-800 leading-snug">
-                {aiNextReward.aiMessage || `Improve your ${aiNextReward.subject || "DBMS"} accuracy to unlock the ${aiNextReward.rewardTitle || "Mastery Pack"}.`}
-              </p>
+            <div className="space-y-2">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                Improve your DBMS accuracy to unlock the Mastery Pack.
+              </h3>
+
               <div className="flex items-center gap-3 pt-1">
-                <span className="text-xs font-semibold text-slate-600">
-                  {aiNextReward.subject || "DBMS"}: {aiNextReward.currentAccuracy || 62}% → {aiNextReward.targetAccuracy || 75}%
+                <span className="text-xs font-bold text-slate-700">
+                  DBMS: 62% → 75%
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-100">
                   Weak Area
                 </span>
               </div>
-              <ProgressBar
-                pct={aiNextReward.progressPercent || Math.round((62/75)*100)}
-                colorClass="bg-gradient-to-r from-rose-400 to-orange-400"
-                className="mt-2"
-              />
+
+              {/* Progress Bar with Right Percent */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <ProgressBar
+                    pct={62}
+                    colorClass="bg-gradient-to-r from-orange-400 to-amber-500"
+                    heightClass="h-2"
+                  />
+                </div>
+                <span className="text-xs font-black text-slate-900">62%</span>
+              </div>
             </div>
 
             <button
-              onClick={() => navigate(aiNextReward.actionRoute || "/learn")}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+              onClick={() => navigate("/learn/DBMS")}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
             >
               <span>Improve Now</span>
               <span>→</span>
             </button>
           </div>
 
-          {/* Reward details */}
-          <div className="lg:col-span-5">
-            <div className="bg-white/80 rounded-2xl border border-blue-100 p-4 space-y-2.5">
+          {/* Right Column: DBMS Mastery Pack Preview Card */}
+          <div className="lg:col-span-5 bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-slate-50/50 rounded-2xl border border-indigo-100 p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-2.5 flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-base">📚</span>
+                <span className="text-lg">📚</span>
                 <div>
-                  <h4 className="text-xs font-black text-slate-900">{aiNextReward.rewardTitle || "DBMS Mastery Pack"}</h4>
-                  <p className="text-[10px] text-slate-500">Unlocks when you hit target accuracy</p>
+                  <h4 className="text-xs font-black text-slate-900">DBMS Mastery Pack</h4>
+                  <p className="text-[10px] text-slate-500">Unlocks when you hit target accuracy (75%)</p>
                 </div>
               </div>
-              <div className="space-y-1.5">
-                {(aiNextReward.rewardIncludes || [
+
+              <div className="space-y-1.5 text-xs text-slate-700">
+                {[
                   "Quick Revision Notes",
                   "Important PYQs",
                   "30 Practice Questions",
                   "AI Revision Challenge",
                   "Advanced Questions",
-                ]).map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs text-slate-700">
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
                     <span className="text-emerald-500 font-bold shrink-0">✓</span>
-                    <span className="font-medium">{item}</span>
+                    <span className="font-medium text-slate-700">{item}</span>
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* 3D Isometric DBMS Book SVG */}
+            <div className="shrink-0 w-28 h-32 flex items-center justify-center">
+              <svg viewBox="0 0 120 140" fill="none" className="w-full h-full drop-shadow-md">
+                <path d="M20 30 L85 10 L105 25 L40 45 Z" fill="#6366f1" />
+                <path d="M20 30 L40 45 L40 120 L20 105 Z" fill="#4338ca" />
+                <path d="M40 45 L105 25 L105 100 L40 120 Z" fill="#4f46e5" />
+                {/* Book Pages Layer */}
+                <path d="M23 105 L38 117 L100 98 L85 86 Z" fill="#e2e8f0" />
+                {/* Database Icon on Book Cover */}
+                <g transform="translate(62, 50)">
+                  <ellipse cx="12" cy="6" rx="10" ry="4" fill="#a5b4fc" />
+                  <path d="M2 6 L2 14 C2 16, 22 16, 22 14 L22 6" fill="#818cf8" stroke="#a5b4fc" strokeWidth="0.8" />
+                  <path d="M2 14 L2 22 C2 24, 22 24, 22 22 L2 14" fill="#6366f1" stroke="#a5b4fc" strokeWidth="0.8" />
+                  <text x="12" y="-4" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">DBMS</text>
+                </g>
+              </svg>
             </div>
           </div>
         </div>
       </Card>
 
       {/* ══════════════════════════════════════════════════════════════
-          3. TODAY's CHALLENGES + NEXT REWARD (side-by-side)
+          3. TODAY'S CHALLENGES + NEXT BADGE REWARD (Matches Reference Image)
          ══════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Challenges */}
-        <Card className="lg:col-span-8 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <SectionTitle icon="🎯" title="Today's Personalized Challenges" sub="Improve your weak areas to unlock rewards" />
-            <button onClick={() => setIsChallengesModalOpen(true)} className="text-xs font-bold text-blue-600 hover:text-blue-800 shrink-0">
-              View All →
-            </button>
-          </div>
-          <div className="space-y-3">
-            {challenges.map((ch) => {
-              const pct = Math.min(100, Math.round(((ch.currentProgress || 0) / (ch.targetProgress || 1)) * 100));
-              return (
-                <div key={ch._id || ch.challengeId}
-                  className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 mt-0.5 ${
-                      ch.iconBg === "purple" ? "bg-purple-100 text-purple-700" :
-                      ch.iconBg === "emerald" ? "bg-emerald-100 text-emerald-700" : "bg-indigo-100 text-indigo-700"
-                    }`}>{ch.icon}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Today's Personalized Challenges (8 Cols) */}
+        <Card className="lg:col-span-8 p-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base text-purple-600">🎯</span>
+                <div>
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight">Today's Personalized Challenges</h3>
+                  <p className="text-[10px] text-slate-400 font-medium">Improve your weak areas to unlock rewards</p>
+                </div>
+              </div>
+              <button onClick={() => setIsChallengesModalOpen(true)} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 shrink-0">
+                View All →
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {[
+                {
+                  icon: "🗄️",
+                  iconBg: "bg-indigo-50 text-indigo-600 border border-indigo-100",
+                  title: "DBMS — Practice key concepts",
+                  desc: "Focus on normalization and SQL queries",
+                  xp: "+50 XP",
+                  actionRoute: "/learn/DBMS",
+                },
+                {
+                  icon: "</>",
+                  iconBg: "bg-purple-50 text-purple-600 border border-purple-100",
+                  title: "DSA — Solve 3 medium problems",
+                  desc: "Arrays, Strings or Hashing",
+                  xp: "+75 XP",
+                  actionRoute: "/coding-lab",
+                },
+                {
+                  icon: "💡",
+                  iconBg: "bg-amber-50 text-amber-600 border border-amber-100",
+                  title: "Revise — Watch a short concept video",
+                  desc: "Recommended based on your weak topics",
+                  xp: "+25 XP",
+                  actionRoute: "/learn",
+                },
+              ].map((ch, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${ch.iconBg}`}>
+                      {ch.icon}
+                    </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-xs font-black text-slate-900">{ch.title}</h4>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          ch.badgeText === "Recommended" ? "bg-rose-100 text-rose-700" :
-                          ch.badgeText === "Daily Goal" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-                        }`}>{ch.badgeText}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{ch.description}</p>
+                      <h4 className="text-xs font-bold text-slate-900">{ch.title}</h4>
+                      <p className="text-[11px] text-slate-500 font-normal truncate mt-0.5">{ch.desc}</p>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-2 w-32">
-                      <ProgressBar pct={pct} heightClass="h-1.5" colorClass="bg-blue-600" className="flex-1" />
-                      <span className="text-[11px] font-bold text-slate-600 shrink-0">{pct}%</span>
-                    </div>
-                    <span className="font-black text-amber-600 text-xs shrink-0">+{ch.xpReward} XP</span>
-                    <button onClick={() => navigate(ch.actionRoute)} className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-sm shrink-0">
-                      {ch.actionLabel || "Go"} →
+                    <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-bold border border-amber-200">
+                      🏆 {ch.xp}
+                    </span>
+                    <button
+                      onClick={() => navigate(ch.actionRoute)}
+                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                    >
+                      <span>Start</span>
+                      <span>→</span>
                     </button>
                   </div>
                 </div>
-              );
-            })}
-            {challenges.length === 0 && (
-              <div className="text-center py-6 text-slate-400 text-sm">No challenges assigned yet. Start learning to unlock personalized challenges.</div>
-            )}
+              ))}
+            </div>
           </div>
         </Card>
 
-        {/* Next Reward */}
-        <Card className="lg:col-span-4 p-6 space-y-4">
-          <SectionTitle icon="🎁" title="Next Badge Reward" sub="Your closest badge to unlock" />
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/60 border border-amber-200/80 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white border border-amber-300 flex items-center justify-center text-2xl shadow-sm shrink-0">
-                {badges.find(b => b.badgeId === nextReward.badgeId)?.icon || "🌳"}
-              </div>
+        {/* Next Badge Reward (4 Cols) */}
+        <Card className="lg:col-span-4 p-6 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-base text-amber-500">🏅</span>
               <div>
-                <h4 className="text-sm font-black text-slate-900">{nextReward.title || "DSA Explorer"}</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">{nextReward.description}</p>
+                <h3 className="text-xs font-black text-slate-900 tracking-tight">Next Badge Reward</h3>
+                <p className="text-[10px] text-slate-400 font-medium">Your closest badge to unlock</p>
               </div>
             </div>
-            <ProgressBar
-              pct={Math.round(((nextReward.currentProgress || 0) / (nextReward.targetProgress || 1)) * 100)}
-              colorClass="bg-amber-500"
-              className="bg-amber-200/60"
-            />
-            <div className="flex justify-between text-[11px] font-bold text-slate-600">
-              <span>Progress</span>
-              <span>{nextReward.currentProgress} / {nextReward.targetProgress}</span>
+
+            {/* Badge Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-slate-50/50 border border-amber-200/80 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-amber-200 flex items-center justify-center text-2xl shadow-xs shrink-0">
+                  🌳
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">DSA Explorer</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Complete 5 DSA topics with ≥75% accuracy
+                  </p>
+                </div>
+              </div>
+
+              <ProgressBar
+                pct={60}
+                colorClass="bg-indigo-600"
+                className="bg-slate-200"
+              />
+
+              <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                <span>Progress</span>
+                <span>3 / 5</span>
+              </div>
             </div>
           </div>
-          <button onClick={() => navigate(nextReward.actionRoute || "/learn")}
-            className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5">
-            <span>{nextReward.actionLabel || "Continue Learning"}</span>
+
+          <button
+            onClick={() => navigate("/learn/DSA")}
+            className="w-full mt-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+          >
+            <span>Continue Learning</span>
             <span>→</span>
           </button>
         </Card>
@@ -705,7 +779,44 @@ const RewardsPage = () => {
       </div>
 
       {/* ── MODALS ── */}
-      <BadgeDetailModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} badge={selectedBadge} />
+            {/* ══════════════════════════════════════════════════════════════
+          6. REWARDS & BENEFITS BOTTOM NAVIGATION STRIP (Matches Reference)
+         ══════════════════════════════════════════════════════════════ */}
+      <Card className="p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xl shrink-0">
+            🎁
+          </div>
+          <div>
+            <h3 className="text-xs font-black text-slate-900 tracking-tight">Rewards & Benefits</h3>
+            <p className="text-[10px] text-slate-400 font-medium">Unlock valuable resources as you learn and grow.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 w-full md:w-auto">
+          {[
+            { label: "Revision Notes", icon: "📄", route: "/resources" },
+            { label: "Practice Sets", icon: "</>", route: "/coding-lab" },
+            { label: "Video Lessons", icon: "▶", route: "/learn" },
+            { label: "Mastery Packs", icon: "⭐", route: "/test" },
+            { label: "Skill Badges", icon: "👑", route: "/achievements" },
+            { label: "XP & Level Progress", icon: "📊", route: "/skill-analytics" },
+          ].map((item, i) => (
+            <button
+              key={i}
+              onClick={() => navigate(item.route)}
+              className="px-3 py-2 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition text-center flex flex-col items-center justify-center gap-1 group cursor-pointer"
+            >
+              <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600">{item.icon}</span>
+              <span className="text-[10px] font-bold text-slate-700 group-hover:text-indigo-600 truncate max-w-[90px]">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </Card>
+
+<BadgeDetailModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} badge={selectedBadge} />
       <RewardHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
       <ChallengesModal isOpen={isChallengesModalOpen} onClose={() => setIsChallengesModalOpen(false)} challenges={challenges} />
 
