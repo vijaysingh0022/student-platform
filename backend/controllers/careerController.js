@@ -653,8 +653,6 @@ Respond strictly in valid JSON format:
       skillMatchMatrix,
       mockQuestions,
       aiCareerSynthesis,
-    });
-      aiCareerSynthesis,
       availableRoles: Object.keys(ROLE_BENCHMARKS),
     });
   } catch (error) {
