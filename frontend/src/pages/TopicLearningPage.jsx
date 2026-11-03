@@ -708,7 +708,68 @@ const TopicLearningPage = () => {
                 onVideoCompleted={handleVideoCompleted}
                 onBookmarkTimestamp={handleBookmarkTimestamp}
                 currentTopicTitle={topic.title}
+                onSelectAlternativeVideo={(alt) => {
+                  setVideoData((prev) => ({
+                    ...prev,
+                    title: alt.title || prev.title,
+                    videoUrl: alt.videoUrl,
+                    extractedId: alt.id,
+                    cleanEmbedUrl: alt.cleanEmbedUrl,
+                  }));
+                  showToast(`Switched video to: ${alt.title}`);
+                }}
               />
+
+              {/* Related & Alternative Lectures Section */}
+              {videoData?.relatedVideos && videoData.relatedVideos.length > 0 && (
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">📚</span>
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                        Related Lectures & Alternative Explanations
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Multi-angle conceptual mastery
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {videoData.relatedVideos.map((rel, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          const relId = rel.videoUrl.match(/v=([a-zA-Z0-9_-]{11})/)?.[1];
+                          setVideoData((prev) => ({
+                            ...prev,
+                            title: rel.title,
+                            videoUrl: rel.videoUrl,
+                            extractedId: relId,
+                            cleanEmbedUrl: `https://www.youtube-nocookie.com/embed/${relId}?enablejsapi=1&autoplay=1`,
+                          }));
+                          showToast(`Now playing: ${rel.title}`);
+                        }}
+                        className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-violet-400 hover:bg-violet-50/50 cursor-pointer transition-all space-y-2 group"
+                      >
+                        <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-200">
+                          <img
+                            src={rel.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-900/80 text-white">
+                            {rel.durationLabel || "Lecture"}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-slate-800 line-clamp-2 group-hover:text-violet-700">
+                          {rel.title}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Interactive Video Transcript & Chapter Navigation */}
               <VideoTranscript

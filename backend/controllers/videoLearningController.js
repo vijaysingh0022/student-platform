@@ -3,85 +3,42 @@ import VideoProgress from "../models/VideoProgress.js";
 import TopicProgress from "../models/TopicProgress.js";
 import { Topic, Subject, Unit, Chapter } from "../models/Curriculum.js";
 import { INITIAL_TOPIC_VIDEOS } from "../seed/topicVideosData.js";
+import { CURRICULUM_TOPICS, CURRICULUM_CHAPTERS, CURRICULUM_UNITS, CURRICULUM_SUBJECTS } from "../seed/curriculumData.js";
 import { awardXP } from "../services/rewardService.js";
 import { extractYouTubeVideoId, getCleanYouTubeEmbedUrl, verifyYouTubeVideoPlayable } from "../utils/videoValidator.js";
+import {
+  discoverTopicVideo,
+  DOMAIN_CURATED_FALLBACKS,
+  UNIVERSAL_FALLBACK_POOL,
+  searchYouTubeCandidates,
+} from "../services/videoDiscoveryService.js";
 
-// Helper to format seconds to "M:SS" or "MM:SS"
+// Helper to format seconds to "MM:SS"
 const formatDuration = (totalSeconds) => {
   const mins = Math.floor(totalSeconds / 60);
   const secs = Math.floor(totalSeconds % 60);
   return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
 };
 
-// Verified working fallbacks per subject/domain
-const VERIFIED_SUBJECT_FALLBACKS = {
-  python: [
-    { url: "https://www.youtube.com/watch?v=kqtD5dpn9C8", dur: 600, title: "Python Programming Masterclass" },
-    { url: "https://www.youtube.com/watch?v=JeznW_7DlB0", dur: 720, title: "Python Object Oriented Programming" },
-    { url: "https://www.youtube.com/watch?v=pkYVOmU3MgA", dur: 640, title: "Data Structures in Python" },
-  ],
-  dbms: [
-    { url: "https://www.youtube.com/watch?v=3EJlovevfcA", dur: 522, title: "DBMS Core Concepts & Architecture" },
-    { url: "https://www.youtube.com/watch?v=UrYLYV7WSHM", dur: 615, title: "Database Normalization Masterclass" },
-  ],
-  dsa: [
-    { url: "https://www.youtube.com/watch?v=fDKIpRe8GW4", dur: 540, title: "Algorithms & Search Techniques" },
-    { url: "https://www.youtube.com/watch?v=pkYVOmU3MgA", dur: 640, title: "Data Structures in Action" },
-  ],
-  os: [
-    { url: "https://www.youtube.com/watch?v=zFnrUVqtiOY", dur: 590, title: "Operating Systems & CPU Scheduling" },
-  ],
-  cn: [
-    { url: "https://www.youtube.com/watch?v=IPvYjXCsTg8", dur: 480, title: "Computer Networks & OSI Protocols" },
-  ],
-};
-
-const DEFAULT_VERIFIED_FALLBACKS = [
-  { url: "https://www.youtube.com/watch?v=kqtD5dpn9C8", dur: 600 },
-  { url: "https://www.youtube.com/watch?v=3EJlovevfcA", dur: 522 },
-  { url: "https://www.youtube.com/watch?v=UrYLYV7WSHM", dur: 615 },
-  { url: "https://www.youtube.com/watch?v=fDKIpRe8GW4", dur: 540 },
-  { url: "https://www.youtube.com/watch?v=zFnrUVqtiOY", dur: 590 },
-  { url: "https://www.youtube.com/watch?v=IPvYjXCsTg8", dur: 480 },
-];
-
-// Helper to create synthetic video fallback for topics without explicit DB seed
-const generateFallbackVideoForTopic = (topic) => {
-  const subjectList = VERIFIED_SUBJECT_FALLBACKS[topic.subjectId] || DEFAULT_VERIFIED_FALLBACKS;
-  const hash = Math.abs(
-    (topic.topicId || "topic").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  );
-  const pick = subjectList[hash % subjectList.length];
-
+/**
+ * Generates synthetic structured transcript and milestones for learning comprehension
+ */
+const generateTranscriptAndKeyMoments = (topicTitle, subjectName) => {
   return {
-    title: `${topic.title} — Comprehensive Tutorial`,
-    description: topic.summary || `Comprehensive conceptual and practical explanation of ${topic.title}.`,
-    subjectId: topic.subjectId,
-    unitId: topic.unitId,
-    chapterId: topic.chapterId || "",
-    topicId: topic.topicId,
-    videoUrl: pick.url,
-    thumbnailUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-    duration: pick.dur,
-    durationLabel: formatDuration(pick.dur),
-    language: "Hinglish",
-    difficulty: topic.difficulty || "Intermediate",
-    sourceType: "youtube",
     transcript: [
-      { timestampSeconds: 0, timeLabel: "00:00", text: `Welcome to LearnX. Today we study ${topic.title}.` },
-      { timestampSeconds: 60, timeLabel: "01:00", text: "Understanding the foundational intuition and why this concept exists." },
-      { timestampSeconds: 180, timeLabel: "03:00", text: "Exam requirements and step-by-step problem solving." },
-      { timestampSeconds: 320, timeLabel: "05:20", text: "Key tradeoffs, interview questions, and real-world architectures." },
-      { timestampSeconds: 420, timeLabel: "07:00", text: "Final summary and practice recap." },
+      { timestampSeconds: 0, timeLabel: "00:00", text: `Welcome to LearnX. Today we study ${topicTitle} in ${subjectName}.` },
+      { timestampSeconds: 65, timeLabel: "01:05", text: "Foundational conceptual framework: Understanding why this concept exists and standard engineering terminology." },
+      { timestampSeconds: 185, timeLabel: "03:05", text: "Mathematical invariants, step-by-step problem walkthrough, and visual state transitions." },
+      { timestampSeconds: 320, timeLabel: "05:20", text: "Edge cases, Big-O complexity analysis, and real-world system architecture tradeoffs." },
+      { timestampSeconds: 430, timeLabel: "07:10", text: "Key exam takeaways, interview pitfalls, and summary revision." },
     ],
     keyMoments: [
-      { timestampSeconds: 0, timeLabel: "00:00", title: "Introduction & Context" },
-      { timestampSeconds: 60, timeLabel: "01:00", title: "Core Intuition & Concepts" },
-      { timestampSeconds: 180, timeLabel: "03:00", title: "Deep Dive & Examples" },
-      { timestampSeconds: 320, timeLabel: "05:20", title: "Interview Gaps & Nuances" },
-      { timestampSeconds: 420, timeLabel: "07:00", title: "Summary & Revision" },
+      { timestampSeconds: 0, timeLabel: "00:00", title: "Introduction & Motivation" },
+      { timestampSeconds: 65, timeLabel: "01:05", title: "Core Concept & Invariants" },
+      { timestampSeconds: 185, timeLabel: "03:05", title: "Step-by-Step Problem Walkthrough" },
+      { timestampSeconds: 320, timeLabel: "05:20", title: "Complexity & Production Tradeoffs" },
+      { timestampSeconds: 430, timeLabel: "07:10", title: "Exam Notes & Summary" },
     ],
-    isActive: true,
   };
 };
 
@@ -100,7 +57,7 @@ export const getTopicVideo = async (req, res) => {
       (video.videoUrl.includes("EWkQD_sP-v8") || video.videoUrl.includes("vv4y_uOneC8"));
 
     if (!video || isKnownBroken) {
-      // Look in INITIAL_TOPIC_VIDEOS
+      // 1. Check if an explicit curated seed entry exists
       const seedItem = INITIAL_TOPIC_VIDEOS.find((v) => v.topicId === topicId);
       if (seedItem) {
         try {
@@ -113,18 +70,82 @@ export const getTopicVideo = async (req, res) => {
           video = seedItem;
         }
       } else {
-        // Fallback: look up topic metadata to generate dynamic entry
-        const topic = await Topic.findOne({ topicId }).lean();
-        if (topic) {
-          const generated = generateFallbackVideoForTopic(topic);
+        // 2. Fetch Topic from DB or seed metadata
+        let topicDoc = await Topic.findOne({ topicId }).lean();
+        if (!topicDoc) {
+          topicDoc = CURRICULUM_TOPICS.find((t) => t.topicId === topicId);
+        }
+
+        if (topicDoc) {
+          // Fetch Chapter, Unit, Subject context for intelligent discovery
+          let chapterDoc = topicDoc.chapterId ? await Chapter.findOne({ chapterId: topicDoc.chapterId }).lean() : null;
+          if (!chapterDoc) chapterDoc = CURRICULUM_CHAPTERS.find((c) => c.chapterId === topicDoc.chapterId);
+
+          let unitDoc = topicDoc.unitId ? await Unit.findOne({ unitId: topicDoc.unitId }).lean() : null;
+          if (!unitDoc) unitDoc = CURRICULUM_UNITS.find((u) => u.unitId === topicDoc.unitId);
+
+          let subjectDoc = topicDoc.subjectId ? await Subject.findOne({ subjectId: topicDoc.subjectId }).lean() : null;
+          if (!subjectDoc) subjectDoc = CURRICULUM_SUBJECTS.find((s) => s.subjectId === topicDoc.subjectId);
+
+          // Perform automated multi-tier discovery
+          const discovered = await discoverTopicVideo({
+            topic: topicDoc,
+            chapter: chapterDoc,
+            unit: unitDoc,
+            subject: subjectDoc,
+          });
+
+          const { transcript, keyMoments } = generateTranscriptAndKeyMoments(
+            topicDoc.title,
+            subjectDoc?.name || topicDoc.subjectId
+          );
+
+          const dur = discovered.duration || 540;
+
+          // Assemble related/alternative videos
+          const subKey = (topicDoc.subjectId || "").toLowerCase();
+          const fallbackPool = DOMAIN_CURATED_FALLBACKS[subKey] || UNIVERSAL_FALLBACK_POOL;
+          const relatedVideos = fallbackPool
+            .filter((p) => p.id !== discovered.extractedId)
+            .slice(0, 3)
+            .map((p) => ({
+              title: p.title,
+              videoUrl: `https://www.youtube.com/watch?v=${p.id}`,
+              duration: p.duration,
+              durationLabel: formatDuration(p.duration),
+              thumbnailUrl: `https://img.youtube.com/vi/${p.id}/mqdefault.jpg`,
+              sourceType: "youtube",
+            }));
+
+          const newVideoRecord = {
+            title: discovered.title || `${topicDoc.title} — Lecture`,
+            description: topicDoc.summary || `Comprehensive learning video for ${topicDoc.title}.`,
+            subjectId: topicDoc.subjectId,
+            unitId: topicDoc.unitId || "u1",
+            chapterId: topicDoc.chapterId || "",
+            topicId: topicDoc.topicId,
+            videoUrl: discovered.videoUrl,
+            thumbnailUrl: `https://img.youtube.com/vi/${discovered.extractedId}/hqdefault.jpg`,
+            duration: dur,
+            durationLabel: formatDuration(dur),
+            language: "Hinglish",
+            difficulty: topicDoc.difficulty || "Intermediate",
+            sourceType: "youtube",
+            discoverySource: discovered.source || "automated_discovery",
+            relatedVideos,
+            transcript,
+            keyMoments,
+            isActive: true,
+          };
+
           try {
             video = await Video.findOneAndUpdate(
               { topicId },
-              { $set: generated },
+              { $set: newVideoRecord },
               { upsert: true, new: true, setDefaultsOnInsert: true }
             ).lean();
-          } catch (genErr) {
-            video = generated;
+          } catch (upsertErr) {
+            video = newVideoRecord;
           }
         }
       }
@@ -165,9 +186,46 @@ export const getTopicVideo = async (req, res) => {
   }
 };
 
-// ─── 2. UPDATE VIDEO PROGRESS (Heartbeat / Time update) ──────────────────────
+// ─── 2. SEARCH VIDEO FOR TOPIC (Manual or dynamic query from UI) ─────────────
+// @route GET /api/learning/topics/:topicId/video/search?query=...
+export const searchVideosForTopic = async (req, res) => {
+  try {
+    const { topicId } = req.params;
+    const { query } = req.query;
+
+    const topic = (await Topic.findOne({ topicId }).lean()) || CURRICULUM_TOPICS.find((t) => t.topicId === topicId);
+    const searchQuery = query || `${topic?.title || topicId} computer science tutorial`;
+
+    const candidates = await searchYouTubeCandidates(searchQuery, 6);
+    const verifiedResults = [];
+
+    for (const id of candidates) {
+      const check = await verifyYouTubeVideoPlayable(id);
+      if (check.isValid && check.status === "playable") {
+        verifiedResults.push({
+          id,
+          videoUrl: `https://www.youtube.com/watch?v=${id}`,
+          cleanEmbedUrl: getCleanYouTubeEmbedUrl(id),
+          title: check.title || searchQuery,
+          author: check.author || "YouTube Educator",
+          thumbnailUrl: `https://img.youtube.com/vi/${id}/mqdefault.jpg`,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      query: searchQuery,
+      results: verifiedResults,
+    });
+  } catch (err) {
+    console.error("searchVideosForTopic error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─── 3. UPDATE VIDEO PROGRESS (Heartbeat / Time update) ──────────────────────
 // @route POST /api/learning/topics/:topicId/video/progress
-// body: { currentTime: number, duration: number }
 export const updateVideoProgress = async (req, res) => {
   try {
     const { topicId } = req.params;
@@ -194,138 +252,106 @@ export const updateVideoProgress = async (req, res) => {
 
     // Prevent instantaneous zero-to-completion manipulation
     let progress = await VideoProgress.findOne({ user: userId, topicId });
-    const lastPos = progress?.lastPosition || 0;
-    const maxAllowedJump = 45; // Max 45 seconds forward jump per heartbeat
     const safeCurrent = Math.min(currentTime, totalDuration);
 
-    const completionPercentage = Math.min(100, Math.round((safeCurrent / totalDuration) * 100));
+    const completionPercentage = Math.min(
+      100,
+      Math.round((safeCurrent / totalDuration) * 100)
+    );
+    const isCompleted = completionPercentage >= 90;
 
-    // Threshold: 90% is marked as completed
-    const meetsCompletion = completionPercentage >= 90;
-    const wasAlreadyCompleted = progress?.isCompleted;
+    let justCompleted = false;
 
     if (!progress) {
-      progress = new VideoProgress({
+      progress = await VideoProgress.create({
         user: userId,
-        videoId: video?._id || new (await import("mongoose")).default.Types.ObjectId(),
+        video: video?._id,
         topicId,
-        subjectId: video?.subjectId || "",
-        watchedSeconds: safeCurrent,
-        lastPosition: safeCurrent,
+        subjectId: video?.subjectId || "cs",
+        watchedSeconds: Math.floor(safeCurrent),
         completionPercentage,
-        isCompleted: meetsCompletion,
-        completedAt: meetsCompletion ? new Date() : null,
+        lastPosition: Math.floor(safeCurrent),
+        isCompleted,
+        completedAt: isCompleted ? new Date() : null,
       });
+      if (isCompleted) justCompleted = true;
     } else {
-      progress.lastPosition = safeCurrent;
-      if (safeCurrent > progress.watchedSeconds) {
-        progress.watchedSeconds = safeCurrent;
-      }
-      if (completionPercentage > progress.completionPercentage) {
-        progress.completionPercentage = completionPercentage;
-      }
-      if (meetsCompletion && !progress.isCompleted) {
+      if (!progress.isCompleted && isCompleted) {
+        justCompleted = true;
         progress.isCompleted = true;
         progress.completedAt = new Date();
       }
+
+      progress.lastPosition = Math.floor(safeCurrent);
+      progress.watchedSeconds = Math.max(progress.watchedSeconds, Math.floor(safeCurrent));
+      progress.completionPercentage = Math.max(progress.completionPercentage, completionPercentage);
+      await progress.save();
     }
 
-    await progress.save();
-
-    let rewardResult = null;
-    let topicCompletedResult = false;
-
-    // If student just crossed 90% video completion, award XP (+20 XP) and mark Topic as completed (+30 XP)
-    if (meetsCompletion && !wasAlreadyCompleted) {
-      // 1. Award Video Completed XP (+20 XP, anti-duplicate via sourceId)
-      rewardResult = await awardXP(userId, {
-        amount: 20,
-        source: "VIDEO_COMPLETED",
-        sourceId: `video-${topicId}`,
-        description: `Watched topic video: ${video?.title || topicId}`,
-      });
-
-      // 2. Mark the Topic itself completed in TopicProgress
-      const existingTopicProg = await TopicProgress.findOne({ user: userId, topicId });
-      if (!existingTopicProg || !existingTopicProg.isCompleted) {
+    // Award XP if the student just crossed the 90% threshold for this topic video
+    if (justCompleted) {
+      try {
+        await awardXP(userId, 20, `Completed video lecture for topic: ${topicId}`);
+        // Also sync TopicProgress
         await TopicProgress.findOneAndUpdate(
           { user: userId, topicId },
           {
             $set: {
-              subjectId: video?.subjectId || "",
-              unitId: video?.unitId || "",
-              chapterId: video?.chapterId || "",
               isCompleted: true,
               completedAt: new Date(),
+              masteryStatus: "understood",
             },
           },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
+          { upsert: true }
         );
-        topicCompletedResult = true;
-
-        // Award Topic Completed XP (+30 XP)
-        await awardXP(userId, {
-          amount: 30,
-          source: "TOPIC_COMPLETED",
-          sourceId: `topic-${topicId}`,
-          description: `Completed learning topic: ${topicId}`,
-        });
+      } catch (rewardErr) {
+        console.warn("Could not award video completion XP:", rewardErr.message);
       }
     }
 
     res.json({
       success: true,
-      progress: {
-        watchedSeconds: progress.watchedSeconds,
-        lastPosition: progress.lastPosition,
-        completionPercentage: progress.completionPercentage,
-        isCompleted: progress.isCompleted,
-        completedAt: progress.completedAt,
-      },
-      justCompleted: meetsCompletion && !wasAlreadyCompleted,
-      topicCompleted: topicCompletedResult,
-      reward: rewardResult,
+      progress,
+      justCompleted,
     });
   } catch (error) {
     console.error("updateVideoProgress error:", error);
-    res.status(500).json({ message: "Failed to record video progress: " + error.message });
+    res.status(500).json({ message: "Failed to update video progress: " + error.message });
   }
 };
 
-// ─── 3. ADD VIDEO TIMESTAMP BOOKMARK ────────────────────────────────────────
+// ─── 4. ADD TIMESTAMP BOOKMARK ──────────────────────────────────────────────
 // @route POST /api/learning/topics/:topicId/video/bookmark
-// body: { timestampSeconds: number, note?: string }
 export const addVideoBookmark = async (req, res) => {
   try {
     const { topicId } = req.params;
-    const { timestampSeconds = 0, note = "" } = req.body;
+    const { timestampSeconds, note = "" } = req.body;
     const userId = req.user?._id;
 
     if (!userId) {
-      return res.status(401).json({ message: "Authentication required to bookmark timestamps." });
+      return res.status(401).json({ message: "Authentication required to bookmark video." });
     }
 
-    const timeLabel = formatDuration(timestampSeconds);
+    const mins = Math.floor(timestampSeconds / 60);
+    const secs = Math.floor(timestampSeconds % 60);
+    const timeLabel = `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
 
-    const progress = await VideoProgress.findOneAndUpdate(
-      { user: userId, topicId },
-      {
-        $push: {
-          bookmarks: {
-            timestampSeconds,
-            timeLabel,
-            note: note.trim() || `Bookmark at ${timeLabel}`,
-            createdAt: new Date(),
-          },
-        },
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    let progress = await VideoProgress.findOne({ user: userId, topicId });
+    if (!progress) {
+      progress = await VideoProgress.create({
+        user: userId,
+        topicId,
+        bookmarks: [{ timestampSeconds, timeLabel, note }],
+      });
+    } else {
+      progress.bookmarks.push({ timestampSeconds, timeLabel, note });
+      await progress.save();
+    }
 
     res.json({
       success: true,
-      message: `Bookmarked timestamp at ${timeLabel}`,
       bookmarks: progress.bookmarks,
+      message: `Bookmark saved at ${timeLabel}`,
     });
   } catch (error) {
     console.error("addVideoBookmark error:", error);
@@ -333,46 +359,34 @@ export const addVideoBookmark = async (req, res) => {
   }
 };
 
-// ─── 4. GET SUBJECT VIDEO STATS (FOR MY LEARNING DASHBOARD ACCURACY) ─────────
+// ─── 5. GET SUBJECT VIDEO STATS ─────────────────────────────────────────────
 // @route GET /api/learning/subjects/:subjectId/video-stats
 export const getSubjectVideoStats = async (req, res) => {
   try {
     const { subjectId } = req.params;
     const userId = req.user?._id;
 
-    const topicList = await Topic.find({ subjectId, isActive: true }).select("topicId").lean();
-    const topicIds = topicList.map((t) => t.topicId);
+    const totalVideos = await Video.countDocuments({ subjectId, isActive: true });
+    let completedVideos = 0;
+    let totalWatchedSeconds = 0;
 
-    let completedVideosCount = 0;
-    let videoProgressMap = {};
-
-    if (userId && topicIds.length > 0) {
-      const records = await VideoProgress.find({
-        user: userId,
-        topicId: { $in: topicIds },
-      }).lean();
-
-      records.forEach((r) => {
-        videoProgressMap[r.topicId] = {
-          completionPercentage: r.completionPercentage,
-          isCompleted: r.isCompleted,
-          lastPosition: r.lastPosition,
-        };
-        if (r.isCompleted || r.completionPercentage >= 90) {
-          completedVideosCount++;
-        }
-      });
+    if (userId) {
+      const progresses = await VideoProgress.find({ user: userId, subjectId }).lean();
+      completedVideos = progresses.filter((p) => p.isCompleted).length;
+      totalWatchedSeconds = progresses.reduce((acc, p) => acc + (p.watchedSeconds || 0), 0);
     }
 
     res.json({
       success: true,
-      totalTopics: topicIds.length,
-      completedVideosCount,
-      videoProgressMap,
+      subjectId,
+      totalVideos,
+      completedVideos,
+      totalWatchedMinutes: Math.round(totalWatchedSeconds / 60),
+      overallProgressPercentage:
+        totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0,
     });
   } catch (error) {
     console.error("getSubjectVideoStats error:", error);
-    res.status(500).json({ message: "Failed to get video statistics." });
+    res.status(500).json({ message: "Failed to get video stats: " + error.message });
   }
 };
-

@@ -6,6 +6,15 @@ const transcriptItemSchema = new mongoose.Schema({
   text: { type: String, required: true },
 });
 
+const relatedVideoSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  videoUrl: { type: String, required: true },
+  duration: { type: Number, default: 522 },
+  durationLabel: { type: String, default: "08:42" },
+  thumbnailUrl: { type: String, default: "" },
+  sourceType: { type: String, default: "youtube" },
+});
+
 const videoSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -33,6 +42,15 @@ const videoSchema = new mongoose.Schema(
       default: "youtube",
     },
 
+    // Hierarchical discovery flag
+    discoverySource: {
+      type: String,
+      default: "seed", // "seed" | "search_topic_exact" | "search_chapter_fallback" | "search_unit_fallback" | "curated_domain_fallback" | "manual_admin"
+    },
+
+    // Alternative/Related videos for multi-angle learning
+    relatedVideos: [relatedVideoSchema],
+
     transcript: [transcriptItemSchema],
     keyMoments: [
       {
@@ -49,4 +67,3 @@ const videoSchema = new mongoose.Schema(
 
 const Video = mongoose.model("Video", videoSchema);
 export default Video;
-

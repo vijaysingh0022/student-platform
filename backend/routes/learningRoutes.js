@@ -22,6 +22,7 @@ import {
 } from "../controllers/learningController.js";
 import {
   getTopicVideo,
+  searchVideosForTopic,
   updateVideoProgress,
   addVideoBookmark,
   getSubjectVideoStats,
@@ -34,6 +35,7 @@ router.get("/search", optionalAuth, searchCurriculum);
 
 // Video Learning & Progress APIs (Inside My Learning)
 router.get("/topics/:topicId/video", optionalAuth, getTopicVideo);
+router.get("/topics/:topicId/video/search", optionalAuth, searchVideosForTopic);
 router.post("/topics/:topicId/video/progress", protect, updateVideoProgress);
 router.post("/topics/:topicId/video/bookmark", protect, addVideoBookmark);
 router.get("/subjects/:subjectId/video-stats", protect, getSubjectVideoStats);

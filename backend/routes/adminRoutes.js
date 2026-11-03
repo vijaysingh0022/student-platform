@@ -11,6 +11,8 @@ import {
   getVideoValidationReport,
   verifySingleVideoUrl,
   replaceVideoUrl,
+  addVideo,
+  deleteVideo,
 } from "../controllers/adminVideoValidationController.js";
 
 const router = express.Router();
@@ -26,6 +28,8 @@ router.get("/dashboard", getAdminDashboardMetrics);
 router.get("/videos/validation-report", getVideoValidationReport);
 router.post("/videos/verify-url", verifySingleVideoUrl);
 router.put("/videos/:id/replace", replaceVideoUrl);
+router.post("/videos", addVideo);
+router.delete("/videos/:id", deleteVideo);
 
 // User management endpoints
 router.get("/users", getAllUsers);

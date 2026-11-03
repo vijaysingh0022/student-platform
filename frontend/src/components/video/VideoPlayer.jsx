@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import api from "../../services/api.js";
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
 
@@ -23,6 +24,7 @@ export const VideoPlayer = ({
   onVideoCompleted,
   onBookmarkTimestamp,
   currentTopicTitle,
+  onSelectAlternativeVideo,
 }) => {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
@@ -39,10 +41,17 @@ export const VideoPlayer = ({
   const [showControls, setShowControls] = useState(true);
   const [justCompletedToast, setJustCompletedToast] = useState(false);
 
-  // Error and Loading states
+  // Error, Search & Fallback state
   const [videoLoading, setVideoLoading] = useState(true);
   const [playbackError, setPlaybackError] = useState(null); // null | { code: number, message: string }
   const [retryKey, setRetryKey] = useState(0);
+
+  // In-player search drawer for alternative educational videos
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchError, setSearchError] = useState(null);
 
   const isYouTube =
     video?.sourceType === "youtube" ||
@@ -263,37 +272,41 @@ export const VideoPlayer = ({
       } else {
         videoRef.current.play();
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
-  // Seek forward / rewind
-  const handleSeek = (seconds) => {
-    if (playbackError) return;
-    const target = Math.max(0, Math.min(seconds, duration));
-    setCurrentTime(target);
+  // Rewind 10 seconds
+  const handleRewind10 = () => {
+    const target = Math.max(0, currentTime - 10);
+    handleSeek(target);
+  };
 
+  // Forward 10 seconds
+  const handleForward10 = () => {
+    const target = Math.min(duration, currentTime + 10);
+    handleSeek(target);
+  };
+
+  // Seek bar handler
+  const handleSeek = (newTime) => {
+    if (playbackError) return;
+    setCurrentTime(newTime);
     if (isYouTube && playerRef.current) {
       try {
-        playerRef.current.seekTo(target, true);
+        playerRef.current.seekTo(newTime, true);
       } catch (_) {}
     } else if (videoRef.current) {
-      videoRef.current.currentTime = target;
+      videoRef.current.currentTime = newTime;
     }
-    reportProgress(target, duration);
+    reportProgress(newTime, duration);
   };
-
-  const handleRewind10 = () => handleSeek(currentTime - 10);
-  const handleForward10 = () => handleSeek(currentTime + 10);
 
   // Speed change
   const handleSpeedChange = (rate) => {
     setPlaybackRate(rate);
     if (isYouTube && playerRef.current) {
       try {
-        if (typeof playerRef.current.setPlaybackRate === "function") {
-          playerRef.current.setPlaybackRate(rate);
-        }
+        playerRef.current.setPlaybackRate(rate);
       } catch (_) {}
     } else if (videoRef.current) {
       videoRef.current.playbackRate = rate;
@@ -316,6 +329,25 @@ export const VideoPlayer = ({
     setPlaybackError(null);
     setVideoLoading(true);
     setRetryKey((k) => k + 1);
+  };
+
+  // Trigger search for alternative verified videos
+  const handlePerformVideoSearch = async (customQuery) => {
+    const query = customQuery || searchQuery || currentTopicTitle || video?.title;
+    if (!query) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const topicIdParam = video?.topicId || "general";
+      const res = await api.get(`/learning/topics/${topicIdParam}/video/search?query=${encodeURIComponent(query)}`);
+      if (res.data?.results) {
+        setSearchResults(res.data.results);
+      }
+    } catch (err) {
+      setSearchError("Failed to search videos. Please try again.");
+    } finally {
+      setSearching(false);
+    }
   };
 
   const completionPct = duration > 0 ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
@@ -351,7 +383,7 @@ export const VideoPlayer = ({
                 {playbackError.message}
               </p>
               <p className="text-[11px] text-slate-400">
-                You can retry loading the lecture, or open the video directly on YouTube.
+                You can retry loading, switch to an alternative lecture, or search across YouTube for educational resources.
               </p>
             </div>
 
@@ -361,6 +393,16 @@ export const VideoPlayer = ({
                 className="px-4 py-2 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>🔄</span> Retry Video
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowSearchModal(true);
+                  handlePerformVideoSearch(currentTopicTitle);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all flex items-center gap-1.5"
+              >
+                <span>🔍</span> Find Alternative Lecture
               </button>
 
               {video?.videoUrl && (
@@ -442,7 +484,7 @@ export const VideoPlayer = ({
         </div>
 
         {/* Action Controls & Speed Selector */}
-        <div className="flex items-center justify-between gap-3 text-white">
+        <div className="flex items-center justify-between gap-3 text-white flex-wrap">
           <div className="flex items-center gap-2">
             {/* Play / Pause */}
             <button
@@ -503,8 +545,23 @@ export const VideoPlayer = ({
             </button>
           </div>
 
-          {/* Right Toolbar: Speed, Timestamp Bookmark, Fullscreen */}
-          <div className="flex items-center gap-2">
+          {/* Right Toolbar: Search Alternatives, Speed, Timestamp Bookmark, Fullscreen */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Search / Alternate Video button */}
+            <button
+              onClick={() => {
+                setShowSearchModal(true);
+                if (searchResults.length === 0) {
+                  handlePerformVideoSearch(currentTopicTitle);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-all"
+              title="Search and change video lecture"
+            >
+              <span>🔍</span>
+              <span className="hidden sm:inline">Change Video</span>
+            </button>
+
             {/* Bookmark Current Timestamp */}
             {onBookmarkTimestamp && !playbackError && (
               <button
@@ -546,6 +603,99 @@ export const VideoPlayer = ({
           </div>
         </div>
       </div>
+
+      {/* ── MODAL: SEARCH & SWITCH EDUCATIONAL VIDEO ── */}
+      {showSearchModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 max-w-xl w-full p-6 space-y-4 shadow-2xl animate-scale-up text-slate-900">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800">
+                  Video Discovery Engine
+                </span>
+                <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                  Find Educational Videos for "{currentTopicTitle || "Topic"}"
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowSearchModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handlePerformVideoSearch()}
+                placeholder="Search topic lecture on YouTube..."
+                className="flex-1 p-2.5 rounded-xl border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-violet-600"
+              />
+              <button
+                onClick={() => handlePerformVideoSearch()}
+                disabled={searching}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {searching ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <span>🔍</span>}
+                <span>Search</span>
+              </button>
+            </div>
+
+            {searchError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                {searchError}
+              </div>
+            )}
+
+            {/* Results List */}
+            <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+              {searching ? (
+                <div className="py-12 text-center space-y-2">
+                  <div className="w-8 h-8 mx-auto border-3 border-violet-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-bold text-slate-600">Verifying video availability with YouTube...</p>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Type a topic name above or click Search to find verified tutorials.
+                </div>
+              ) : (
+                searchResults.map((res) => (
+                  <div
+                    key={res.id}
+                    className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={res.thumbnailUrl}
+                        alt=""
+                        className="w-16 h-11 object-cover rounded-lg shrink-0 bg-slate-200"
+                      />
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs text-slate-900 truncate">{res.title}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{res.author}</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (onSelectAlternativeVideo) {
+                          onSelectAlternativeVideo(res);
+                        }
+                        setShowSearchModal(false);
+                      }}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+                    >
+                      Watch This
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
