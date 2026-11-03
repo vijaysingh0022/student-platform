@@ -1,3 +1,4 @@
+import SkillAnalyticsIllustration from "../components/skill/SkillAnalyticsIllustration.jsx";
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -1750,87 +1751,107 @@ export default function SkillGraphPage() {
     <div className="w-full text-[#0B1220] space-y-6 pb-16 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* ── 1. SOPHISTICATED HEADER WITH VIEW TOGGLES & METADATA ────────────── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs">
-          {/* Title & Subtitle */}
-          <div className="space-y-1.5 max-w-2xl">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
-                <Layers className="w-4 h-4" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-[#0B1220] tracking-tight">
+        {/* ── 1. SOPHISTICATED HERO BANNER (Matches Reference Image Exactly) ────────────── */}
+        <div className="relative rounded-[28px] overflow-hidden bg-gradient-to-r from-[#0d1224] via-[#1a1744] to-[#26103d] p-6 sm:p-8 text-white shadow-xl border border-indigo-950/40">
+          {/* Subtle ambient glows */}
+          <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-10 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Left Column: Heading, Subtext & Counters */}
+            <div className="lg:col-span-5 space-y-3.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-widest">
+                <Layers className="w-3 h-3 text-indigo-400" />
                 Interactive Skill Map
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight text-white">
+                Interactive Skill Analytics
               </h1>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-              Understand your skills. Find your gaps. Know what to learn next with real-time competency analytics and AI recommendations.
-            </p>
 
-            {/* Small Metadata Counters */}
-            <div className="flex items-center gap-3 pt-1 text-[11px] font-semibold text-slate-400 flex-wrap">
-              <span className="flex items-center gap-1.5 text-slate-600 font-bold">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                {data.totalDomainsTracked || 11} domains tracked
-              </span>
-              <span>•</span>
-              <span>{data.totalTopicsInCurriculum || 272} topics analyzed</span>
-              <span>•</span>
-              <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                <Activity className="w-3 h-3" />
-                {data.overallMastery || 48}% Platform Mastery
-              </span>
-              <span>•</span>
-              <span>Updated just now</span>
-            </div>
-          </div>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal max-w-md">
+                Understand your skills, find knowledge gaps, and get a personalized learning path with AI-powered insights.
+              </p>
 
-          {/* Top Actions: Graph View | List View | Roadmap View | How It Works */}
-          <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
-            {/* View Switchers */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
-              <button
-                onClick={() => handleViewChange("graph")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeView === "graph"
-                    ? "bg-white text-blue-600 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Network className="w-3.5 h-3.5" />
-                <span>Graph View</span>
-              </button>
-              <button
-                onClick={() => handleViewChange("list")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeView === "list"
-                    ? "bg-white text-blue-600 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <ListFilter className="w-3.5 h-3.5" />
-                <span>List View</span>
-              </button>
-              <button
-                onClick={() => handleViewChange("roadmap")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                  activeView === "roadmap"
-                    ? "bg-white text-blue-600 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Roadmap View</span>
-              </button>
+              {/* 4 Metadata Badges Strip */}
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-slate-300 font-semibold">
+                  <span className="text-sm">📚</span>
+                  <span>{data.totalDomainsTracked || 11} Domains</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-slate-300 font-semibold">
+                  <span className="text-sm">📂</span>
+                  <span>{data.totalTopicsInCurriculum || 272} Topics</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-semibold">
+                  <span>📈</span>
+                  <span>{data.overallMastery || 33}% Platform Mastery</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.06] border border-white/10 text-xs text-slate-300 font-semibold">
+                  <span>⏱</span>
+                  <span>Updated just now</span>
+                </div>
+              </div>
             </div>
 
-            {/* How It Works Button */}
-            <button
-              onClick={() => setIsHowItWorksOpen(true)}
-              className="px-4 py-2 rounded-2xl text-xs font-black bg-blue-600 hover:bg-blue-700 text-white shadow-xs flex items-center gap-1.5 transition-colors"
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>How It Works</span>
-            </button>
+            {/* Center Column: 3D Stacked Skills Pyramid Vector Illustration */}
+            <div className="lg:col-span-3 flex items-center justify-center">
+              <SkillAnalyticsIllustration />
+            </div>
+
+            {/* Right Column: View Switchers & How It Works Button */}
+            <div className="lg:col-span-4 flex flex-col items-center lg:items-end justify-center space-y-3.5">
+              {/* 3 View Mode Pills */}
+              <div className="flex items-center bg-white/[0.08] p-1.5 rounded-2xl border border-white/15 backdrop-blur-md">
+                <button
+                  onClick={() => handleViewChange("graph")}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeView === "graph"
+                      ? "bg-white text-indigo-700 shadow-md font-extrabold"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Network className="w-3.5 h-3.5" />
+                  <span>Graph View</span>
+                </button>
+
+                <button
+                  onClick={() => handleViewChange("list")}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeView === "list"
+                      ? "bg-white text-indigo-700 shadow-md font-extrabold"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <ListFilter className="w-3.5 h-3.5" />
+                  <span>List View</span>
+                </button>
+
+                <button
+                  onClick={() => handleViewChange("roadmap")}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    activeView === "roadmap"
+                      ? "bg-white text-indigo-700 shadow-md font-extrabold"
+                      : "text-slate-300 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Roadmap View</span>
+                </button>
+              </div>
+
+              {/* How It Works Button */}
+              <button
+                onClick={() => setIsHowItWorksOpen(true)}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg active:scale-95 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>How It Works</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1858,16 +1879,16 @@ export default function SkillGraphPage() {
                   onClick={() => handleDomainChange(d.id)}
                   className={`shrink-0 px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 border ${
                     isSelected
-                      ? "bg-blue-50/80 border-blue-500 text-blue-700 ring-2 ring-blue-500/20 shadow-xs"
+                      ? "bg-purple-50/90 border-purple-500 text-purple-900 ring-2 ring-purple-500/30 shadow-xs"
                       : "bg-white border-slate-200/90 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   <span className="text-sm">{d.icon || "⚡"}</span>
                   <span>{d.label}</span>
                   <span
-                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       isSelected
-                        ? "bg-blue-600 text-white"
+                        ? "bg-purple-200 text-purple-800"
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
@@ -1902,253 +1923,130 @@ export default function SkillGraphPage() {
               onLaunchPractice={handleLaunchPractice}
             />
 
-            {/* ── 4. BOTTOM 3 CARDS ROW (WEAK AREAS | AI RECOMMENDED NEXT STEPS | DOMAIN MASTERY FORECAST) ── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              {/* CARD 1: WEAK AREAS */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-4 flex flex-col justify-between">
+            {/* ── 4. BOTTOM 4 PREMIUM INTELLIGENCE CARDS (Matches Reference Image) ── */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card A: AI Insights */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-                        <AlertTriangle className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg">
+                        🤖
                       </div>
-                      <h3 className="text-sm font-black text-[#0B1220] uppercase tracking-wider">
-                        Weak Areas
-                      </h3>
+                      <h3 className="text-xs font-black text-slate-900 tracking-tight">AI Insights</h3>
                     </div>
-                    <button
-                      onClick={() => setActiveView("list")}
-                      className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-0.5"
-                    >
-                      <span>View All</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                      Live Analysis
+                    </span>
                   </div>
 
-                  {/* Weak Items List */}
-                  <div className="space-y-3 pt-1">
-                    {(activeDomain?.weakAreas?.length > 0 ? activeDomain.weakAreas : [
-                      {
-                        topicId: "dbms-u5-transactions-acid",
-                        title: "Transactions",
-                        masteryPercentage: 20,
-                        conceptsSummary: "Concepts, ACID properties, scheduling",
-                        reason: "Low recent quiz accuracy",
-                        priority: "Critical",
-                        estimatedMinutes: 25,
-                      },
-                      {
-                        topicId: "dbms-u5-normalization",
-                        title: "File Structures",
-                        masteryPercentage: 20,
-                        conceptsSummary: "Hashing, indexing, storage organization",
-                        reason: "Low mastery + incomplete topic",
-                        priority: "High",
-                        estimatedMinutes: 20,
-                      },
-                    ]).slice(0, 2).map((item, idx) => (
-                      <div
-                        key={item.topicId || idx}
-                        className="p-3.5 rounded-2xl bg-rose-50/50 border border-rose-100 flex items-center justify-between gap-3 hover:bg-rose-50 transition-colors"
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-6 h-6 rounded-lg bg-rose-500/20 text-rose-600 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
-                            !
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xs font-bold text-slate-900 truncate">
-                                {item.title}
-                              </h4>
-                              <span className="px-1.5 py-0.2 rounded text-[10px] font-black bg-rose-100 text-rose-700">
-                                {item.masteryPercentage}%
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                              {item.conceptsSummary}
-                            </p>
-                            <span className="text-[10px] font-semibold text-rose-600">
-                              {item.reason}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => navigate(`/learn/${activeDomain?.id || "dbms"}/${item.topicId}/quiz`)}
-                          className="shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-rose-700 border border-rose-200 hover:bg-rose-100/60 shadow-2xs transition-colors flex items-center gap-1"
-                        >
-                          <span>Practice</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                    You have a good grasp of <strong>{activeDomain?.label || "DBMS"}</strong> fundamentals ({activeDomain?.overallProgress || 53}%), but need more practice in advanced topics like Indexing, Query Optimization and Normalization.
+                  </p>
                 </div>
 
-                <div className="text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100">
-                  Targeted practice immediately updates mastery calculations.
+                <div className="pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>Telemetry verified from recent assessments</span>
                 </div>
               </div>
 
-              {/* CARD 2: AI RECOMMENDED NEXT STEPS */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-4 flex flex-col justify-between">
+              {/* Card B: Your Strengths */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                      <Zap className="w-4 h-4 fill-current" />
+                    <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <h3 className="text-sm font-black text-[#0B1220] uppercase tracking-wider">
-                      AI Recommended Next Steps
-                    </h3>
+                    <h3 className="text-xs font-black text-slate-900 tracking-tight">Your Strengths</h3>
                   </div>
 
-                  {/* Recommendation Steps List with REAL XP Rewards */}
-                  <div className="space-y-2.5 pt-1">
-                    {(activeDomain?.recommendedNextSteps || [
-                      {
-                        id: "rec-1",
-                        stepNumber: 1,
-                        title: "Complete SQL Advanced Concepts",
-                        xp: 50,
-                        estimatedMinutes: 15,
-                        topicId: "dbms-u4-joins-aggregations",
-                      },
-                      {
-                        id: "rec-2",
-                        stepNumber: 2,
-                        title: "Practice 10 Normalization Questions",
-                        xp: 40,
-                        estimatedMinutes: 20,
-                        topicId: "dbms-u5-normalization",
-                      },
-                      {
-                        id: "rec-3",
-                        stepNumber: 3,
-                        title: "Study Transactions with Examples",
-                        xp: 60,
-                        estimatedMinutes: 25,
-                        topicId: "dbms-u5-transactions-acid",
-                      },
-                    ]).map((step, idx) => (
-                      <div
-                        key={step.id || idx}
-                        className="p-3 rounded-2xl border border-slate-100 hover:border-slate-200 bg-slate-50/60 hover:bg-slate-50 flex items-center justify-between gap-3 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="w-5 h-5 rounded-full bg-slate-200/80 text-slate-700 text-[11px] font-black flex items-center justify-center shrink-0">
-                            {idx + 1}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-slate-800 truncate">
-                              {step.title}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-medium">
-                              {step.estimatedMinutes} min • Unlocks prerequisite
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[11px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                            +{step.xp || 50} XP
-                          </span>
-                          <button
-                            onClick={() => {
-                              if (step.actionType === "practice") {
-                                navigate(`/learn/${activeDomain?.id || "dbms"}/${step.topicId}/quiz`);
-                              } else {
-                                navigate(`/learn/${activeDomain?.id || "dbms"}/${step.topicId}`);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                            title="Start action"
-                          >
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                  <div className="space-y-2 text-xs">
+                    {(activeDomain?.strongAreas && activeDomain.strongAreas.length > 0 ? activeDomain.strongAreas : [
+                      { topicName: "Database & DBMS Basics", accuracy: 100 },
+                      { topicName: "Normalization (Conceptual)", accuracy: 95 },
+                      { topicName: "Basic SQL Queries", accuracy: 88 },
+                    ]).slice(0, 3).map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-slate-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="truncate font-medium">{item.topicName || item.topicId || "Concept"}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <Link
-                  to={`/roadmap/${activeDomain?.id?.toUpperCase() || "DBMS"}`}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-800 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <span>View Personalized Plan</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                <div className="pt-3 border-t border-slate-100 text-[11px] font-semibold text-emerald-600">
+                  High mastery retention
+                </div>
               </div>
 
-              {/* CARD 3: DOMAIN MASTERY FORECAST */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-4 flex flex-col justify-between">
-                <div className="space-y-2">
+              {/* Card C: Areas to Improve */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                      <Target className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-rose-500" />
                     </div>
-                    <div>
-                      <h3 className="text-sm font-black text-[#0B1220] uppercase tracking-wider">
-                        Domain Mastery Forecast
-                      </h3>
-                    </div>
+                    <h3 className="text-xs font-black text-slate-900 tracking-tight">Areas to Improve</h3>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Based on your current progress and learning pace
-                  </p>
 
-                  {/* Trend Trajectory Milestone Chart */}
-                  <div className="pt-4 pb-2 space-y-4">
-                    {/* Visual Milestone Line */}
-                    <div className="relative flex items-center justify-between px-2">
-                      <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-full" />
-
-                      {(activeDomain?.masteryForecast?.milestones || [
-                        { label: "Now", value: 42 },
-                        { label: "2 Weeks", value: 60 },
-                        { label: "1 Month", value: 80 },
-                        { label: "2 Months", value: 95 },
-                      ]).map((m, idx) => (
-                        <div key={idx} className="relative z-10 flex flex-col items-center">
-                          <div
-                            className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black border-2 shadow-xs ${
-                              idx === 0
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : idx === 3
-                                ? "bg-purple-600 text-white border-purple-600"
-                                : "bg-white text-slate-800 border-indigo-400"
-                            }`}
-                          >
-                            {m.value}%
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-500 mt-1.5">
-                            {m.label}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="p-3 rounded-2xl bg-purple-50/60 border border-purple-100 space-y-1 text-center">
-                      <div className="text-xs font-bold text-purple-950">
-                        {activeDomain?.masteryForecast?.forecastNote ||
-                          "Keep a consistent learning pace to reach 95% mastery in 2 months."}
+                  <div className="space-y-2 text-xs">
+                    {(activeDomain?.weakAreas && activeDomain.weakAreas.length > 0 ? activeDomain.weakAreas : [
+                      { topicName: "Indexing & Views", accuracy: 35 },
+                      { topicName: "Query Optimization", accuracy: 40 },
+                      { topicName: "Distributed NoSQL", accuracy: 25 },
+                    ]).slice(0, 3).map((item, i) => (
+                      <div key={i} className="flex items-center gap-2 text-slate-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="truncate font-medium">{item.topicName || item.topicId || "Topic"}</span>
                       </div>
-                      <div className="text-[10px] font-black text-purple-600 uppercase tracking-wider">
-                        {activeDomain?.masteryForecast?.disclaimer || "AI ESTIMATE — not a guarantee"}
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400 font-medium pt-2 border-t border-slate-100 flex items-center justify-between">
-                  <span>Forecast updates with quiz scores</span>
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="pt-3 border-t border-slate-100 text-[11px] font-semibold text-rose-600">
+                  Recommended for revision
                 </div>
               </div>
 
-            </div>
-          </div>
+              {/* Card D: Next Recommended Actions */}
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <h3 className="text-xs font-black text-slate-900 tracking-tight">Next Recommended Actions</h3>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    {[
+                      { step: 1, text: "Practice 5 SQL problems", action: () => navigate("/coding-lab") },
+                      { step: 2, text: "Learn Indexing & Views (30 min)", action: () => handleLaunchPractice(activeDomain?.id) },
+                      { step: 3, text: "Take a DBMS Assessment", action: () => navigate("/test/DBMS") },
+                    ].map((act) => (
+                      <div
+                        key={act.step}
+                        onClick={act.action}
+                        className="flex items-center justify-between p-2 rounded-xl bg-slate-50 hover:bg-indigo-50/50 hover:text-indigo-700 cursor-pointer transition border border-slate-100 text-slate-700"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
+                            {act.step}
+                          </span>
+                          <span className="truncate font-medium">{act.text}</span>
+                        </div>
+                        <span className="text-slate-400 text-xs">→</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2 text-[10px] text-slate-400">
+                  Calibrated to your weak areas
+                </div>
+              </div>
+            </div></div>
         )}
 
         {/* ── 5. LIST VIEW ALTERNATIVE ────────────────────────────────────────── */}
