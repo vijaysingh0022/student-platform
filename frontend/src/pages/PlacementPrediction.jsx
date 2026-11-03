@@ -185,6 +185,12 @@ const PlacementPrediction = () => {
             <span>ℹ️</span> How this score is calculated
           </button>
           <Link
+            to="/career-readiness"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-xs transition-colors flex items-center gap-1.5"
+          >
+            <span>📄 AI Resume & ATS</span>
+          </Link>
+          <Link
             to="/test/DSA"
             className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white transition-colors flex items-center gap-1.5"
           >

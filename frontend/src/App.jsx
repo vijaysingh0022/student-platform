@@ -244,6 +244,26 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/resume-analyzer"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CareerReadiness />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resume"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CareerReadiness />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/coding-lab"

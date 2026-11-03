@@ -13,6 +13,7 @@ const SEARCH_DATA = [
   { title: "AI Tutor (DeepSeek / GPT-4o)", category: "AI Tools", path: "/tutor", icon: "🤖", desc: "24/7 personal conversational tutor" },
   { title: "7-Day AI Study Roadmap", category: "Planning", path: "/roadmap/DSA", icon: "🗺️", desc: "Personalized syllabus schedule" },
   { title: "Placement Readiness Predictor", category: "Career", path: "/placement-readiness", icon: "📊", desc: "Interview probability and risk analysis" },
+  { title: "AI Resume & ATS Analyzer", category: "Career", path: "/career-readiness", icon: "📄", desc: "Deep resume scoring, ATS audit, studio & JD matcher" },
   { title: "AI Coding Lab (159+ Problems)", category: "Practice", path: "/coding-lab", icon: "💻", desc: "Code, debug & run in C, C++, Java, Python" },
   { title: "Algorithm Visualizer (15 Algos)", category: "Practice", path: "/algorithm-visualizer", icon: "🎬", desc: "Step-by-step animations with code execution" },
   { title: "AI Mock Interview Simulator", category: "Career", path: "/mock-interview", icon: "🎤", desc: "5-round full mock interview session" },
