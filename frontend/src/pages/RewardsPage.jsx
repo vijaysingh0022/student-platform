@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api, {
+import {
   getRewardsOverview,
   updateRewardSettings,
 } from "../services/api.js";
 import BadgeDetailModal from "../components/rewards/BadgeDetailModal.jsx";
 import RewardHistoryModal from "../components/rewards/RewardHistoryModal.jsx";
 import ChallengesModal from "../components/rewards/ChallengesModal.jsx";
-import LearnXCertificateTemplate from "../components/certificate/LearnXCertificateTemplate.jsx";
 
 // ─── Compact progress bar ──────────────────────────────────────────────────────
 const ProgressBar = ({ pct, colorClass = "bg-blue-600", heightClass = "h-2", className = "" }) => (
@@ -58,60 +57,6 @@ const RewardsPage = () => {
   const [toast, setToast] = useState("");
   const badgeScrollRef = useRef(null);
 
-  // ─── Certificate Feature Integration ─────────────────────────────────────────
-  const [certificates, setCertificates] = useState([]);
-  const [loadingCerts, setLoadingCerts] = useState(true);
-  const [selectedCert, setSelectedCert] = useState(null);
-  const [claimingCourseId, setClaimingCourseId] = useState(null);
-  const [certModalOpen, setCertModalOpen] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
-
-  const fetchCertificates = async () => {
-    try {
-      const { data } = await api.get("/certificates/my");
-      if (data?.certificates) {
-        setCertificates(data.certificates);
-        if (data.certificates.length > 0 && !selectedCert) {
-          setSelectedCert(data.certificates[0]);
-        }
-      }
-    } catch (err) {
-      console.warn("Error fetching certificates in rewards:", err.message);
-    } finally {
-      setLoadingCerts(false);
-    }
-  };
-
-  const handleClaimRewardCertificate = async (course) => {
-    setClaimingCourseId(course.id);
-    try {
-      const { data } = await api.post("/certificates/claim", {
-        courseId: course.id,
-        courseName: course.name,
-        courseDuration: course.duration,
-        skills: course.skills,
-      });
-      if (data?.certificate) {
-        showToast("🎉 Verified Course Certificate unlocked and added to your rewards!");
-        await fetchCertificates();
-        setSelectedCert(data.certificate);
-        setCertModalOpen(true);
-      }
-    } catch (err) {
-      showToast("Could not claim certificate: " + (err.response?.data?.message || err.message));
-    } finally {
-      setClaimingCourseId(null);
-    }
-  };
-
-  const handleCopyVerificationLink = (cert) => {
-    const link = `${window.location.origin}/verify/${cert.verificationToken || cert.certificateId}`;
-    navigator.clipboard.writeText(link);
-    setShareCopied(true);
-    showToast("📋 Verification link copied!");
-    setTimeout(() => setShareCopied(false), 3000);
-  };
-
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 4000); };
 
   const fetchOverview = async () => {
@@ -125,10 +70,7 @@ const RewardsPage = () => {
     }
   };
 
-  useEffect(() => { 
-    fetchOverview(); 
-    fetchCertificates();
-  }, []);
+  useEffect(() => { fetchOverview(); }, []);
 
   const handleToggleSetting = async (key) => {
     if (!data?.settings) return;
@@ -555,196 +497,6 @@ const RewardsPage = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          5.5 OFFICIAL COURSE COMPLETION CERTIFICATES (REWARD SECTION)
-         ══════════════════════════════════════════════════════════════ */}
-      <Card className="p-6 overflow-hidden relative border-2 border-amber-200/80 shadow-md">
-        {/* Background ambient gold gradient glow */}
-        <div
-          className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-20 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, #f59e0b 0%, #1e3a8a 70%)" }}
-        />
-
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 mb-2">
-              <span>🎓</span> Verified Educational Credentials
-            </div>
-            <h2 className="text-base font-black text-slate-900 flex items-center gap-2">
-              Official Course Completion Certificates
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Unlock prestigious, QR-verifiable certificates designed in Navy & Gold when you achieve 100% course milestone completion.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-              Earned: <strong className="text-indigo-700">{certificates.length}</strong>
-            </span>
-            <Link
-              to="/certificates"
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all shadow-2xs"
-            >
-              Full Certificates Hub →
-            </Link>
-          </div>
-        </div>
-
-        {/* Grid: Issued Certificates Carousel + Claimable Tracks */}
-        <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Issued Certificates Preview (5 Cols) */}
-          <div className="lg:col-span-5 space-y-3">
-            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>🏅</span> Your Earned Credentials
-            </h3>
-
-            {loadingCerts ? (
-              <div className="p-8 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="w-5 h-5 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin mx-auto mb-2" />
-                Loading certificates...
-              </div>
-            ) : certificates.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-xs bg-amber-50/50 rounded-2xl border border-dashed border-amber-200">
-                <span className="text-3xl block mb-2">📜</span>
-                <p className="font-bold text-slate-800">No certificates unlocked yet</p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Complete any learning course milestone on the right to claim your high-resolution verified credential.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {certificates.map((cert) => (
-                  <div
-                    key={cert._id}
-                    onClick={() => {
-                      setSelectedCert(cert);
-                      setCertModalOpen(true);
-                    }}
-                    className="p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-400 bg-white hover:bg-indigo-50/40 transition-all cursor-pointer shadow-xs flex items-center justify-between gap-3 group"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#061c47] to-[#1e64cc] flex items-center justify-center text-amber-300 font-bold shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-                        🎓
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-slate-900 truncate">
-                          {cert.courseName}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] font-mono text-indigo-700 font-bold">
-                            {cert.certificateId}
-                          </span>
-                          <span className="text-[10px] text-slate-300">•</span>
-                          <span className="text-[10px] text-emerald-700 font-extrabold uppercase">
-                            ✓ {cert.status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="px-2.5 py-1 rounded-lg bg-indigo-50 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white text-xs font-bold transition-all shrink-0"
-                    >
-                      View & Print →
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Claimable Courses via Rewards XP & Progress (7 Cols) */}
-          <div className="lg:col-span-7 space-y-3">
-            <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span>⚡</span> Course Rewards Ready to Unlock
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                {
-                  id: "web-dev-beginner",
-                  name: "Web Development – Beginner Level",
-                  duration: "40 Hours",
-                  skills: ["HTML & CSS", "JavaScript", "Responsive Design", "Web Projects"],
-                  tag: "Full Stack Track",
-                },
-                {
-                  id: "data-structures-algorithms",
-                  name: "Data Structures & Algorithms Mastery",
-                  duration: "60 Hours",
-                  skills: ["Arrays & Lists", "Trees & Graphs", "Dynamic Prog", "Time Complexity"],
-                  tag: "CSE Core",
-                },
-                {
-                  id: "database-management-systems",
-                  name: "Database Management & SQL Systems",
-                  duration: "35 Hours",
-                  skills: ["Relational Model", "Advanced SQL", "Indexing", "ACID Transactions"],
-                  tag: "CSE Core",
-                },
-                {
-                  id: "system-design-architecture",
-                  name: "High-Level System Design & Cloud",
-                  duration: "50 Hours",
-                  skills: ["Microservices", "Load Balancing", "Caching", "Distributed Sys"],
-                  tag: "Placement Advanced",
-                },
-              ].map((course) => {
-                const isEarned = certificates.some(
-                  (c) => c.courseId === course.id && c.status === "Valid"
-                );
-                const isClaiming = claimingCourseId === course.id;
-
-                return (
-                  <div
-                    key={course.id}
-                    className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-slate-300 transition-all flex flex-col justify-between gap-3 shadow-2xs"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span className="text-[9.5px] font-bold text-indigo-700 uppercase bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
-                          {course.tag}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          {course.duration}
-                        </span>
-                      </div>
-                      <h4 className="text-xs font-black text-slate-900 leading-snug">
-                        {course.name}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-200/80">
-                      <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                        <span>★</span> 100% Eligible
-                      </div>
-
-                      {isEarned ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                          <span>✓</span> Earned
-                        </span>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleClaimRewardCertificate(course)}
-                          disabled={isClaiming}
-                          className="px-3 py-1 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 shadow-xs flex items-center gap-1 transition-all disabled:opacity-50"
-                        >
-                          {isClaiming ? "Unlocking..." : "Claim Reward →"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* ══════════════════════════════════════════════════════════════
           6. ACHIEVEMENT BADGES
          ══════════════════════════════════════════════════════════════ */}
       <Card className="p-6">
@@ -956,68 +708,6 @@ const RewardsPage = () => {
       <BadgeDetailModal isOpen={isBadgeModalOpen} onClose={() => setIsBadgeModalOpen(false)} badge={selectedBadge} />
       <RewardHistoryModal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} />
       <ChallengesModal isOpen={isChallengesModalOpen} onClose={() => setIsChallengesModalOpen(false)} challenges={challenges} />
-
-      {/* ── CERTIFICATE PREVIEW MODAL ── */}
-      {certModalOpen && selectedCert && (
-        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-5xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-auto animate-scale-in">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-sm">
-                  🎓
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 leading-tight">
-                    {selectedCert.courseName}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5 font-mono">
-                    Certificate ID: <strong>{selectedCert.certificateId}</strong> • Status:{" "}
-                    <span className="text-emerald-700 font-extrabold uppercase">
-                      ✓ {selectedCert.status}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleCopyVerificationLink(selectedCert)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all flex items-center gap-1.5 shadow-2xs"
-                >
-                  <span>🔗</span>
-                  <span>{shareCopied ? "Copied!" : "Share Link"}</span>
-                </button>
-                <Link
-                  to={`/verify/${selectedCert.verificationToken || selectedCert.certificateId}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all flex items-center gap-1.5"
-                >
-                  <span>🛡️</span>
-                  <span>Public Verify</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setCertModalOpen(false)}
-                  className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 flex items-center justify-center text-sm font-bold transition-all ml-1"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            {/* Certificate Template Preview */}
-            <div className="flex justify-center overflow-x-auto pb-2">
-              <LearnXCertificateTemplate
-                certificate={selectedCert}
-                onDownloadComplete={() => showToast("✅ High-Resolution PDF downloaded!")}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Toast */}
       {toast && (
