@@ -473,5 +473,37 @@ export const updateRewardSettings = async (settings, config = {}) => {
   return api.patch("/rewards/settings", { settings }, config);
 };
 
+// ─── Career Intelligence & Resume Studio Engine ──────────────────────────────
+export const getCareerIntelligenceProfile = async (config = {}) => {
+  return api.get("/career-intelligence/profile", config);
+};
+
+export const uploadAndAnalyzeFullResume = async (formData, config = {}) => {
+  return api.post("/career-intelligence/analyze-file", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    ...config,
+  });
+};
+
+export const matchJobDescription = async (data, config = {}) => {
+  return api.post("/career-intelligence/match-job", data, config);
+};
+
+export const studioRewrite = async (data, config = {}) => {
+  return api.post("/career-intelligence/studio-rewrite", data, config);
+};
+
+export const saveResumeVersion = async (data, config = {}) => {
+  return api.post("/career-intelligence/save-version", data, config);
+};
+
+export const chatWithCareerCopilot = async (data, config = {}) => {
+  return api.post("/career-intelligence/copilot", data, config);
+};
+
+export const deleteResumeData = async (id, config = {}) => {
+  return api.delete(`/career-intelligence/resume/${id}`, config);
+};
+
 export default api;
 

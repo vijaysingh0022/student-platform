@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import api from "../services/api.js";
+import { Link, useNavigate } from "react-router-dom";
+import api, {
+  getCareerIntelligenceProfile,
+  uploadAndAnalyzeFullResume,
+} from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useAppState } from "../context/AppStateContext.jsx";
+import { ResumeAnalysisCard } from "../components/career/ResumeAnalysisCard.jsx";
+import { JobDescriptionMatcher } from "../components/career/JobDescriptionMatcher.jsx";
+import { ResumeStudio } from "../components/career/ResumeStudio.jsx";
+import { CareerCopilotDrawer } from "../components/career/CareerCopilotDrawer.jsx";
+import { SkillGapCurriculumBridge } from "../components/career/SkillGapCurriculumBridge.jsx";
+import { CareerReadinessRadar } from "../components/career/CareerReadinessRadar.jsx";
 
 const DIFF_COLORS = { "Hard": "text-rose-700 bg-rose-50 border-rose-200", "Medium": "text-amber-700 bg-amber-50 border-amber-200", "Easy": "text-emerald-700 bg-emerald-50 border-emerald-200" };
 
@@ -194,11 +203,17 @@ const ROLE_PROJECTS = {
 
 const CareerReadiness = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { careerVersion, onResumeAnalyzed } = useAppState();
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Advanced Career Intelligence state
+  const [careerProfile, setCareerProfile] = useState(null);
+  const [activeAnalysis, setActiveAnalysis] = useState(null);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   const [targetRole, setTargetRole] = useState("Full Stack Software Engineer");
   const [updatingRole, setUpdatingRole] = useState(false);
@@ -226,10 +241,28 @@ const CareerReadiness = () => {
   const fetchCareerData = async () => {
     setLoading(true);
     try {
-      const { data: res } = await api.get("/career/dashboard");
-      setData(res);
-      if (res.targetRole) setTargetRole(res.targetRole);
-      if (res.resumeText) setResumeText(res.resumeText);
+      const [careerRes, intelRes] = await Promise.allSettled([
+        api.get("/career/dashboard"),
+        getCareerIntelligenceProfile(),
+      ]);
+
+      if (careerRes.status === "fulfilled" && careerRes.value?.data) {
+        const res = careerRes.value.data;
+        setData(res);
+        if (res.targetRole) setTargetRole(res.targetRole);
+        if (res.resumeText) setResumeText(res.resumeText);
+      }
+
+      if (intelRes.status === "fulfilled" && intelRes.value?.data?.profile) {
+        const p = intelRes.value.data.profile;
+        setCareerProfile(p);
+        if (p.activeAnalysis) {
+          setActiveAnalysis(p.activeAnalysis);
+          if (p.activeAnalysis.parsedData?.rawText && !resumeText) {
+            setResumeText(p.activeAnalysis.parsedData.rawText);
+          }
+        }
+      }
     } catch (err) {
       console.error("Failed to load career dashboard:", err);
     } finally {
@@ -296,12 +329,27 @@ const CareerReadiness = () => {
     formData.append("resumeFile", file);
     formData.append("targetRole", targetRole);
     try {
+      // 1. Send to existing dashboard endpoint
       const { data: res } = await api.post("/career/upload-resume", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setResumeAnalysis(res);
       if (res.resumeText) setResumeText(res.resumeText);
       if (res.filename) setUploadedFilename(res.filename);
+
+      // 2. Also send to Full AI Career Intelligence Engine for in-depth parsing, ATS scoring & curriculum mapping
+      try {
+        const fullFormData = new FormData();
+        fullFormData.append("resumeFile", file);
+        fullFormData.append("targetRole", targetRole);
+        const { data: fullRes } = await uploadAndAnalyzeFullResume(fullFormData);
+        if (fullRes?.analysis) {
+          setActiveAnalysis(fullRes.analysis);
+        }
+      } catch (fullErr) {
+        console.warn("Full career intelligence upload sync:", fullErr.message);
+      }
+
       fetchCareerData();
       // 🔄 Cascade: update Placement Prediction too
       onResumeAnalyzed();
@@ -400,9 +448,13 @@ const CareerReadiness = () => {
 
   const TABS = [
     { id: "overview", label: "Overview", icon: "🎯" },
+    { id: "analysis", label: "ATS Diagnostics", icon: "🔬" },
+    { id: "studio", label: "AI Resume Studio", icon: "✨" },
+    { id: "matcher", label: "Job Matcher", icon: "💼" },
+    { id: "skill-bridge", label: "LearnX Skill Bridge", icon: "🌉" },
     { id: "roadmap", label: "Career Roadmap", icon: "🗺️" },
     { id: "projects", label: "Projects", icon: "💡" },
-    { id: "resume", label: "Resume & ATS", icon: "📄" },
+    { id: "resume", label: "Classic Scanner", icon: "📄" },
     { id: "skills", label: "Skill Matrix", icon: "⚡" },
     { id: "mock", label: "Mock Interview", icon: "🎙️" },
   ];
@@ -508,12 +560,12 @@ const CareerReadiness = () => {
             {/* Stats Grid */}
             <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { label: "ATS Resume Score", value: `${ats}%`, icon: "📄", sub: "Resume match" },
-                { label: "Test Avg Score", value: `${data?.averageScore}%`, icon: "🧠", sub: "Academic mastery" },
-                { label: "Assessments Taken", value: data?.testsTaken || 0, icon: "📊", sub: "Tests completed" },
-                { label: "Skills Job-Ready", value: `${data?.skillMatchMatrix?.filter(s => s.masteryScore >= 75).length || 0}/${data?.skillMatchMatrix?.length || 0}`, icon: "⚡", sub: "Mastered skills" },
-                { label: "Roadmap Phases", value: data?.roadmapPhases?.length || 3, icon: "🗺️", sub: "3-month plan" },
-                { label: "Project Ideas", value: data?.recommendedProjects?.length || 3, icon: "💡", sub: "Portfolio blueprints" },
+                { label: "ATS Resume Score", value: `${activeAnalysis?.atsCompatibilityScore || ats}%`, icon: "📄", sub: "Resume match" },
+                { label: "Overall Quality", value: `${activeAnalysis?.overallQualityScore || 74}%`, icon: "⭐", sub: "Content & depth" },
+                { label: "Recruiter Readability", value: `${activeAnalysis?.recruiterReadabilityScore || 72}%`, icon: "👁️", sub: "Human scan time" },
+                { label: "Academic Test Avg", value: `${data?.averageScore || 0}%`, icon: "🧠", sub: "Mastery proof" },
+                { label: "Roadmap Phases", value: data?.roadmapPhases?.length || 3, icon: "🗺️", sub: "Execution path" },
+                { label: "Project Blueprints", value: data?.recommendedProjects?.length || 4, icon: "💡", sub: "Role projects" },
               ].map((s, i) => (
                 <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
                   <div className="text-lg mb-1">{s.icon}</div>
@@ -524,6 +576,19 @@ const CareerReadiness = () => {
               ))}
             </div>
           </div>
+
+          {/* 5-Pillar Career Readiness Profile */}
+          <CareerReadinessRadar
+            pillars={activeAnalysis?.readinessPillars || {
+              technicalReadiness: data?.averageScore || 75,
+              projectReadiness: 70,
+              resumeReadiness: activeAnalysis?.atsCompatibilityScore || ats,
+              interviewReadiness: 65,
+              communicationReadiness: activeAnalysis?.recruiterReadabilityScore || 72,
+            }}
+            overallScore={score}
+            confidenceLevel={activeAnalysis ? "High (Full AI Scan)" : "Estimated"}
+          />
 
           {/* Quick Launch */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -565,6 +630,85 @@ const CareerReadiness = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── ATS DIAGNOSTICS & SECTION SCORES ── */}
+      {activeTab === "analysis" && (
+        <div className="space-y-6 animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-6 rounded-3xl border border-slate-200">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
+                Full AI Diagnostic Engine
+              </span>
+              <h2 className="text-xl font-black text-slate-900 mt-2 flex items-center gap-2">
+                🔬 Deep Resume Breakdown & ATS Diagnostics
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                Detailed section scoring, bullet impact reviews, and ATS parsing analysis.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab("studio")}
+                className="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+              >
+                ✨ Open AI Resume Studio →
+              </button>
+            </div>
+          </div>
+
+          <ResumeAnalysisCard
+            analysis={activeAnalysis}
+            onOpenStudio={() => setActiveTab("studio")}
+            onRunJobMatch={() => setActiveTab("matcher")}
+          />
+        </div>
+      )}
+
+      {/* ── AI RESUME STUDIO ── */}
+      {activeTab === "studio" && (
+        <div className="space-y-6 animate-fade-in-up">
+          <ResumeStudio
+            initialParsedData={activeAnalysis?.parsedData}
+            targetRole={targetRole}
+            onVersionSaved={() => fetchCareerData()}
+          />
+        </div>
+      )}
+
+      {/* ── JOB DESCRIPTION MATCHER ── */}
+      {activeTab === "matcher" && (
+        <div className="space-y-6 animate-fade-in-up">
+          <JobDescriptionMatcher
+            currentTargetRole={targetRole}
+            resumeText={activeAnalysis?.parsedData?.rawText || resumeText}
+            onSaveMatch={() => fetchCareerData()}
+          />
+        </div>
+      )}
+
+      {/* ── SKILL GAP & CURRICULUM BRIDGE ── */}
+      {activeTab === "skill-bridge" && (
+        <div className="space-y-6 animate-fade-in-up">
+          <SkillGapCurriculumBridge
+            skillGaps={activeAnalysis?.skillGaps || (data?.skillMatchMatrix || []).filter(s => s.masteryScore < 65).map(s => ({
+              skill: s.skill,
+              currentMastery: s.masteryScore,
+              importance: "High",
+              recommendation: `Complete curriculum modules and practice questions for ${s.skill}.`,
+              curriculumMapping: {
+                subjectId: s.skill.toLowerCase().includes("sql") ? "dbms" : s.skill.toLowerCase().includes("tree") ? "dsa" : "cs",
+                subjectName: s.skill.toLowerCase().includes("sql") ? "Database Management Systems" : "Computer Science Core",
+                topicId: s.skill.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+                topicName: s.skill,
+                unitNumber: 1,
+                chapterName: "Foundations",
+              },
+            }))}
+            targetRole={targetRole}
+            onStartMockInterview={() => navigate("/mock-interview")}
+          />
         </div>
       )}
 
@@ -1179,6 +1323,26 @@ const CareerReadiness = () => {
           </div>
         </div>
       )}
+
+      {/* ── FLOATING CAREER COPILOT TRIGGER ── */}
+      <div className="fixed bottom-6 right-6 z-40">
+        <button
+          onClick={() => setIsCopilotOpen(true)}
+          className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-slate-900 via-indigo-900 to-violet-900 text-white shadow-xl hover:scale-105 active:scale-95 transition-all border border-indigo-400/30 group"
+        >
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-sm">🤖</span>
+          <span className="text-xs font-black tracking-wide">Ask Career Copilot</span>
+        </button>
+      </div>
+
+      {/* ── COPILOT DRAWER ── */}
+      <CareerCopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        targetRole={targetRole}
+        resumeScore={activeAnalysis?.overallQualityScore || score}
+      />
     </div>
   );
 };

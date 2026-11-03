@@ -26,6 +26,7 @@ import skillGraphRoutes from "./routes/skillGraphRoutes.js";
 import codingRoutes from "./routes/codingRoutes.js";
 import interviewRoutes from "./routes/interviewRoutes.js";
 import examPrepRoutes from "./routes/examPrepRoutes.js";
+import careerIntelligenceRoutes from "./routes/careerIntelligenceRoutes.js";
 import {
   enterpriseSecurityHeaders,
   rateLimiter,
@@ -91,6 +92,7 @@ app.use("/api/offline", offlineRoutes);
 app.use("/api/learning", learningRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/career", careerRoutes);
+app.use("/api/career-intelligence", careerIntelligenceRoutes);
 app.use("/api/adaptive", adaptiveRoutes);
 app.use("/api/skillgraph", skillGraphRoutes);
 app.use("/api/coding", codingRoutes);
