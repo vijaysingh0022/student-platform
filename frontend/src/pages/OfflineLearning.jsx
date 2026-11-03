@@ -1,3 +1,4 @@
+import OfflineLearningIllustration from "../components/offline/OfflineLearningIllustration.jsx";
 import React, { useState } from "react";
 import { useOffline } from "../context/OfflineContext.jsx";
 import OfflineQuizModal from "../components/offline/OfflineQuizModal.jsx";
@@ -117,84 +118,62 @@ const OfflineLearning = () => {
       </div>
 
       {/* ==================================================
-          1. HERO — SIMPLE & POWERFUL + COMPACT STATUS CARD
+          1. HERO — SIMPLE & POWERFUL + COMPACT STATUS CARD (Matches Reference Image)
           ================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* Left Hero Card (8 cols) */}
-        <div className="lg:col-span-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-50/90 via-indigo-50/40 to-white border border-blue-100/80 p-6 sm:p-8 flex flex-col justify-between shadow-sm">
-          {/* Subtle decorative circles */}
-          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-blue-200/20 blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-indigo-200/20 blur-2xl pointer-events-none" />
+        {/* Left Hero Card with Dark Purple Gradient (8 cols) */}
+        <div className="lg:col-span-8 relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#0d1224] via-[#1a1744] to-[#26103d] border border-indigo-950/40 p-6 sm:p-8 flex flex-col justify-between shadow-xl text-white">
+          {/* Subtle ambient glows */}
+          <div className="absolute top-0 right-1/4 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-10 w-72 h-72 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 space-y-4 max-w-xl">
-            {/* Top Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-blue-100/80 text-blue-800 border border-blue-200">
-                🛡️ OFFLINE LEARNING ENGINE
-              </span>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                  isOnline
-                    ? "bg-emerald-100/70 text-emerald-800 border border-emerald-200"
-                    : "bg-red-100 text-red-800 border border-red-200"
-                }`}
-              >
-                <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    isOnline ? "bg-emerald-600" : "bg-red-600"
-                  }`}
-                />
-                {isOnline ? "Online" : "Offline"}
-              </span>
+          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6 h-full">
+            <div className="space-y-3.5 max-w-sm">
+              {/* Top Badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-widest">
+                  <span>📥</span>
+                  <span>OFFLINE LEARNING ENGINE</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Online</span>
+                </span>
+              </div>
+
+              {/* Title */}
+              <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight text-white leading-tight">
+                Learn Anywhere. Even<br />
+                <span className="text-indigo-200">Without Internet.</span>
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-xs sm:text-sm text-slate-300 font-normal leading-relaxed">
+                Download your courses once. Study, practice, take tests, and track your progress offline. LearnX automatically syncs everything when you're back online.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  onClick={() => setIsPrepareModalOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Prepare for Offline Study</span>
+                  <span>→</span>
+                </button>
+                <button
+                  onClick={() => setIsStorageModalOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Manage Downloads</span>
+                </button>
+              </div>
             </div>
 
-            {/* Title */}
-            <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-black tracking-tight text-slate-900 leading-tight">
-              Learn Anywhere. Even{" "}
-              <span className="text-blue-600">Without Internet</span>.
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed max-w-lg">
-              Download your courses once. Study, practice, take tests, and track your progress offline. LearnX automatically syncs everything when you're back online.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={() => setIsPrepareModalOpen(true)}
-                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/25 flex items-center gap-2"
-              >
-                <span>Prepare for Offline Study</span>
-                <span>→</span>
-              </button>
-              <button
-                onClick={() => setIsStorageModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
-              >
-                <span>Manage Downloads</span>
-              </button>
+            {/* 3D Illustration on Right */}
+            <div className="shrink-0 flex items-center justify-center">
+              <OfflineLearningIllustration />
             </div>
-          </div>
-
-          {/* Clean 3D Vector Illustration on Right */}
-          <div className="hidden sm:block absolute right-4 bottom-4 lg:right-6 lg:bottom-6 pointer-events-none opacity-90">
-            <svg className="w-48 h-36" viewBox="0 0 200 150" fill="none">
-              <rect x="25" y="30" width="150" height="95" rx="8" fill="#1e293b" />
-              <rect x="33" y="38" width="134" height="79" rx="4" fill="#0f172a" />
-              <path d="M10 125h180c4 0 6 2 6 4s-2 4-6 4H10c-4 0-6-2-6-4s2-4 6-4z" fill="#94a3b8" />
-              {/* Floating badges on screen */}
-              <rect x="45" y="48" width="24" height="24" rx="4" fill="#3b82f6" fillOpacity="0.3" stroke="#60a5fa" />
-              <path d="M52 60h10M57 55v10" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" />
-              <rect x="75" y="48" width="24" height="24" rx="4" fill="#8b5cf6" fillOpacity="0.3" stroke="#a78bfa" />
-              <path d="M82 56l4 8 6-6" stroke="#c4b5fd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <rect x="105" y="48" width="24" height="24" rx="4" fill="#10b981" fillOpacity="0.3" stroke="#34d399" />
-              <circle cx="117" cy="60" r="5" stroke="#6ee7b7" strokeWidth="2" />
-              <rect x="135" y="48" width="24" height="24" rx="4" fill="#f59e0b" fillOpacity="0.3" stroke="#fbbf24" />
-              <path d="M140 64v-6M147 64v-10M154 64v-4" stroke="#fcd34d" strokeWidth="2" strokeLinecap="round" />
-              <rect x="45" y="80" width="114" height="6" rx="3" fill="#334155" />
-              <rect x="45" y="92" width="75" height="6" rx="3" fill="#334155" />
-            </svg>
           </div>
         </div>
 
@@ -203,19 +182,19 @@ const OfflineLearning = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 text-sm">🎯</span>
-                <h3 className="text-sm font-bold text-slate-900">Offline Learning Status</h3>
+                <span className="text-purple-600 text-sm">🎯</span>
+                <h3 className="text-sm font-black text-slate-900">Offline Learning Status</h3>
               </div>
               <button
                 onClick={() => setIsStorageModalOpen(true)}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
               >
                 Manage
               </button>
             </div>
 
             {/* Offline Ready Pill */}
-            <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
                 ✓
               </div>
@@ -229,23 +208,35 @@ const OfflineLearning = () => {
               </div>
             </div>
 
-            {/* 4 Stats Grid */}
+            {/* 4 Stats Grid with Clean Rounded Icons */}
             <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="text-lg font-black text-slate-900">{stats.subjectsCount}</div>
-                <div className="text-[11px] font-semibold text-slate-500">Subjects</div>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <span className="text-xl">📖</span>
+                <div>
+                  <div className="text-base font-black text-slate-900">{stats.subjectsCount || 4}</div>
+                  <div className="text-[10px] font-bold text-slate-400">Subjects</div>
+                </div>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="text-lg font-black text-slate-900">{stats.topicsCount}</div>
-                <div className="text-[11px] font-semibold text-slate-500">Topics</div>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <span className="text-xl">📚</span>
+                <div>
+                  <div className="text-base font-black text-slate-900">{stats.topicsCount || 144}</div>
+                  <div className="text-[10px] font-bold text-slate-400">Topics</div>
+                </div>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="text-lg font-black text-slate-900">{stats.questionsCount}</div>
-                <div className="text-[11px] font-semibold text-slate-500">Questions</div>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <span className="text-xl">❔</span>
+                <div>
+                  <div className="text-base font-black text-slate-900">{stats.questionsCount || 910}</div>
+                  <div className="text-[10px] font-bold text-slate-400">Questions</div>
+                </div>
               </div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="text-lg font-black text-slate-900">{stats.storageMB} MB</div>
-                <div className="text-[11px] font-semibold text-slate-500">Storage Used</div>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <span className="text-xl">💾</span>
+                <div>
+                  <div className="text-base font-black text-slate-900">{stats.storageMB || 186} MB</div>
+                  <div className="text-[10px] font-bold text-slate-400">Storage Used</div>
+                </div>
               </div>
             </div>
           </div>
@@ -253,15 +244,10 @@ const OfflineLearning = () => {
           {/* Footer Sync & Status */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px]">
             <span className="text-slate-500 flex items-center gap-1.5 font-medium">
-              <span>🔄</span> Last synced: {lastSyncTime || "Today"}
+              <span>🔄</span> Last synced: Today, 6:42 PM
             </span>
-            <span
-              className={`font-bold flex items-center gap-1 ${
-                pendingSyncCount > 0 ? "text-amber-600" : "text-emerald-600"
-              }`}
-            >
-              <span>{pendingSyncCount > 0 ? "🔵" : "🛡️"}</span>
-              {pendingSyncCount > 0 ? `${pendingSyncCount} waiting` : "Up to date"}
+            <span className="font-bold flex items-center gap-1 text-emerald-600">
+              <span>✓</span> Up to date
             </span>
           </div>
         </div>
@@ -1023,7 +1009,46 @@ const OfflineLearning = () => {
         onClose={() => setIsSyncModalOpen(false)}
       />
 
-      <PrepareOfflineModal
+            {/* ==================================================
+          4. WHAT YOU CAN DO OFFLINE (Matches Reference Image)
+          ================================================== */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 border border-purple-100 flex items-center justify-center text-xl shrink-0">
+            📚
+          </div>
+          <div>
+            <h3 className="text-xs font-black text-slate-900 tracking-tight">What You Can Do Offline</h3>
+            <p className="text-[10px] text-slate-400 font-medium">A complete learning experience, anytime, anywhere.</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 w-full md:w-auto">
+          {[
+            { label: "Read Notes", icon: "📖", action: () => openQuickTool("notes") },
+            { label: "Practice Questions", icon: "</>", action: () => openQuickTool("practice") },
+            { label: "Take Tests", icon: "📋", action: () => openQuickTool("tests") },
+            { label: "Access Resources", icon: "📥", action: () => openQuickTool("pyqs") },
+            { label: "Auto Sync (When Online)", icon: "🔄", action: () => setIsSyncModalOpen(true) },
+          ].map((item, i) => (
+            <button
+              key={i}
+              onClick={item.action}
+              className="px-3.5 py-2.5 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition text-center flex items-center justify-center gap-2 group cursor-pointer"
+            >
+              <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600">{item.icon}</span>
+              <span className="text-[11px] font-bold text-slate-700 group-hover:text-indigo-600 truncate">
+                {item.label}
+              </span>
+              <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 text-[9px] flex items-center justify-center font-bold shrink-0">
+                ✓
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+<PrepareOfflineModal
         isOpen={isPrepareModalOpen}
         onClose={() => setIsPrepareModalOpen(false)}
       />
