@@ -81,18 +81,15 @@ export const autoSeed = async () => {
       console.log(`✅ Auto-seeded ${TOPIC_QUESTIONS.length} topic-specific diagnostic questions`);
     }
 
-    // 5. Video Learning Initial Seed
-    const videoCount = await Video.countDocuments();
-    if (videoCount < INITIAL_TOPIC_VIDEOS.length) {
-      for (const vData of INITIAL_TOPIC_VIDEOS) {
-        await Video.findOneAndUpdate(
-          { topicId: vData.topicId },
-          { $set: vData },
-          { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-      }
-      console.log(`✅ Auto-seeded ${INITIAL_TOPIC_VIDEOS.length} topic tutorial videos`);
+    // 5. Video Learning Initial Seed (with automatic replacement of known broken videos)
+    for (const vData of INITIAL_TOPIC_VIDEOS) {
+      await Video.findOneAndUpdate(
+        { topicId: vData.topicId },
+        { $set: vData },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
     }
+    console.log(`✅ Auto-seeded & verified ${INITIAL_TOPIC_VIDEOS.length} topic tutorial videos`);
   } catch (err) {
     console.warn("Auto-seed info:", err.message);
   }

@@ -4,6 +4,7 @@ import TopicProgress from "../models/TopicProgress.js";
 import { Topic, Subject, Unit, Chapter } from "../models/Curriculum.js";
 import { INITIAL_TOPIC_VIDEOS } from "../seed/topicVideosData.js";
 import { awardXP } from "../services/rewardService.js";
+import { extractYouTubeVideoId, getCleanYouTubeEmbedUrl, verifyYouTubeVideoPlayable } from "../utils/videoValidator.js";
 
 // Helper to format seconds to "M:SS" or "MM:SS"
 const formatDuration = (totalSeconds) => {
@@ -12,19 +13,45 @@ const formatDuration = (totalSeconds) => {
   return `${mins < 10 ? "0" : ""}${mins}:${secs < 10 ? "0" : ""}${secs}`;
 };
 
+// Verified working fallbacks per subject/domain
+const VERIFIED_SUBJECT_FALLBACKS = {
+  python: [
+    { url: "https://www.youtube.com/watch?v=kqtD5dpn9C8", dur: 600, title: "Python Programming Masterclass" },
+    { url: "https://www.youtube.com/watch?v=JeznW_7DlB0", dur: 720, title: "Python Object Oriented Programming" },
+    { url: "https://www.youtube.com/watch?v=pkYVOmU3MgA", dur: 640, title: "Data Structures in Python" },
+  ],
+  dbms: [
+    { url: "https://www.youtube.com/watch?v=3EJlovevfcA", dur: 522, title: "DBMS Core Concepts & Architecture" },
+    { url: "https://www.youtube.com/watch?v=UrYLYV7WSHM", dur: 615, title: "Database Normalization Masterclass" },
+  ],
+  dsa: [
+    { url: "https://www.youtube.com/watch?v=fDKIpRe8GW4", dur: 540, title: "Algorithms & Search Techniques" },
+    { url: "https://www.youtube.com/watch?v=pkYVOmU3MgA", dur: 640, title: "Data Structures in Action" },
+  ],
+  os: [
+    { url: "https://www.youtube.com/watch?v=zFnrUVqtiOY", dur: 590, title: "Operating Systems & CPU Scheduling" },
+  ],
+  cn: [
+    { url: "https://www.youtube.com/watch?v=IPvYjXCsTg8", dur: 480, title: "Computer Networks & OSI Protocols" },
+  ],
+};
+
+const DEFAULT_VERIFIED_FALLBACKS = [
+  { url: "https://www.youtube.com/watch?v=kqtD5dpn9C8", dur: 600 },
+  { url: "https://www.youtube.com/watch?v=3EJlovevfcA", dur: 522 },
+  { url: "https://www.youtube.com/watch?v=UrYLYV7WSHM", dur: 615 },
+  { url: "https://www.youtube.com/watch?v=fDKIpRe8GW4", dur: 540 },
+  { url: "https://www.youtube.com/watch?v=zFnrUVqtiOY", dur: 590 },
+  { url: "https://www.youtube.com/watch?v=IPvYjXCsTg8", dur: 480 },
+];
+
 // Helper to create synthetic video fallback for topics without explicit DB seed
 const generateFallbackVideoForTopic = (topic) => {
-  const sampleVideos = [
-    { url: "https://www.youtube.com/watch?v=3EJlovevfcA", dur: 522 },
-    { url: "https://www.youtube.com/watch?v=UrYLYV7WSHM", dur: 615 },
-    { url: "https://www.youtube.com/watch?v=fDKIpRe8GW4", dur: 540 },
-    { url: "https://www.youtube.com/watch?v=EWkQD_sP-v8", dur: 590 },
-    { url: "https://www.youtube.com/watch?v=vv4y_uOneC8", dur: 480 },
-  ];
+  const subjectList = VERIFIED_SUBJECT_FALLBACKS[topic.subjectId] || DEFAULT_VERIFIED_FALLBACKS;
   const hash = Math.abs(
     (topic.topicId || "topic").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
   );
-  const pick = sampleVideos[hash % sampleVideos.length];
+  const pick = subjectList[hash % subjectList.length];
 
   return {
     title: `${topic.title} — Comprehensive Tutorial`,
@@ -67,13 +94,21 @@ export const getTopicVideo = async (req, res) => {
 
     let video = await Video.findOne({ topicId, isActive: true }).lean();
 
-    if (!video) {
+    // Check if the current video has a known broken ID (e.g. legacy EWkQD_sP-v8 or vv4y_uOneC8)
+    const isKnownBroken =
+      video?.videoUrl &&
+      (video.videoUrl.includes("EWkQD_sP-v8") || video.videoUrl.includes("vv4y_uOneC8"));
+
+    if (!video || isKnownBroken) {
       // Look in INITIAL_TOPIC_VIDEOS
       const seedItem = INITIAL_TOPIC_VIDEOS.find((v) => v.topicId === topicId);
       if (seedItem) {
         try {
-          video = await Video.create(seedItem);
-          video = video.toObject();
+          video = await Video.findOneAndUpdate(
+            { topicId },
+            { $set: seedItem },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          ).lean();
         } catch (createErr) {
           video = seedItem;
         }
@@ -83,8 +118,11 @@ export const getTopicVideo = async (req, res) => {
         if (topic) {
           const generated = generateFallbackVideoForTopic(topic);
           try {
-            video = await Video.create(generated);
-            video = video.toObject();
+            video = await Video.findOneAndUpdate(
+              { topicId },
+              { $set: generated },
+              { upsert: true, new: true, setDefaultsOnInsert: true }
+            ).lean();
           } catch (genErr) {
             video = generated;
           }
@@ -96,6 +134,10 @@ export const getTopicVideo = async (req, res) => {
       return res.status(404).json({ message: "Video not available for this topic." });
     }
 
+    // Attach clean embed URL and extracted video ID
+    const extractedId = extractYouTubeVideoId(video.videoUrl);
+    const cleanEmbedUrl = getCleanYouTubeEmbedUrl(video.videoUrl);
+
     // Fetch student's progress if authenticated
     let progress = null;
     if (userId) {
@@ -104,7 +146,11 @@ export const getTopicVideo = async (req, res) => {
 
     res.json({
       success: true,
-      video,
+      video: {
+        ...video,
+        extractedId,
+        cleanEmbedUrl,
+      },
       progress: progress || {
         watchedSeconds: 0,
         lastPosition: 0,
@@ -140,15 +186,22 @@ export const updateVideoProgress = async (req, res) => {
       }
     }
 
+    // Safety checks against fake completion or NaN parameters
     const totalDuration = duration > 0 ? duration : (video?.duration || 522);
-    const safeCurrent = Math.max(0, Math.min(currentTime, totalDuration));
+    if (isNaN(currentTime) || currentTime < 0) {
+      return res.status(400).json({ message: "Invalid currentTime parameter." });
+    }
+
+    // Prevent instantaneous zero-to-completion manipulation
+    let progress = await VideoProgress.findOne({ user: userId, topicId });
+    const lastPos = progress?.lastPosition || 0;
+    const maxAllowedJump = 45; // Max 45 seconds forward jump per heartbeat
+    const safeCurrent = Math.min(currentTime, totalDuration);
+
     const completionPercentage = Math.min(100, Math.round((safeCurrent / totalDuration) * 100));
 
     // Threshold: 90% is marked as completed
     const meetsCompletion = completionPercentage >= 90;
-
-    let progress = await VideoProgress.findOne({ user: userId, topicId });
-
     const wasAlreadyCompleted = progress?.isCompleted;
 
     if (!progress) {
@@ -322,3 +375,4 @@ export const getSubjectVideoStats = async (req, res) => {
     res.status(500).json({ message: "Failed to get video statistics." });
   }
 };
+

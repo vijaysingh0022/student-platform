@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api, { getFacultyLearningStats } from "../services/api.js";
+import api, {
+  getFacultyLearningStats,
+  getAdminVideoValidationReport,
+  replaceAdminVideoUrl,
+  verifyAdminSingleVideoUrl,
+} from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import SecurityGovernance from "./SecurityGovernance.jsx";
 import { ADMIN_SESSION_KEY } from "./AdminLogin.jsx";
@@ -94,6 +99,53 @@ const TeacherDashboard = () => {
       fetchMongoUsers();
     }
   }, [activeTab, mongoRoleFilter]);
+
+  // Video Validation & Admin Health State
+  const [videoReport, setVideoReport] = useState(null);
+  const [loadingVideoReport, setLoadingVideoReport] = useState(false);
+  const [editingVideoItem, setEditingVideoItem] = useState(null);
+  const [newVideoUrlInput, setNewVideoUrlInput] = useState("");
+  const [verifyingNewVideo, setVerifyingNewVideo] = useState(false);
+  const [verificationFeedback, setVerificationFeedback] = useState(null);
+
+  const fetchVideoValidationReport = async () => {
+    setLoadingVideoReport(true);
+    try {
+      const res = await getAdminVideoValidationReport();
+      if (res.data) {
+        setVideoReport(res.data);
+      }
+    } catch (err) {
+      console.warn("Failed to load video validation report:", err);
+    } finally {
+      setLoadingVideoReport(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "video-validator") {
+      fetchVideoValidationReport();
+    }
+  }, [activeTab]);
+
+  const handleTestAndReplaceVideo = async (videoId) => {
+    if (!newVideoUrlInput.trim()) return;
+    setVerifyingNewVideo(true);
+    setVerificationFeedback(null);
+    try {
+      const res = await replaceAdminVideoUrl(videoId, { videoUrl: newVideoUrlInput.trim() });
+      if (res.data?.success) {
+        showToast("✅ Video replaced and verified successfully!");
+        setEditingVideoItem(null);
+        setNewVideoUrlInput("");
+        fetchVideoValidationReport();
+      }
+    } catch (err) {
+      setVerificationFeedback(err.response?.data?.message || err.message || "Verification failed");
+    } finally {
+      setVerifyingNewVideo(false);
+    }
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -271,6 +323,7 @@ ${student.department || "Computer Science & Engineering"}`;
   const TABS = [
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "all-users", label: "Registered Users (MongoDB)", icon: "🗄️" },
+    { id: "video-validator", label: "Video Validation & Health", icon: "🎥" },
     { id: "curriculum-analytics", label: "Curriculum Analytics", icon: "📚" },
     { id: "weak-topics", label: "Weak Topics in Class", icon: "⚠️" },
     { id: "at-risk", label: "At-Risk Alerts", icon: "🚨", count: atRiskData?.atRiskCount },
@@ -1514,6 +1567,263 @@ ${student.department || "Computer Science & Engineering"}`;
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── TAB 3: VIDEO VALIDATION & HEALTH (ANTI-BREAKAGE) ── */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "video-validator" && (
+        <div className="space-y-6 animate-fade-in-up">
+          {/* Header Card */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-800">
+                  Course Video Health Monitor
+                </span>
+                <span className="text-xs text-slate-500 font-semibold">Real-time YouTube Embed Status</span>
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Course Video Integrity & Live Validator
+              </h2>
+              <p className="text-xs text-slate-500 max-w-2xl mt-1">
+                Ensures students never encounter "Video unavailable" errors. Audits YouTube IDs via the oEmbed protocol, checks for embedding permissions, and enables 1-click verified URL replacement.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchVideoValidationReport}
+                disabled={loadingVideoReport}
+                className="px-4 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2 shadow-xs transition-all"
+              >
+                {loadingVideoReport ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <span>🔄</span>
+                )}
+                <span>{loadingVideoReport ? "Validating Videos..." : "Re-scan All Videos"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Bar */}
+          {videoReport?.summary && (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Video Lessons</div>
+                <div className="text-2xl font-black text-slate-900 mt-1">{videoReport.summary.total}</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">Configured across all courses</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 shadow-xs">
+                <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Playable & Healthy</div>
+                <div className="text-2xl font-black text-emerald-700 mt-1">{videoReport.summary.playable}</div>
+                <div className="text-[11px] text-emerald-600 mt-0.5">Passed oEmbed verification</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 shadow-xs">
+                <div className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">Unavailable / Restricted</div>
+                <div className="text-2xl font-black text-rose-700 mt-1">{videoReport.summary.broken}</div>
+                <div className="text-[11px] text-rose-600 mt-0.5">Need URL replacement</div>
+              </div>
+              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 shadow-xs">
+                <div className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider">Course Health Score</div>
+                <div className="text-2xl font-black text-indigo-700 mt-1">
+                  {videoReport.summary.total > 0
+                    ? `${Math.round((videoReport.summary.playable / videoReport.summary.total) * 100)}%`
+                    : "100%"}
+                </div>
+                <div className="text-[11px] text-indigo-600 mt-0.5">Zero student disruption target</div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading or Video List Table */}
+          {loadingVideoReport ? (
+            <div className="p-16 text-center bg-white rounded-3xl border border-slate-200 shadow-sm space-y-3">
+              <div className="w-10 h-10 mx-auto border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs font-bold text-slate-700">Checking YouTube availability for all course videos...</p>
+              <p className="text-[11px] text-slate-400">Querying YouTube oEmbed verification API across course catalog</p>
+            </div>
+          ) : !videoReport?.videos?.length ? (
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-sm space-y-2">
+              <span className="text-3xl">🎥</span>
+              <p className="text-sm font-bold text-slate-700">No Videos Found</p>
+              <p className="text-xs text-slate-400">Click "Re-scan All Videos" to load videos from the database.</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700">
+                  Showing {videoReport.videos.length} Course Videos
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Protected with safe-embed & auto-fallback
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 px-4">Subject & Topic</th>
+                      <th className="py-3 px-4">Video Title</th>
+                      <th className="py-3 px-4">YouTube ID</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Details</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {videoReport.videos.map((vid) => (
+                      <tr key={vid.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-50 text-indigo-700 uppercase">
+                            {vid.subjectId}
+                          </span>
+                          <div className="text-[11px] text-slate-400 font-mono mt-0.5">{vid.topicId}</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-slate-900 max-w-xs truncate">{vid.title}</div>
+                          <div className="text-[11px] text-slate-400 truncate max-w-xs">{vid.videoUrl}</div>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] font-semibold text-slate-700">
+                          {vid.validation?.youtubeId ? (
+                            <a
+                              href={`https://www.youtube.com/watch?v=${vid.validation.youtubeId}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-indigo-600 hover:underline flex items-center gap-1"
+                            >
+                              <span>{vid.validation.youtubeId}</span>
+                              <span className="text-[10px]">↗</span>
+                            </a>
+                          ) : (
+                            <span className="text-slate-400">N/A</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          {vid.validation?.playable ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                              🟢 Playable
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                              🔴 Unavailable
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-[11px] text-slate-600">
+                          {vid.validation?.error ? (
+                            <span className="text-rose-600 font-medium">{vid.validation.error}</span>
+                          ) : (
+                            <span className="text-slate-400">OK ({vid.validation?.title || "Verified"})</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => {
+                              setEditingVideoItem(vid);
+                              setNewVideoUrlInput(vid.videoUrl || "");
+                              setVerificationFeedback(null);
+                            }}
+                            className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 border border-slate-200 transition-all"
+                          >
+                            Replace URL
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Replace Video URL Modal */}
+          {editingVideoItem && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl border border-slate-200 max-w-lg w-full p-6 space-y-4 shadow-2xl animate-scale-up">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div>
+                    <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 uppercase">
+                      Admin Video Fix
+                    </span>
+                    <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                      Replace Video for: {editingVideoItem.title}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingVideoItem(null);
+                      setVerificationFeedback(null);
+                    }}
+                    className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Current Video URL:
+                    </label>
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-600 break-all">
+                      {editingVideoItem.videoUrl}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      New Verified YouTube URL or Video ID:
+                    </label>
+                    <input
+                      type="text"
+                      value={newVideoUrlInput}
+                      onChange={(e) => setNewVideoUrlInput(e.target.value)}
+                      placeholder="e.g. https://www.youtube.com/watch?v=kqtD5dpn9C8"
+                      className="w-full p-2.5 rounded-xl border border-slate-300 font-mono text-xs text-slate-900 focus:outline-none focus:border-indigo-600"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      The system will automatically ping YouTube to verify that the video is public and permits embedding before saving.
+                    </p>
+                  </div>
+
+                  {verificationFeedback && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+                      ⚠️ {verificationFeedback}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      setEditingVideoItem(null);
+                      setVerificationFeedback(null);
+                    }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleTestAndReplaceVideo(editingVideoItem.id)}
+                    disabled={verifyingNewVideo || !newVideoUrlInput.trim()}
+                    className="px-4 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+                  >
+                    {verifyingNewVideo ? (
+                      <>
+                        <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Verifying with YouTube...</span>
+                      </>
+                    ) : (
+                      <span>Verify & Save Video</span>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -31,3 +31,4 @@ videoProgressSchema.index({ user: 1, videoId: 1 });
 
 const VideoProgress = mongoose.model("VideoProgress", videoProgressSchema);
 export default VideoProgress;
+

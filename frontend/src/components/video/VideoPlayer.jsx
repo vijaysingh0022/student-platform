@@ -1,6 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
+
+/**
+ * Extracts YouTube video ID robustly from any standard URL or bare ID
+ */
+export const extractYouTubeId = (urlOrId) => {
+  if (!urlOrId || typeof urlOrId !== "string") return null;
+  const clean = urlOrId.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
+
+  const match = clean.match(
+    /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match ? match[1] : null;
+};
 
 export const VideoPlayer = ({
   video,
@@ -12,7 +26,8 @@ export const VideoPlayer = ({
 }) => {
   const containerRef = useRef(null);
   const videoRef = useRef(null);
-  const iframeRef = useRef(null);
+  const playerRef = useRef(null);
+  const progressTimerRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(initialPosition || 0);
@@ -24,33 +39,166 @@ export const VideoPlayer = ({
   const [showControls, setShowControls] = useState(true);
   const [justCompletedToast, setJustCompletedToast] = useState(false);
 
-  // Determine if it's YouTube or direct HTML5 video
+  // Error and Loading states
+  const [videoLoading, setVideoLoading] = useState(true);
+  const [playbackError, setPlaybackError] = useState(null); // null | { code: number, message: string }
+  const [retryKey, setRetryKey] = useState(0);
+
   const isYouTube =
     video?.sourceType === "youtube" ||
     (video?.videoUrl && (video.videoUrl.includes("youtube.com") || video.videoUrl.includes("youtu.be")));
 
-  const getYouTubeEmbedUrl = (url, startSec = 0) => {
-    let videoId = "3EJlovevfcA";
-    if (url) {
-      if (url.includes("v=")) {
-        videoId = url.split("v=")[1]?.split("&")[0];
-      } else if (url.includes("youtu.be/")) {
-        videoId = url.split("youtu.be/")[1]?.split("?")[0];
-      }
-    }
-    const startParam = startSec > 0 ? `&start=${Math.floor(startSec)}` : "";
-    return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=0&rel=0&modestbranding=1${startParam}`;
-  };
+  const youtubeVideoId = isYouTube ? extractYouTubeId(video?.videoUrl) : null;
 
   // Format seconds -> MM:SS
   const formatTime = (secs) => {
+    if (!secs || isNaN(secs) || secs < 0) return "00:00";
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m < 10 ? "0" : ""}${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  // HTML5 Video event listeners
+  // Safe progress update handler
+  const reportProgress = useCallback(
+    (pos, totalDur) => {
+      if (playbackError) return; // Never track progress on broken/unavailable videos
+      if (onProgressUpdate) {
+        onProgressUpdate(pos, totalDur);
+      }
+      if (totalDur > 0 && pos / totalDur >= 0.9 && !justCompletedToast) {
+        setJustCompletedToast(true);
+        if (onVideoCompleted) onVideoCompleted();
+      }
+    },
+    [playbackError, onProgressUpdate, onVideoCompleted, justCompletedToast]
+  );
+
+  // ── YouTube IFrame API Integration ──────────────────────────────────────────
   useEffect(() => {
+    if (!isYouTube || !youtubeVideoId) {
+      setVideoLoading(false);
+      return;
+    }
+
+    setPlaybackError(null);
+    setVideoLoading(true);
+
+    let isSubscribed = true;
+
+    // Load YouTube IFrame Player API script if not already present
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    }
+
+    const initPlayer = () => {
+      if (!isSubscribed) return;
+
+      const elementId = `yt-player-container-${retryKey}`;
+      const targetElement = document.getElementById(elementId);
+      if (!targetElement) return;
+
+      try {
+        if (playerRef.current && typeof playerRef.current.destroy === "function") {
+          playerRef.current.destroy();
+        }
+
+        playerRef.current = new window.YT.Player(elementId, {
+          videoId: youtubeVideoId,
+          host: "https://www.youtube-nocookie.com",
+          playerVars: {
+            autoplay: 0,
+            controls: 0, // Using LearnX unified custom controls
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            start: Math.floor(initialPosition || 0),
+            origin: window.location.origin,
+            enablejsapi: 1,
+          },
+          events: {
+            onReady: (event) => {
+              if (!isSubscribed) return;
+              setVideoLoading(false);
+              setPlaybackError(null);
+              const dur = event.target.getDuration();
+              if (dur && dur > 0) setDuration(dur);
+              if (initialPosition > 0) {
+                event.target.seekTo(initialPosition, true);
+              }
+            },
+            onStateChange: (event) => {
+              if (!isSubscribed) return;
+              // YT.PlayerState.PLAYING === 1, PAUSED === 2, ENDED === 0, BUFFERING === 3
+              if (event.data === 1) {
+                setIsPlaying(true);
+                // Start heartbeat timer
+                if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+                progressTimerRef.current = setInterval(() => {
+                  if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+                    const curr = playerRef.current.getCurrentTime();
+                    const dur = playerRef.current.getDuration() || duration;
+                    setCurrentTime(curr);
+                    reportProgress(curr, dur);
+                  }
+                }, 1000);
+              } else if (event.data === 2 || event.data === 0) {
+                setIsPlaying(false);
+                if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+                if (event.data === 0) {
+                  reportProgress(duration, duration);
+                }
+              }
+            },
+            onError: (event) => {
+              if (!isSubscribed) return;
+              setVideoLoading(false);
+              setIsPlaying(false);
+              if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+
+              const code = event.data;
+              let msg = "This video is currently unavailable on YouTube.";
+              if (code === 2) msg = "Invalid YouTube video ID parameter.";
+              if (code === 5) msg = "HTML5 player error on YouTube.";
+              if (code === 100) msg = "Video unavailable: This video has been removed or marked private.";
+              if (code === 101 || code === 150)
+                msg = "Video embedding restricted: The owner does not allow this video to be played in embedded players.";
+
+              setPlaybackError({ code, message: msg });
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("YouTube Player initialization notice:", err);
+      }
+    };
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      const prevCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prevCallback) prevCallback();
+        initPlayer();
+      };
+    }
+
+    return () => {
+      isSubscribed = false;
+      if (progressTimerRef.current) clearInterval(progressTimerRef.current);
+      if (playerRef.current && typeof playerRef.current.destroy === "function") {
+        try {
+          playerRef.current.destroy();
+        } catch (_) {}
+      }
+    };
+  }, [youtubeVideoId, retryKey, isYouTube, initialPosition, reportProgress, duration]);
+
+  // HTML5 native video handler
+  useEffect(() => {
+    if (isYouTube) return;
     const v = videoRef.current;
     if (!v) return;
 
@@ -58,64 +206,57 @@ export const VideoPlayer = ({
       v.currentTime = initialPosition;
     }
 
+    const handleLoadedMetadata = () => {
+      setVideoLoading(false);
+      if (v.duration) setDuration(v.duration);
+    };
+
     const handleTimeUpdate = () => {
       setCurrentTime(v.currentTime);
-      const totalDur = v.duration || video.duration || 522;
+      const totalDur = v.duration || video?.duration || 522;
       setDuration(totalDur);
-
-      // Report progress to parent
-      if (onProgressUpdate) {
-        onProgressUpdate(v.currentTime, totalDur);
-      }
-
-      // Check 90% threshold for completion
-      if (totalDur > 0 && v.currentTime / totalDur >= 0.9) {
-        if (!justCompletedToast) {
-          setJustCompletedToast(true);
-          if (onVideoCompleted) onVideoCompleted();
-        }
-      }
+      reportProgress(v.currentTime, totalDur);
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setJustCompletedToast(true);
-      if (onVideoCompleted) onVideoCompleted();
+      reportProgress(duration, duration);
     };
 
+    const handleError = () => {
+      setVideoLoading(false);
+      setIsPlaying(false);
+      setPlaybackError({
+        code: 404,
+        message: "The video file stream could not be loaded or is corrupted.",
+      });
+    };
+
+    v.addEventListener("loadedmetadata", handleLoadedMetadata);
     v.addEventListener("timeupdate", handleTimeUpdate);
     v.addEventListener("ended", handleEnded);
+    v.addEventListener("error", handleError);
 
     return () => {
+      v.removeEventListener("loadedmetadata", handleLoadedMetadata);
       v.removeEventListener("timeupdate", handleTimeUpdate);
       v.removeEventListener("ended", handleEnded);
+      v.removeEventListener("error", handleError);
     };
-  }, [initialPosition, video, onProgressUpdate, onVideoCompleted, justCompletedToast]);
-
-  // Periodic heartbeat for YouTube simulator timer
-  useEffect(() => {
-    if (!isYouTube || !isPlaying) return;
-
-    const interval = setInterval(() => {
-      setCurrentTime((prev) => {
-        const next = Math.min(prev + 1, duration);
-        if (onProgressUpdate) onProgressUpdate(next, duration);
-
-        if (duration > 0 && next / duration >= 0.9 && !justCompletedToast) {
-          setJustCompletedToast(true);
-          if (onVideoCompleted) onVideoCompleted();
-        }
-        return next;
-      });
-    }, 1000 / playbackRate);
-
-    return () => clearInterval(interval);
-  }, [isYouTube, isPlaying, duration, playbackRate, onProgressUpdate, onVideoCompleted, justCompletedToast]);
+  }, [isYouTube, initialPosition, video, reportProgress, duration]);
 
   // Play/Pause toggle
   const togglePlay = () => {
-    if (isYouTube) {
-      setIsPlaying(!isPlaying);
+    if (playbackError) return;
+
+    if (isYouTube && playerRef.current) {
+      try {
+        if (isPlaying) {
+          playerRef.current.pauseVideo();
+        } else {
+          playerRef.current.playVideo();
+        }
+      } catch (_) {}
     } else if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -128,12 +269,18 @@ export const VideoPlayer = ({
 
   // Seek forward / rewind
   const handleSeek = (seconds) => {
+    if (playbackError) return;
     const target = Math.max(0, Math.min(seconds, duration));
     setCurrentTime(target);
-    if (!isYouTube && videoRef.current) {
+
+    if (isYouTube && playerRef.current) {
+      try {
+        playerRef.current.seekTo(target, true);
+      } catch (_) {}
+    } else if (videoRef.current) {
       videoRef.current.currentTime = target;
     }
-    if (onProgressUpdate) onProgressUpdate(target, duration);
+    reportProgress(target, duration);
   };
 
   const handleRewind10 = () => handleSeek(currentTime - 10);
@@ -142,7 +289,13 @@ export const VideoPlayer = ({
   // Speed change
   const handleSpeedChange = (rate) => {
     setPlaybackRate(rate);
-    if (!isYouTube && videoRef.current) {
+    if (isYouTube && playerRef.current) {
+      try {
+        if (typeof playerRef.current.setPlaybackRate === "function") {
+          playerRef.current.setPlaybackRate(rate);
+        }
+      } catch (_) {}
+    } else if (videoRef.current) {
       videoRef.current.playbackRate = rate;
     }
   };
@@ -159,6 +312,12 @@ export const VideoPlayer = ({
     }
   };
 
+  const handleRetryPlayback = () => {
+    setPlaybackError(null);
+    setVideoLoading(true);
+    setRetryKey((k) => k + 1);
+  };
+
   const completionPct = duration > 0 ? Math.min(100, Math.round((currentTime / duration) * 100)) : 0;
 
   return (
@@ -170,16 +329,59 @@ export const VideoPlayer = ({
     >
       {/* ── VIDEO DISPLAY SCREEN ── */}
       <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-        {isYouTube ? (
-          <iframe
-            ref={iframeRef}
-            src={getYouTubeEmbedUrl(video?.videoUrl, initialPosition)}
-            title={video?.title || "Topic Video"}
-            className="w-full h-full border-0 pointer-events-auto"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+        {/* Loading Spinner */}
+        {videoLoading && !playbackError && (
+          <div className="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center space-y-3">
+            <div className="w-10 h-10 border-3 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+            <p className="text-xs font-bold text-slate-300">Connecting video stream...</p>
+          </div>
+        )}
+
+        {/* Playback Error & Recovery Screen (Section 4) */}
+        {playbackError ? (
+          <div className="absolute inset-0 z-30 bg-slate-900/95 backdrop-blur-md p-6 sm:p-8 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-2xl text-rose-400">
+              ⚠️
+            </div>
+            <div className="space-y-1.5 max-w-md">
+              <h3 className="text-base font-black text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Video Playback Notice
+              </h3>
+              <p className="text-xs text-rose-200/90 leading-relaxed font-medium">
+                {playbackError.message}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                You can retry loading the lecture, or open the video directly on YouTube.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1 flex-wrap justify-center">
+              <button
+                onClick={handleRetryPlayback}
+                className="px-4 py-2 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-500 text-white shadow-md transition-all flex items-center gap-1.5"
+              >
+                <span>🔄</span> Retry Video
+              </button>
+
+              {video?.videoUrl && (
+                <a
+                  href={video.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center gap-1.5"
+                >
+                  <span>↗</span> Watch on YouTube Directly
+                </a>
+              )}
+            </div>
+          </div>
+        ) : isYouTube ? (
+          /* YouTube Embed Container */
+          <div className="w-full h-full relative">
+            <div id={`yt-player-container-${retryKey}`} className="w-full h-full" />
+          </div>
         ) : (
+          /* HTML5 Video Element */
           <video
             ref={videoRef}
             src={video?.videoUrl}
@@ -191,7 +393,7 @@ export const VideoPlayer = ({
         )}
 
         {/* Completion Milestone Toast */}
-        {justCompletedToast && (
+        {justCompletedToast && !playbackError && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-emerald-500/95 text-white backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-bold animate-bounce border border-emerald-400">
             <span>🎉</span>
             <span>Video Completed! Topic marked as finished (+20 XP).</span>
@@ -205,7 +407,7 @@ export const VideoPlayer = ({
         )}
       </div>
 
-      {/* ── PREMIUM VIDEO PLAYER CONTROLS BAR ── */}
+      {/* ── PREMIUM UNIFIED VIDEO PLAYER CONTROLS BAR ── */}
       <div
         className={`bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3 border-t border-slate-800 transition-opacity duration-300 ${
           showControls || !isPlaying ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -223,8 +425,9 @@ export const VideoPlayer = ({
               min={0}
               max={duration || 100}
               value={currentTime}
+              disabled={!!playbackError}
               onChange={(e) => handleSeek(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-700/80 rounded-full appearance-none cursor-pointer accent-violet-500 focus:outline-none"
+              className="w-full h-1.5 bg-slate-700/80 rounded-full appearance-none cursor-pointer accent-violet-500 focus:outline-none disabled:opacity-30"
             />
             {/* Visual gradient fill */}
             <div
@@ -244,7 +447,8 @@ export const VideoPlayer = ({
             {/* Play / Pause */}
             <button
               onClick={togglePlay}
-              className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition-all shadow-md active:scale-95"
+              disabled={!!playbackError}
+              className="w-9 h-9 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition-all shadow-md active:scale-95 disabled:opacity-40"
               title={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
@@ -261,7 +465,8 @@ export const VideoPlayer = ({
             {/* Rewind 10s */}
             <button
               onClick={handleRewind10}
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              disabled={!!playbackError}
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40"
               title="Rewind 10 seconds"
             >
               <span className="text-xs font-bold">⏪ 10s</span>
@@ -270,7 +475,8 @@ export const VideoPlayer = ({
             {/* Forward 10s */}
             <button
               onClick={handleForward10}
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              disabled={!!playbackError}
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40"
               title="Forward 10 seconds"
             >
               <span className="text-xs font-bold">10s ⏩</span>
@@ -281,7 +487,14 @@ export const VideoPlayer = ({
               onClick={() => {
                 const nextMuted = !isMuted;
                 setIsMuted(nextMuted);
-                if (videoRef.current) videoRef.current.muted = nextMuted;
+                if (isYouTube && playerRef.current) {
+                  try {
+                    if (nextMuted) playerRef.current.mute();
+                    else playerRef.current.unMute();
+                  } catch (_) {}
+                } else if (videoRef.current) {
+                  videoRef.current.muted = nextMuted;
+                }
               }}
               className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
               title={isMuted ? "Unmute" : "Mute"}
@@ -293,7 +506,7 @@ export const VideoPlayer = ({
           {/* Right Toolbar: Speed, Timestamp Bookmark, Fullscreen */}
           <div className="flex items-center gap-2">
             {/* Bookmark Current Timestamp */}
-            {onBookmarkTimestamp && (
+            {onBookmarkTimestamp && !playbackError && (
               <button
                 onClick={() => onBookmarkTimestamp(currentTime, formatTime(currentTime))}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-amber-400 border border-slate-700/80 text-xs font-bold transition-all"
@@ -310,7 +523,8 @@ export const VideoPlayer = ({
                 <button
                   key={rate}
                   onClick={() => handleSpeedChange(rate)}
-                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                  disabled={!!playbackError}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all disabled:opacity-40 ${
                     playbackRate === rate
                       ? "bg-violet-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-slate-200"
@@ -327,7 +541,7 @@ export const VideoPlayer = ({
               className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
               title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             >
-              {isFullscreen ? "⛶" : "⛶"}
+              ⛶
             </button>
           </div>
         </div>

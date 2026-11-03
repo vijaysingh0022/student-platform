@@ -7,6 +7,11 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/adminController.js";
+import {
+  getVideoValidationReport,
+  verifySingleVideoUrl,
+  replaceVideoUrl,
+} from "../controllers/adminVideoValidationController.js";
 
 const router = express.Router();
 
@@ -16,6 +21,11 @@ router.use(requireAdmin);
 
 // GET /api/admin/dashboard — metrics overview
 router.get("/dashboard", getAdminDashboardMetrics);
+
+// Video Management & Validation System (Admin)
+router.get("/videos/validation-report", getVideoValidationReport);
+router.post("/videos/verify-url", verifySingleVideoUrl);
+router.put("/videos/:id/replace", replaceVideoUrl);
 
 // User management endpoints
 router.get("/users", getAllUsers);

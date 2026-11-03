@@ -217,6 +217,19 @@ export const getSubjectVideoStats = async (subjectId, config = {}) => {
   return api.get(`/learning/subjects/${subjectId}/video-stats`, config);
 };
 
+// ─── Admin Video Validation APIs ───────────────────────────────────────────
+export const getAdminVideoValidationReport = async (subjectId = "All", config = {}) => {
+  return api.get(`/admin/videos/validation-report?subjectId=${encodeURIComponent(subjectId)}`, config);
+};
+
+export const verifyAdminSingleVideoUrl = async (videoUrl, config = {}) => {
+  return api.post("/admin/videos/verify-url", { videoUrl }, config);
+};
+
+export const replaceAdminVideoUrl = async (id, payload, config = {}) => {
+  return api.put(`/admin/videos/${id}/replace`, payload, config);
+};
+
 // Topic Mastery
 export const updateTopicMastery = async (topicId, payload, config = {}) => {
   return api.post(`/learning/topics/${topicId}/mastery`, payload, config);

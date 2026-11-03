@@ -124,3 +124,4 @@ export const VideoTranscript = ({ transcript = [], keyMoments = [], onSeek }) =>
 };
 
 export default VideoTranscript;
+
