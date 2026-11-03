@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const sectionScoreSchema = new mongoose.Schema({
   score: { type: Number, default: 70 },
   weight: { type: Number, default: 15 },
-  status: { type: String, enum: ["Strong", "Good", "Needs Improvement", "Critical Gap"], default: "Good" },
+  status: { type: String, default: "Good" },
   feedback: { type: String, default: "" },
   strengths: { type: [String], default: [] },
   improvements: { type: [String], default: [] },
@@ -121,7 +121,7 @@ const resumeAnalysisSchema = new mongoose.Schema(
     weaknesses: [String],
     actionableImprovementPlan: [
       {
-        priority: { type: String, enum: ["High", "Medium", "Low"], default: "High" },
+        priority: { type: String, default: "High" },
         category: String,
         action: String,
         reason: String,
@@ -144,7 +144,7 @@ const resumeAnalysisSchema = new mongoose.Schema(
       {
         skill: String,
         category: String,
-        urgency: { type: String, enum: ["Critical", "Moderate", "Elective"], default: "Critical" },
+        urgency: { type: String, default: "Critical" },
         matchedLearnXSubjectId: String,
         matchedLearnXTopicId: String,
         matchedLearnXTopicTitle: String,
@@ -157,9 +157,9 @@ const resumeAnalysisSchema = new mongoose.Schema(
       {
         questionId: String,
         question: String,
-        category: { type: String, enum: ["Project Deep-Dive", "Technical Architecture", "Core Fundamentals", "Behavioral / HR"], default: "Project Deep-Dive" },
+        category: { type: String, default: "Project Deep-Dive" },
         sourceContext: String, // Which project or skill in resume inspired this
-        difficulty: { type: String, enum: ["Easy", "Medium", "Hard"], default: "Medium" },
+        difficulty: { type: String, default: "Medium" },
         idealAnswerRubric: String,
       },
     ],
