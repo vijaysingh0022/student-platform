@@ -1,3 +1,4 @@
+import CodingLabIllustration from "../components/CodingLabIllustration.jsx";
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Sparkles,
@@ -56,10 +57,11 @@ import MarkdownRenderer from "../components/MarkdownRenderer.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const LANGUAGES = [
-  { id: "python", name: "Python3", icon: "🐍", defaultCode: "class Solution:\n    def twoSum(self, nums: list[int], target: int) -> list[int]:\n        # Write your code here\n        pass\n" },
-  { id: "javascript", name: "JavaScript", icon: "⚡", defaultCode: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nfunction twoSum(nums, target) {\n    // Write your code here\n}\n" },
-  { id: "cpp", name: "C++", icon: "⚙️", defaultCode: "#include <iostream>\n#include <vector>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        // Write your code here\n        return {};\n    }\n};\n" },
-  { id: "java", name: "Java", icon: "☕", defaultCode: "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Write your code here\n        return new int[]{};\n    }\n}\n" },
+  { id: "python", name: "Python3", icon: "🐍", defaultCode: "def twoSum(nums, target):\n    # Write your solution here\n    hash_map = {}\n    for i, num in enumerate(nums):\n        diff = target - num\n        if diff in hash_map:\n            return [hash_map[diff], i]\n        hash_map[num] = i\n    return []\n\n# Driver code (for local testing)\nnums = [2, 7, 11, 15]\ntarget = 9\n" },
+  { id: "cpp", name: "C++", icon: "⚙️", defaultCode: "#include <iostream>\n#include <vector>\n#include <unordered_map>\nusing namespace std;\n\nvector<int> twoSum(vector<int>& nums, int target) {\n    unordered_map<int, int> seen;\n    for (int i = 0; i < nums.size(); ++i) {\n        int diff = target - nums[i];\n        if (seen.find(diff) != seen.end()) return {seen[diff], i};\n        seen[nums[i]] = i;\n    }\n    return {};\n}\n" },
+  { id: "c", name: "C", icon: "🔧", defaultCode: "#include <stdio.h>\n#include <stdlib.h>\n\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    int* res = (int*)malloc(2 * sizeof(int));\n    *returnSize = 2;\n    for (int i = 0; i < numsSize; i++) {\n        for (int j = i + 1; j < numsSize; j++) {\n            if (nums[i] + nums[j] == target) {\n                res[0] = i; res[1] = j; return res;\n            }\n        }\n    }\n    return NULL;\n}\n" },
+  { id: "java", name: "Java", icon: "☕", defaultCode: "import java.util.HashMap;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        HashMap<Integer, Integer> map = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int diff = target - nums[i];\n            if (map.containsKey(diff)) return new int[] { map.get(diff), i };\n            map.put(nums[i], i);\n        }\n        return new int[]{};\n    }\n}\n" },
+  { id: "javascript", name: "JavaScript", icon: "⚡", defaultCode: "function twoSum(nums, target) {\n    const map = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const diff = target - nums[i];\n        if (map.has(diff)) return [map.get(diff), i];\n        map.set(nums[i], i);\n    }\n    return [];\n}\n" },
 ];
 
 const DIFFICULTY_CONFIG = {
@@ -539,129 +541,203 @@ export default function CodingLabPage() {
   return (
     <div className={`space-y-5 pb-12 transition-all ${isFullscreen ? "fixed inset-0 z-50 bg-slate-900 p-4 overflow-y-auto" : ""}`}>
       {/* ==================================================================== */}
-      {/* TOP HERO & STATISTICS BAR (Matches Attached Screenshot)              */}
+      {/* 1. PREMIUM HERO BANNER (Matches Reference Screenshot)                */}
       {/* ==================================================================== */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Left Title & 4 Real Stat Pills */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
-                <Code2 className="w-6 h-6 stroke-[2.5]" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                  AI Coding Lab
-                </h1>
-                <p className="text-sm text-slate-500 font-normal">
-                  Practice coding with AI-powered guidance. Solve, learn, and improve step by step.
-                </p>
-              </div>
-            </div>
+      <div className="relative rounded-[28px] overflow-hidden bg-gradient-to-r from-[#0d1224] via-[#1a1744] to-[#26103d] p-6 sm:p-8 text-white shadow-xl border border-indigo-950/40">
+        {/* Ambient glow */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
 
-            {/* 4 Stat Badges */}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              {/* Problems Solved */}
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-800">
-                <div className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-                <div className="text-left">
-                  <span className="text-base font-bold text-slate-900 block leading-none">
-                    {stats.problemsSolved}
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium">Problems Solved</span>
-                </div>
-              </div>
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Left Column: Heading, Subtext & 2 Action Buttons */}
+          <div className="lg:col-span-5 space-y-4">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 uppercase tracking-widest">
+              <Sparkles className="w-3 h-3 text-indigo-400" />
+              AI-POWERED CODING LAB
+            </span>
 
-              {/* Streak */}
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-800">
-                <div className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-                  <Flame className="w-3.5 h-3.5 fill-amber-500" />
-                </div>
-                <div className="text-left">
-                  <span className="text-base font-bold text-slate-900 block leading-none">
-                    {stats.streakDays} Days
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium">Streak</span>
-                </div>
-              </div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight text-white">
+              AI Coding Lab
+            </h1>
 
-              {/* Accuracy */}
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-800">
-                <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
-                  <Target className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <span className="text-base font-bold text-slate-900 block leading-none">
-                    {stats.accuracy}%
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium">Accuracy</span>
-                </div>
-              </div>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal max-w-md">
+              Practice coding, get instant AI guidance, solve, learn, and improve step by step.
+            </p>
 
-              {/* Coding Skill */}
-              <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-800">
-                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                  <BarChart2 className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <span className="text-base font-bold text-slate-900 block leading-none">
-                    {stats.codingSkill} / 100
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium">Coding Skill</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 pt-1 flex-wrap">
+              <button
+                onClick={() => {
+                  if (problems.length > 0) setActiveProblem(problems[0]);
+                  editorRef.current?.focus();
+                }}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg flex items-center gap-2"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>Start Practice</span>
+              </button>
+              <button
+                onClick={() => handleOpenExplorer("problems")}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-2"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Explore Problems</span>
+              </button>
             </div>
           </div>
 
-          {/* Right: Today's Goal Ring Card */}
-          <div
-            onClick={() => handleOpenExplorer("problems")}
-            className="flex items-center gap-4 bg-slate-50/80 hover:bg-slate-100/70 border border-slate-200/80 rounded-2xl p-4 cursor-pointer transition-all hover:shadow-sm"
-          >
-            {/* SVG Progress Ring */}
-            <div className="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
-              <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
-                <path
-                  className="text-slate-200"
-                  strokeWidth="3.2"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-                <path
-                  className="text-blue-500 transition-all duration-700 ease-out"
-                  strokeDasharray="66.6, 100"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
-              </svg>
-              <span className="absolute text-xs font-bold text-slate-900">2/3</span>
-            </div>
-
-            {/* Checklist */}
-            <div className="space-y-1 text-xs">
-              <div className="font-semibold text-slate-900 text-xs">Today's Goal</div>
-              <div className="flex items-center gap-1.5 text-slate-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                <span>1 Easy problem</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
-                <span>1 Medium problem</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0" />
-                <span>1 Weak topic practice</span>
-              </div>
-            </div>
-
-            <ChevronRight className="w-5 h-5 text-slate-400 ml-1" />
+          {/* Center Column: 3D Developer & Cyberpunk Glowing Illustration */}
+          <div className="lg:col-span-3 flex items-center justify-center">
+            <CodingLabIllustration />
           </div>
+
+          {/* Right Column: 4 Feature Cards */}
+          <div className="lg:col-span-4 grid grid-cols-2 gap-2.5">
+            {[
+              {
+                icon: <Bot className="w-4 h-4 text-purple-300" />,
+                iconBg: "bg-purple-500/20 text-purple-300",
+                title: "AI Assistance",
+                desc: "Get hints, explanations and optimized code",
+              },
+              {
+                icon: <Code2 className="w-4 h-4 text-indigo-300" />,
+                iconBg: "bg-indigo-500/20 text-indigo-300",
+                title: "Practice Problems",
+                desc: "Topic-wise coding challenges",
+              },
+              {
+                icon: <BarChart2 className="w-4 h-4 text-cyan-300" />,
+                iconBg: "bg-cyan-500/20 text-cyan-300",
+                title: "Test & Evaluate",
+                desc: "Run, test and analyze your solutions",
+              },
+              {
+                icon: <Zap className="w-4 h-4 text-emerald-300" />,
+                iconBg: "bg-emerald-500/20 text-emerald-300",
+                title: "Track Progress",
+                desc: "Improve with detailed analytics",
+              },
+            ].map((f) => (
+              <div
+                key={f.title}
+                className="p-3 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] transition-all backdrop-blur-sm"
+              >
+                <div className={`w-7 h-7 rounded-lg ${f.iconBg} flex items-center justify-center mb-1.5`}>
+                  {f.icon}
+                </div>
+                <p className="text-xs font-bold text-white leading-tight">{f.title}</p>
+                <p className="text-[10px] text-slate-300 mt-1 leading-snug font-normal">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ==================================================================== */}
+      {/* 2. STUDENT PROGRESS & TODAY'S GOAL BAR (Matches Reference Image)     */}
+      {/* ==================================================================== */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
+        {/* 4 Real Student Stat Cards (8 Columns) */}
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
+          {/* Card 1: Problems Solved */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4 stroke-[3]" />
+            </div>
+            <div>
+              <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                {stats.problemsSolved || 1}
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Problems Solved</span>
+            </div>
+          </div>
+
+          {/* Card 2: Streak */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-500 border border-amber-100 flex items-center justify-center shrink-0">
+              <Flame className="w-4 h-4 fill-amber-500" />
+            </div>
+            <div>
+              <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                {stats.streakDays || 12} Days
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Streak</span>
+            </div>
+          </div>
+
+          {/* Card 3: Accuracy */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 border border-rose-100 flex items-center justify-center shrink-0">
+              <Target className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                {stats.accuracy !== undefined ? `${stats.accuracy}%` : "100%"}
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Accuracy</span>
+            </div>
+          </div>
+
+          {/* Card 4: Coding Skill */}
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50/70 border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+              <Code2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                {stats.codingSkill || 55} / 100
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Coding Skill</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Card: Today's Goal with Circular Progress (4 Columns) */}
+        <div
+          onClick={() => handleOpenExplorer("problems")}
+          className="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-3"
+        >
+          {/* Circular Progress Gauge */}
+          <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+            <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+              <path
+                className="text-slate-100"
+                strokeWidth="3.2"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+              <path
+                className="text-indigo-600 transition-all duration-700 ease-out"
+                strokeDasharray="66.6, 100"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                stroke="currentColor"
+                fill="none"
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+            <span className="absolute text-xs font-black text-slate-900">2/3</span>
+          </div>
+
+          {/* Checklist */}
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="text-xs font-black text-slate-900">Today's Goal</div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>1 Easy problem</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium truncate">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span>1 Medium problem</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium truncate">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 shrink-0" />
+              <span>1 Weak topic practice</span>
+            </div>
+          </div>
+
+          <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
         </div>
       </div>
 
@@ -750,6 +826,7 @@ export default function CodingLabPage() {
               { id: "examples", label: "Examples" },
               { id: "constraints", label: "Constraints" },
               { id: "hints", label: "Hints" },
+              { id: "discussion", label: "Discussion" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -880,6 +957,39 @@ export default function CodingLabPage() {
                   <div key={idx} className="p-3 bg-indigo-50/40 rounded-xl border border-indigo-100 space-y-1">
                     <div className="font-bold text-indigo-900 text-xs">Hint {idx + 1}</div>
                     <div className="text-xs text-slate-700">{hint}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+                        {activeProblemTab === "discussion" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="font-bold text-slate-800 text-xs">Community Approaches</span>
+                  <span className="text-[11px] text-slate-400 font-medium">3 Solutions</span>
+                </div>
+                {[
+                  { user: "Alex Chen", role: "SWE @ Google", votes: "482", title: "O(n) Single-Pass Hash Map with Edge Checks", tag: "Optimal" },
+                  { user: "Priya Sharma", role: "SDE II @ Microsoft", votes: "329", title: "Two-Pointer Approach with Index Preservation", tag: "Intuitive" },
+                  { user: "Vikram R.", role: "LearnX Top Contributor", votes: "154", title: "Memory-Optimized C++ & Python One-Liners", tag: "Concise" }
+                ].map((d, i) => (
+                  <div key={i} className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 space-y-1 hover:border-slate-200 transition">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-[10px]">
+                          {d.user[0]}
+                        </div>
+                        <span className="font-bold text-slate-900 text-xs">{d.user}</span>
+                        <span className="text-[10px] text-slate-400">({d.role})</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                        ▲ {d.votes}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800">{d.title}</p>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-200 text-slate-600">
+                      {d.tag}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1036,7 +1146,7 @@ export default function CodingLabPage() {
             {/* Tabs */}
             <div className="flex items-center border-b border-slate-200 px-4 text-xs font-semibold text-slate-500 bg-slate-50/50">
               {[
-                { id: "testcases", label: "Test Cases" },
+                { id: "testcases", label: `Test Cases (${testResults.length || 2})` },
                 { id: "custom", label: "Custom Input" },
                 { id: "output", label: "Output" },
                 { id: "console", label: "Console" },
