@@ -225,17 +225,8 @@ export const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand Header */}
         <div className="h-18 px-5 border-b border-slate-100 flex items-center justify-between shrink-0">
           <Link to="/dashboard" onClick={onClose} className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="font-extrabold text-base tracking-tight text-slate-900">
-                LEARNX
-              </span>
-            </div>
-            <span className="text-[10px] font-medium text-slate-400 tracking-tight mt-0.5 ml-10">
+            <LearnXLogo size="md" showTagline={false} />
+            <span className="text-[10px] font-medium text-slate-400 tracking-tight mt-0.5 ml-1">
               Learn. Practice. Grow. Succeed.
             </span>
           </Link>
