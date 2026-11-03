@@ -12,6 +12,7 @@ import { ResumeStudio } from "../components/career/ResumeStudio.jsx";
 import { CareerCopilotDrawer } from "../components/career/CareerCopilotDrawer.jsx";
 import { SkillGapCurriculumBridge } from "../components/career/SkillGapCurriculumBridge.jsx";
 import { CareerReadinessRadar } from "../components/career/CareerReadinessRadar.jsx";
+import { ResumeUploadSection } from "../components/career/ResumeUploadSection.jsx";
 
 const DIFF_COLORS = { "Hard": "text-rose-700 bg-rose-50 border-rose-200", "Medium": "text-amber-700 bg-amber-50 border-amber-200", "Easy": "text-emerald-700 bg-emerald-50 border-emerald-200" };
 
@@ -361,6 +362,40 @@ const CareerReadiness = () => {
     }
   };
 
+  const handleAnalysisSuccess = (analysis, filename) => {
+    setActiveAnalysis(analysis);
+    if (analysis?.parsedData?.rawText) {
+      setResumeText(analysis.parsedData.rawText);
+    }
+    if (filename) {
+      setUploadedFilename(filename);
+    }
+    fetchCareerData();
+    onResumeAnalyzed();
+  };
+
+  const handleRemoveResume = async () => {
+    if (!window.confirm("Are you sure you want to remove your resume? This will clear your ATS diagnostics and resume-based scores.")) {
+      return;
+    }
+    try {
+      if (activeAnalysis?._id) {
+        await api.delete(`/career-intelligence/resume/${activeAnalysis._id}`);
+      } else {
+        await api.post("/career/update-role", { targetRole });
+      }
+      setActiveAnalysis(null);
+      setResumeText("");
+      setUploadedFilename("");
+      setResumeFile(null);
+      fetchCareerData();
+      onResumeAnalyzed();
+    } catch (err) {
+      console.error("Failed to remove resume:", err);
+      alert("Failed to delete resume records.");
+    }
+  };
+
   const handleOptimizeBullet = async () => {
     if (!bulletInput.trim() || bulletInput.trim().length < 5) {
       alert("Please enter a valid bullet point to optimize.");
@@ -670,12 +705,21 @@ const CareerReadiness = () => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTab("studio")}
-                className="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+                className="px-4 py-2 rounded-xl text-xs font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all"
               >
                 ✨ Open AI Resume Studio →
               </button>
             </div>
           </div>
+
+          {/* Visible Interactive Resume Upload & Parser Section */}
+          <ResumeUploadSection
+            targetRole={targetRole}
+            currentFileName={uploadedFilename || activeAnalysis?.originalFileName || (activeAnalysis ? "Uploaded Resume" : "")}
+            isAnalyzed={Boolean(activeAnalysis && activeAnalysis.overallQualityScore > 0)}
+            onAnalysisSuccess={handleAnalysisSuccess}
+            onRemoveResume={handleRemoveResume}
+          />
 
           <ResumeAnalysisCard
             analysis={activeAnalysis}

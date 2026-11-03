@@ -3,21 +3,12 @@ import React from "react";
 export const ResumeAnalysisCard = ({ analysis, onOpenStudio, onRunJobMatch }) => {
   if (!analysis || !analysis.overallQualityScore) {
     return (
-      <div className="p-12 text-center bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
-        <span className="text-4xl block">📄</span>
-        <h3 className="text-base font-black text-slate-800">Resume Not Uploaded</h3>
+      <div className="p-10 text-center bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-4">
+        <span className="text-4xl block">📊</span>
+        <h3 className="text-base font-black text-slate-800">No Resume Analyzed Yet</h3>
         <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-          Upload your resume to unlock AI-powered resume analysis, ATS diagnostics, job matching and personalized recommendations.
+          Use the upload component above to upload your resume (PDF or DOCX). Once uploaded, your section-by-section ATS breakdown, recruiter readability, and missing keywords will appear here automatically.
         </p>
-        <div className="pt-2">
-          <a
-            href="#career-resume-uploader"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs shadow-sm transition-all"
-          >
-            <span>📁 Upload Resume</span>
-            <span>→</span>
-          </a>
-        </div>
       </div>
     );
   }
