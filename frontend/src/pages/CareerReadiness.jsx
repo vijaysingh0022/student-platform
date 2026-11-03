@@ -1,4 +1,4 @@
-import { Sparkles, Briefcase, ChevronRight, CheckCircle2, ArrowRight, Play, Bot, FileText, Award, Eye, Brain, Layers, Zap, TrendingUp, BarChart2, ShieldCheck, Target } from "lucide-react";
+import { Sparkles, Briefcase, ChevronRight, Check, CheckCircle2, ArrowRight, Play, Bot, FileText, Award, Eye, Brain, Layers, Zap, TrendingUp, BarChart2, ShieldCheck, Target } from "lucide-react";
 import CareerIllustration from "../components/career/CareerIllustration.jsx";
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -542,7 +542,7 @@ const CareerReadiness = () => {
                 <span>Start Readiness Plan</span>
               </button>
               <button
-                onClick={() => setCopilotOpen(true)}
+                onClick={() => setIsCopilotOpen(true)}
                 className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold transition-all border border-white/20 flex items-center gap-2"
               >
                 <Sparkles className="w-3.5 h-3.5 text-purple-300" />
