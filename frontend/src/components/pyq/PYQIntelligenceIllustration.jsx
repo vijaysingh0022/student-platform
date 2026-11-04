@@ -135,3 +135,4 @@ export const PYQIntelligenceIllustration = ({ className = "w-full max-w-[280px] 
 };
 
 export default PYQIntelligenceIllustration;
+

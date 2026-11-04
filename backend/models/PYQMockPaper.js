@@ -87,3 +87,4 @@ const pyqMockPaperSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("PYQMockPaper", pyqMockPaperSchema);
+

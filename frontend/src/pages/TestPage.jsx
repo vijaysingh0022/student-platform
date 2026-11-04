@@ -421,25 +421,38 @@ const CommandCenter = ({ onStartTest }) => {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowHistoryModal(true)}
-          className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 shadow-sm transition-all hover:border-slate-300 self-start sm:self-auto shrink-0 group"
-        >
-          <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <div className="text-left">
-            <p className="text-xs font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">
-              Assessment History
-            </p>
-            <p className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">
-              {pastResults.length > 0 ? `${pastResults.length} attempts` : "39 attempts"}
-            </p>
-          </div>
-          <span className="text-slate-400 ml-1 text-sm">›</span>
-        </button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <Link
+            to="/assessments/pyq"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-md shadow-indigo-600/20 transition-all text-xs font-black active:scale-95"
+          >
+            <span>📑</span>
+            <span>AI PYQ Intelligence</span>
+            <span className="px-1.5 py-0.5 rounded-md text-[9px] bg-white/20 text-white font-extrabold uppercase">
+              NEW
+            </span>
+          </Link>
+
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200/90 shadow-sm transition-all hover:border-slate-300 self-start sm:self-auto shrink-0 group"
+          >
+            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <p className="text-xs font-bold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">
+                Assessment History
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium leading-none mt-0.5">
+                {pastResults.length > 0 ? `${pastResults.length} attempts` : "39 attempts"}
+              </p>
+            </div>
+            <span className="text-slate-400 ml-1 text-sm">›</span>
+          </button>
+        </div>
       </div>
 
       {/* ── HERO BANNER ── */}
