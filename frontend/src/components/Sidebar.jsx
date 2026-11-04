@@ -228,21 +228,26 @@ export const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Sidebar shell */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-[240px] bg-white border-r border-slate-200/90 flex flex-col select-none transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-[240px] bg-[#0b1120] text-slate-300 border-r border-slate-800/80 flex flex-col select-none transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
         {/* Brand Header */}
-        <div className="h-18 px-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div className="h-18 px-5 border-b border-slate-800/60 flex items-center justify-between shrink-0">
           <Link to="/dashboard" onClick={onClose} className="flex flex-col">
-            <LearnXLogo size="md" showTagline={false} />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow-md">
+                LX
+              </div>
+              <span className="text-lg font-black text-white tracking-tight">LearnX</span>
+            </div>
             <span className="text-[10px] font-medium text-slate-400 tracking-tight mt-0.5 ml-1">
               Learn. Practice. Grow. Succeed.
             </span>
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             aria-label="Close sidebar"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -252,7 +257,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Nav Items Grouped */}
-        <div className="flex-1 overflow-y-auto py-3 px-3.5 space-y-4">
+        <div className="flex-1 overflow-y-auto py-3 px-3.5 space-y-4 scrollbar-thin scrollbar-thumb-slate-800">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
               <p className="px-2.5 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -268,23 +273,29 @@ export const Sidebar = ({ isOpen, onClose }) => {
                       onClick={onClose}
                       className={`flex items-center justify-between px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150 ${
                         active
-                          ? "bg-indigo-50/80 text-indigo-700 shadow-2xs font-bold"
-                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50/80"
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md font-bold"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/60"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`${active ? "text-indigo-600" : "text-slate-400"} transition-colors`}>
+                        <span className={`${active ? "text-white" : "text-slate-400"} transition-colors`}>
                           {item.icon}
                         </span>
                         <span>{item.label}</span>
                         {item.badge && (
-                          <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-600 text-white ml-0.5">
+                          <span
+                            className={`text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded-md ${
+                              active
+                                ? "bg-white/20 text-white"
+                                : "bg-gradient-to-r from-purple-500 to-indigo-500 text-white"
+                            } ml-0.5`}
+                          >
                             {item.badge}
                           </span>
                         )}
                       </div>
                       {active && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
                       )}
                     </Link>
                   );
@@ -295,15 +306,15 @@ export const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Bottom Section: Settings & Student Profile */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/40 shrink-0 space-y-2">
+        <div className="p-3 border-t border-slate-800/80 bg-[#080d19] shrink-0 space-y-2">
           {/* Settings link */}
           <Link
             to="/security"
             onClick={onClose}
             className={`flex items-center gap-3 px-3 py-1.5 rounded-xl text-[13px] font-semibold transition-all ${
               isActive("/security", location)
-                ? "bg-white text-indigo-700 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/80"
+                ? "bg-slate-800 text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/60"
             }`}
           >
             <svg className="w-4 h-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -314,12 +325,12 @@ export const Sidebar = ({ isOpen, onClose }) => {
           </Link>
 
           {/* Student Profile Card */}
-          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0">
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-900/90 border border-slate-800 shadow-2xs hover:border-slate-700 transition-all">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-xs shrink-0 ring-1 ring-white/20">
               {userInitial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-slate-800 truncate leading-tight">
+              <p className="text-xs font-bold text-slate-200 truncate leading-tight">
                 {displayName}
               </p>
               <p className="text-[10px] text-slate-400 font-medium truncate leading-tight mt-0.5">
@@ -329,7 +340,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
             <button
               onClick={handleSignOut}
               title="Sign out"
-              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors shrink-0"
               aria-label="Sign out"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
