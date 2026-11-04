@@ -194,11 +194,8 @@ export const PYQIntelligencePage = () => {
             </div>
 
             {/* Heading */}
-            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight leading-tight">
-              Previous Year Paper{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-blue-400">
-                Analyzer
-              </span>
+            <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-black tracking-tight leading-tight text-white">
+              Previous Year Paper Analyzer
             </h1>
 
             {/* Description */}
