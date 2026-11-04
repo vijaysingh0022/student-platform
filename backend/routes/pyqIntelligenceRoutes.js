@@ -5,6 +5,7 @@ import {
   getPYQDashboard,
   uploadPYQPapers,
   getPaperStatus,
+  reprocessPYQPaper,
   getPYQQuestions,
   updatePYQQuestion,
   getRepeatedQuestionsIntelligence,
@@ -45,6 +46,7 @@ router.use(protect);
 router.get("/dashboard", getPYQDashboard);
 router.post("/upload", upload.array("papers", 10), uploadPYQPapers);
 router.get("/papers/:paperId/status", getPaperStatus);
+router.post("/papers/:paperId/reprocess", reprocessPYQPaper);
 router.delete("/papers/:paperId", deletePYQPaper);
 
 // Extracted Questions & Syllabus

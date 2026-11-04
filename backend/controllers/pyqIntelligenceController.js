@@ -134,14 +134,32 @@ async function processPaperBackground(paperId, buffer, mimeType, filename, userI
     const paper = await PYQPaper.findById(paperId);
     if (!paper) return;
 
-    // Step 1: Text extraction / OCR
-    await PYQPaper.findByIdAndUpdate(paperId, {
-      status: "Extracting Text",
-      progressPercent: 30,
-      statusMessage: "Reading PDF document and optical stream...",
-    });
+    let text = paper.rawExtractedText || "";
+    let pageCount = paper.pageCount || 1;
+    let isOcrUsed = paper.isOcrUsed || false;
 
-    const { text, pageCount, isOcrUsed } = await extractTextFromBuffer(buffer, mimeType, filename);
+    // Step 1: Text extraction / OCR if text is not already available or if buffer provided
+    if (!text || text.length < 20) {
+      if (!buffer) {
+        await PYQPaper.findByIdAndUpdate(paperId, {
+          status: "Failed / Needs Review",
+          progressPercent: 100,
+          statusMessage: "No raw text or file buffer available for extraction.",
+        });
+        return;
+      }
+
+      await PYQPaper.findByIdAndUpdate(paperId, {
+        status: "Extracting Text",
+        progressPercent: 30,
+        statusMessage: "Reading PDF document and optical stream...",
+      });
+
+      const extracted = await extractTextFromBuffer(buffer, mimeType, filename);
+      text = extracted.text;
+      pageCount = extracted.pageCount;
+      isOcrUsed = extracted.isOcrUsed;
+    }
 
     if (!text || text.length < 20) {
       await PYQPaper.findByIdAndUpdate(paperId, {
@@ -163,7 +181,7 @@ async function processPaperBackground(paperId, buffer, mimeType, filename, userI
       statusMessage: "Detecting question boundaries, sub-questions, and marks allocation...",
     });
 
-    const parsedQuestions = parseRawTextIntoQuestions(text, 2);
+    const parsedQuestions = parseRawTextIntoQuestions(text, paper.subjectId);
 
     if (parsedQuestions.length === 0) {
       await PYQPaper.findByIdAndUpdate(paperId, {
@@ -302,6 +320,41 @@ export const getPaperStatus = async (req, res) => {
     return res.json({ success: true, paper });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch status." });
+  }
+};
+
+// ─── 4b. REPROCESS PAPER QUESTIONS ───────────────────────────────────────────
+// @route POST /api/pyq/papers/:paperId/reprocess
+export const reprocessPYQPaper = async (req, res) => {
+  try {
+    const { paperId } = req.params;
+    const userId = req.user._id;
+    const paper = await PYQPaper.findOne({ _id: paperId, userId });
+    if (!paper) {
+      return res.status(404).json({ success: false, message: "Paper not found" });
+    }
+
+    // Delete existing questions for this paper
+    await PYQQuestion.deleteMany({ paperId: paper._id });
+
+    // Use rawExtractedText or fileData buffer
+    let buffer = null;
+    if (paper.fileData) {
+      buffer = Buffer.from(paper.fileData, "base64");
+    }
+
+    // Run processing
+    await processPaperBackground(paper._id, buffer, paper.mimeType, paper.originalFilename, userId);
+
+    const updatedQuestions = await PYQQuestion.find({ paperId: paper._id }).lean();
+    return res.json({
+      success: true,
+      message: `Reprocessed ${updatedQuestions.length} questions successfully.`,
+      count: updatedQuestions.length,
+    });
+  } catch (error) {
+    console.error("Reprocess error:", error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 

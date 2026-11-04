@@ -59,8 +59,8 @@ export async function mapQuestionToSyllabus(questionText, subjectId) {
     }
   }
 
-  // If local heuristic finds a strong match (score >= 4)
-  if (bestTopic && highestScore >= 4) {
+  // If local heuristic finds a match (score >= 2)
+  if (bestTopic && highestScore >= 2) {
     const unit = subjectUnits.find((u) => u.unitId === bestTopic.unitId);
     return {
       unitId: bestTopic.unitId,
@@ -78,6 +78,7 @@ export async function mapQuestionToSyllabus(questionText, subjectId) {
   }
 
   // 3. Fallback to AI Client for intelligent semantic syllabus mapping if score was weak
+  // Use Promise.race with a 4s timeout so it never blocks or hangs background processing
   const aiClient = getAIClient();
   if (aiClient) {
     try {
@@ -97,12 +98,18 @@ Respond ONLY with a JSON object:
   "evidence": "brief 1-sentence reason"
 }`;
 
-      const res = await aiClient.chat.completions.create({
+      const aiPromise = aiClient.chat.completions.create({
         model: getAIModel(),
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
         max_tokens: 300,
       });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("AI mapping timeout")), 4000)
+      );
+
+      const res = await Promise.race([aiPromise, timeoutPromise]);
 
       const parsed = JSON.parse(res.choices[0]?.message?.content || "{}");
       if (parsed.topicId) {
