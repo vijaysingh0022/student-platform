@@ -108,6 +108,16 @@ const TopicLearningPage = () => {
     let isMounted = true;
     const fetchTopic = async () => {
       setLoading(true);
+      setLoadingVideo(true);
+      // Immediately reset previous video to prevent stale video bleed across topics
+      setVideoData(null);
+      setVideoProgress({
+        watchedSeconds: 0,
+        lastPosition: 0,
+        completionPercentage: 0,
+        isCompleted: false,
+        bookmarks: [],
+      });
       try {
         const [res, videoRes, currRes] = await Promise.all([
           getTopicDetails(topicId),
@@ -128,6 +138,8 @@ const TopicLearningPage = () => {
             if (videoRes.data.progress) {
               setVideoProgress(videoRes.data.progress);
             }
+          } else {
+            setVideoData(null);
           }
 
           // Extract unit chapters and topics for sidebar
@@ -149,7 +161,10 @@ const TopicLearningPage = () => {
       } catch (err) {
         console.error("Error loading topic:", err);
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setLoadingVideo(false);
+        }
       }
     };
 

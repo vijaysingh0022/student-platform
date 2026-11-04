@@ -5,7 +5,12 @@ import { Topic, Subject, Unit, Chapter } from "../models/Curriculum.js";
 import { INITIAL_TOPIC_VIDEOS } from "../seed/topicVideosData.js";
 import { CURRICULUM_TOPICS, CURRICULUM_CHAPTERS, CURRICULUM_UNITS, CURRICULUM_SUBJECTS } from "../seed/curriculumData.js";
 import { awardXP } from "../services/rewardService.js";
-import { extractYouTubeVideoId, getCleanYouTubeEmbedUrl, verifyYouTubeVideoPlayable } from "../utils/videoValidator.js";
+import {
+  extractYouTubeVideoId,
+  getCleanYouTubeEmbedUrl,
+  verifyYouTubeVideoPlayable,
+  isVideoRelevantToTopic,
+} from "../utils/videoValidator.js";
 import {
   discoverTopicVideo,
   DOMAIN_CURATED_FALLBACKS,
@@ -51,14 +56,52 @@ export const getTopicVideo = async (req, res) => {
 
     let video = await Video.findOne({ topicId, isActive: true }).lean();
 
-    // Check if the current video has a known broken ID (e.g. legacy EWkQD_sP-v8 or vv4y_uOneC8)
-    const isKnownBroken =
-      video?.videoUrl &&
-      (video.videoUrl.includes("EWkQD_sP-v8") || video.videoUrl.includes("vv4y_uOneC8"));
+    // Check if an explicit verified seed exists for this topic (always takes precedence)
+    const seedItem = INITIAL_TOPIC_VIDEOS.find((v) => v.topicId === topicId);
 
-    if (!video || isKnownBroken) {
-      // 1. Check if an explicit curated seed entry exists
-      const seedItem = INITIAL_TOPIC_VIDEOS.find((v) => v.topicId === topicId);
+    // Fetch topic metadata for validation
+    let topicDoc = await Topic.findOne({ topicId }).lean();
+    if (!topicDoc) {
+      topicDoc = CURRICULUM_TOPICS.find((t) => t.topicId === topicId);
+    }
+
+    let chapterDoc = topicDoc?.chapterId ? await Chapter.findOne({ chapterId: topicDoc.chapterId }).lean() : null;
+    if (!chapterDoc && topicDoc?.chapterId) chapterDoc = CURRICULUM_CHAPTERS.find((c) => c.chapterId === topicDoc.chapterId);
+
+    let unitDoc = topicDoc?.unitId ? await Unit.findOne({ unitId: topicDoc.unitId }).lean() : null;
+    if (!unitDoc && topicDoc?.unitId) unitDoc = CURRICULUM_UNITS.find((u) => u.unitId === topicDoc.unitId);
+
+    let subjectDoc = topicDoc?.subjectId ? await Subject.findOne({ subjectId: topicDoc.subjectId }).lean() : null;
+    if (!subjectDoc && topicDoc?.subjectId) subjectDoc = CURRICULUM_SUBJECTS.find((s) => s.subjectId === topicDoc.subjectId);
+
+    // Relevance validation for existing DB record
+    let isDbVideoMismatched = false;
+    if (video && topicDoc) {
+      // Check if existing DB video is pointing to an unrelated video
+      const isRelevant = isVideoRelevantToTopic(
+        {
+          topicTitle: topicDoc.title,
+          subtopics: topicDoc.subtopics || [],
+          chapterTitle: chapterDoc?.title || "",
+          unitTitle: unitDoc?.title || "",
+          subjectName: subjectDoc?.name || topicDoc.subjectId || "",
+        },
+        video.title || ""
+      );
+
+      // Known corrupt mappings (e.g., dsa-u1-intro-ds mapped to Binary Search fDKIpRe8GW4 or cpp to DBMS 3EJlovevfcA)
+      const isKnownMismatch =
+        (topicId === "dsa-u1-intro-ds" && video.videoUrl?.includes("fDKIpRe8GW4")) ||
+        (topicId === "cpp-u1-c1-t1" && video.videoUrl?.includes("3EJlovevfcA")) ||
+        (video.videoUrl?.includes("EWkQD_sP-v8") || video.videoUrl?.includes("vv4y_uOneC8"));
+
+      if (!isRelevant || isKnownMismatch) {
+        isDbVideoMismatched = true;
+      }
+    }
+
+    // If no video exists, or seed exists and differs, or existing DB video is mismatched
+    if (!video || isDbVideoMismatched || (seedItem && video.videoUrl !== seedItem.videoUrl)) {
       if (seedItem) {
         try {
           video = await Video.findOneAndUpdate(
@@ -69,53 +112,22 @@ export const getTopicVideo = async (req, res) => {
         } catch (createErr) {
           video = seedItem;
         }
-      } else {
-        // 2. Fetch Topic from DB or seed metadata
-        let topicDoc = await Topic.findOne({ topicId }).lean();
-        if (!topicDoc) {
-          topicDoc = CURRICULUM_TOPICS.find((t) => t.topicId === topicId);
-        }
+      } else if (topicDoc) {
+        // Perform automated discovery with relevance filtering
+        const discovered = await discoverTopicVideo({
+          topic: topicDoc,
+          chapter: chapterDoc,
+          unit: unitDoc,
+          subject: subjectDoc,
+        });
 
-        if (topicDoc) {
-          // Fetch Chapter, Unit, Subject context for intelligent discovery
-          let chapterDoc = topicDoc.chapterId ? await Chapter.findOne({ chapterId: topicDoc.chapterId }).lean() : null;
-          if (!chapterDoc) chapterDoc = CURRICULUM_CHAPTERS.find((c) => c.chapterId === topicDoc.chapterId);
-
-          let unitDoc = topicDoc.unitId ? await Unit.findOne({ unitId: topicDoc.unitId }).lean() : null;
-          if (!unitDoc) unitDoc = CURRICULUM_UNITS.find((u) => u.unitId === topicDoc.unitId);
-
-          let subjectDoc = topicDoc.subjectId ? await Subject.findOne({ subjectId: topicDoc.subjectId }).lean() : null;
-          if (!subjectDoc) subjectDoc = CURRICULUM_SUBJECTS.find((s) => s.subjectId === topicDoc.subjectId);
-
-          // Perform automated multi-tier discovery
-          const discovered = await discoverTopicVideo({
-            topic: topicDoc,
-            chapter: chapterDoc,
-            unit: unitDoc,
-            subject: subjectDoc,
-          });
-
+        if (discovered && discovered.videoUrl) {
           const { transcript, keyMoments } = generateTranscriptAndKeyMoments(
             topicDoc.title,
             subjectDoc?.name || topicDoc.subjectId
           );
 
           const dur = discovered.duration || 540;
-
-          // Assemble related/alternative videos
-          const subKey = (topicDoc.subjectId || "").toLowerCase();
-          const fallbackPool = DOMAIN_CURATED_FALLBACKS[subKey] || UNIVERSAL_FALLBACK_POOL;
-          const relatedVideos = fallbackPool
-            .filter((p) => p.id !== discovered.extractedId)
-            .slice(0, 3)
-            .map((p) => ({
-              title: p.title,
-              videoUrl: `https://www.youtube.com/watch?v=${p.id}`,
-              duration: p.duration,
-              durationLabel: formatDuration(p.duration),
-              thumbnailUrl: `https://img.youtube.com/vi/${p.id}/mqdefault.jpg`,
-              sourceType: "youtube",
-            }));
 
           const newVideoRecord = {
             title: discovered.title || `${topicDoc.title} — Lecture`,
@@ -132,7 +144,7 @@ export const getTopicVideo = async (req, res) => {
             difficulty: topicDoc.difficulty || "Intermediate",
             sourceType: "youtube",
             discoverySource: discovered.source || "automated_discovery",
-            relatedVideos,
+            relatedVideos: [],
             transcript,
             keyMoments,
             isActive: true,
@@ -147,12 +159,23 @@ export const getTopicVideo = async (req, res) => {
           } catch (upsertErr) {
             video = newVideoRecord;
           }
+        } else {
+          // If no video discovered, remove corrupted DB record if any
+          if (isDbVideoMismatched) {
+            await Video.deleteOne({ topicId });
+          }
+          video = null;
         }
       }
     }
 
     if (!video) {
-      return res.status(404).json({ message: "Video not available for this topic." });
+      return res.status(200).json({
+        success: true,
+        available: false,
+        video: null,
+        message: "No verified video available for this topic yet.",
+      });
     }
 
     // Attach clean embed URL and extracted video ID

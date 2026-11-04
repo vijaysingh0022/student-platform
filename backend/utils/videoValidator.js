@@ -149,3 +149,125 @@ export const verifyYouTubeVideoPlayable = (urlOrId) => {
   });
 };
 
+/**
+ * Validates whether a candidate YouTube video title is genuinely relevant to the requested topic.
+ * Prevents cross-topic / cross-subject mismatches (e.g. assigning Binary Search to Intro to Data Structures,
+ * or assigning DBMS videos to C++ pointers).
+ */
+export const isVideoRelevantToTopic = (
+  { topicTitle, subtopics = [], chapterTitle = "", unitTitle = "", subjectName = "" },
+  videoTitle
+) => {
+  if (!topicTitle || !videoTitle) return false;
+
+  const stem = (w) =>
+    w
+      .toLowerCase()
+      .replace(/s$/, "")
+      .replace(/ing$/, "")
+      .replace(/ed$/, "");
+
+  const extractTokens = (str) =>
+    (str || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length >= 3)
+      .map(stem);
+
+  const genericStopWords = new Set([
+    "introduction",
+    "intro",
+    "basic",
+    "fundamental",
+    "overview",
+    "lecture",
+    "tutorial",
+    "course",
+    "video",
+    "hindi",
+    "english",
+    "part",
+    "what",
+    "with",
+    "from",
+    "and",
+    "the",
+    "for",
+    "learn",
+    "complete",
+    "full",
+    "gate",
+    "masterclass",
+    "guide",
+    "class",
+    "example",
+    "note",
+    "concept",
+    "chapter",
+    "unit",
+    "easy",
+    "advanced",
+    "series",
+    "explained",
+    "explanation",
+  ]);
+
+  const topicTokens = extractTokens(topicTitle);
+  const videoTokens = new Set(extractTokens(videoTitle));
+
+  // 1. Cross-Subject Contamination Guard:
+  // Detect if video belongs to an unrelated subject domain that differs from current topic
+  const domainSignatures = {
+    dbms: ["dbms", "database", "sql", "normalization", "relational", "schema", "table"],
+    os: ["operating", "kernel", "deadlock", "paging", "semaphore"],
+    cn: ["networking", "network", "tcp", "udp", "osi", "ip", "subnet"],
+    dsa: ["dsa", "algorithm", "array", "stack", "queue", "tree", "graph", "sorting", "searching", "linked"],
+    python: ["python", "django", "flask", "numpy", "pandas"],
+    java: ["java", "jvm", "spring"],
+    cpp: ["cpp", "pointer", "cplusplus"],
+  };
+
+  const currentSubjectStr = `${subjectName} ${topicTitle} ${chapterTitle} ${unitTitle}`.toLowerCase();
+
+  for (const [domainKey, keywords] of Object.entries(domainSignatures)) {
+    const isTopicInDomain = keywords.some((k) => currentSubjectStr.includes(k));
+    if (!isTopicInDomain) {
+      // If the topic is definitely NOT in this domain, check if video title prominently features domain exclusive tokens
+      const primaryKeywords = keywords.slice(0, 2);
+      const videoHasDomain = primaryKeywords.some((pk) => videoTokens.has(stem(pk)));
+      if (videoHasDomain) {
+        return false; // Mismatched subject domain
+      }
+    }
+  }
+
+  // 2. Specific Topic Keyword Matching
+  const coreTopicTokens = topicTokens.filter((t) => !genericStopWords.has(t));
+  const matchedCore = coreTopicTokens.filter((t) => videoTokens.has(t));
+  if (coreTopicTokens.length > 0 && matchedCore.length >= 1) {
+    return true;
+  }
+
+  // 3. Subtopics matching
+  for (const sub of subtopics) {
+    const subTokens = extractTokens(sub).filter((t) => !genericStopWords.has(t));
+    const matchedSub = subTokens.filter((t) => videoTokens.has(t));
+    if (subTokens.length > 0 && matchedSub.length >= 1) {
+      return true;
+    }
+  }
+
+  // 4. Chapter title matching
+  if (chapterTitle && chapterTitle !== topicTitle) {
+    const chapterTokens = extractTokens(chapterTitle).filter((t) => !genericStopWords.has(t));
+    const matchedChapter = chapterTokens.filter((t) => videoTokens.has(t));
+    if (chapterTokens.length > 0 && matchedChapter.length >= 1) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+

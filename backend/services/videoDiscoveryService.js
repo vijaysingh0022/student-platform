@@ -1,5 +1,5 @@
 import https from "https";
-import { extractYouTubeVideoId, verifyYouTubeVideoPlayable } from "../utils/videoValidator.js";
+import { extractYouTubeVideoId, verifyYouTubeVideoPlayable, isVideoRelevantToTopic } from "../utils/videoValidator.js";
 
 /**
  * In-memory LRU/map cache for search query results to prevent redundant calls and stay within quotas
@@ -183,87 +183,91 @@ export async function searchYouTubeCandidates(query, maxResults = 5) {
 
 /**
  * Hierarchical Video Discovery Algorithm:
- * Step 1: Exact Topic Name + Subject + Chapter
- * Step 2: Chapter Name + Subject
- * Step 3: Unit Title + Subject
- * Step 4: Subject-Curated Verified Fallback Pool
- * Step 5: Universal Engineering Fallback Pool
+ * Step 1: Exact Topic Name + Subject + Chapter with strict relevance validation
+ * Step 2: Chapter Name + Subject with relevance validation
+ * Step 3: Curated verified fallbacks ONLY if they match relevance criteria
  *
- * Every candidate is validated live with YouTube oEmbed before returning to ensure 100% playable state.
+ * Every candidate is validated live with YouTube oEmbed before returning to ensure 100% playable state
+ * AND checked with isVideoRelevantToTopic to guarantee zero topic mismatches.
  */
 export async function discoverTopicVideo({ topic, chapter, unit, subject }) {
   const subjectName = subject?.name || topic.subjectId || "";
   const topicTitle = topic.title || "";
   const chapterTitle = chapter?.title || "";
   const unitTitle = unit?.title || "";
+  const subtopics = Array.isArray(topic.subtopics) ? topic.subtopics : [];
+
+  const relevanceContext = {
+    topicTitle,
+    subtopics,
+    chapterTitle,
+    unitTitle,
+    subjectName,
+  };
 
   // Step 1: Query exact topic with subject
-  const queryStep1 = `${topicTitle} ${subjectName} tutorial lecture`;
-  let candidates = await searchYouTubeCandidates(queryStep1, 4);
+  const queryStep1 = `${topicTitle} ${subjectName} tutorial`;
+  let candidates = await searchYouTubeCandidates(queryStep1, 5);
 
   // Validate Step 1 candidates
   for (const id of candidates) {
     const check = await verifyYouTubeVideoPlayable(id);
     if (check.isValid && check.status === "playable") {
-      return {
-        videoUrl: `https://www.youtube.com/watch?v=${id}`,
-        title: check.title || `${topicTitle} — ${subjectName}`,
-        source: "search_topic_exact",
-        extractedId: id,
-        author: check.author,
-      };
+      const isRelevant = isVideoRelevantToTopic(relevanceContext, check.title || "");
+      if (isRelevant) {
+        return {
+          videoUrl: `https://www.youtube.com/watch?v=${id}`,
+          title: check.title || `${topicTitle} — ${subjectName}`,
+          source: "search_topic_exact",
+          extractedId: id,
+          author: check.author,
+          isRelevant: true,
+        };
+      }
     }
   }
 
   // Step 2: Fallback to Chapter query
   if (chapterTitle && chapterTitle !== topicTitle) {
     const queryStep2 = `${chapterTitle} ${subjectName} lecture`;
-    candidates = await searchYouTubeCandidates(queryStep2, 3);
+    candidates = await searchYouTubeCandidates(queryStep2, 4);
     for (const id of candidates) {
       const check = await verifyYouTubeVideoPlayable(id);
       if (check.isValid && check.status === "playable") {
-        return {
-          videoUrl: `https://www.youtube.com/watch?v=${id}`,
-          title: check.title || `${topicTitle} — ${chapterTitle}`,
-          source: "search_chapter_fallback",
-          extractedId: id,
-          author: check.author,
-        };
+        const isRelevant = isVideoRelevantToTopic(relevanceContext, check.title || "");
+        if (isRelevant) {
+          return {
+            videoUrl: `https://www.youtube.com/watch?v=${id}`,
+            title: check.title || `${topicTitle} — ${chapterTitle}`,
+            source: "search_chapter_fallback",
+            extractedId: id,
+            author: check.author,
+            isRelevant: true,
+          };
+        }
       }
     }
   }
 
-  // Step 3: Fallback to Unit query
-  if (unitTitle) {
-    const queryStep3 = `${unitTitle} ${subjectName}`;
-    candidates = await searchYouTubeCandidates(queryStep3, 3);
-    for (const id of candidates) {
-      const check = await verifyYouTubeVideoPlayable(id);
-      if (check.isValid && check.status === "playable") {
-        return {
-          videoUrl: `https://www.youtube.com/watch?v=${id}`,
-          title: check.title || `${topicTitle} — ${unitTitle}`,
-          source: "search_unit_fallback",
-          extractedId: id,
-          author: check.author,
-        };
-      }
-    }
-  }
-
-  // Step 4: Curated domain fallback
+  // Step 3: Check curated domain list, but ONLY if title matches topic relevance!
   const subKey = (topic.subjectId || "").toLowerCase();
-  const curatedList = DOMAIN_CURATED_FALLBACKS[subKey] || UNIVERSAL_FALLBACK_POOL;
-  const hash = Math.abs(
-    (topic.topicId || "topic").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  );
-  const picked = curatedList[hash % curatedList.length];
+  const curatedList = DOMAIN_CURATED_FALLBACKS[subKey] || [];
+  for (const item of curatedList) {
+    if (isVideoRelevantToTopic(relevanceContext, item.title)) {
+      const check = await verifyYouTubeVideoPlayable(item.id);
+      if (check.isValid && check.status === "playable") {
+        return {
+          videoUrl: `https://www.youtube.com/watch?v=${item.id}`,
+          title: item.title,
+          source: "curated_domain_verified",
+          extractedId: item.id,
+          duration: item.duration || 540,
+          isRelevant: true,
+        };
+      }
+    }
+  }
 
-  return {
-    videoUrl: `https://www.youtube.com/watch?v=${picked.id}`,
-    title: `${topicTitle} — ${picked.title}`,
-    source: "curated_domain_fallback",
-    extractedId: picked.id,
-    duration: picked.duration || 522,
-  };
+  // If no strictly relevant video was discovered, DO NOT assign an unrelated video!
+  return null;
 }
