@@ -46,3 +46,4 @@ const pyqPaperSchema = new mongoose.Schema(
 
 const PYQPaper = mongoose.model("PYQPaper", pyqPaperSchema);
 export default PYQPaper;
+

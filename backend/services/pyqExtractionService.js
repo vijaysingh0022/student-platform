@@ -1,5 +1,4 @@
 import pdf from "pdf-parse/lib/pdf-parse.js";
-import { createWorker } from "tesseract.js";
 
 /**
  * Extracts raw text from an uploaded buffer (PDF, scanned PDF, or image).
@@ -54,11 +53,16 @@ export async function extractDocumentText(buffer, mimeType = "application/pdf") 
 }
 
 /**
- * Tesseract OCR Engine wrapper
+ * Tesseract OCR Engine wrapper with dynamic lazy import
  */
 async function runTesseractOCR(buffer) {
   let worker = null;
   try {
+    const tesseract = await import("tesseract.js");
+    const createWorker = tesseract.createWorker || tesseract.default?.createWorker;
+    if (!createWorker) {
+      throw new Error("createWorker not found in tesseract.js");
+    }
     worker = await createWorker("eng");
     const ret = await worker.recognize(buffer);
     await worker.terminate();
