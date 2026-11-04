@@ -1,133 +1,211 @@
 import React from "react";
 
-export const PYQIntelligenceIllustration = ({ className = "w-full max-w-[280px] h-[190px]" }) => {
+export const PYQIntelligenceIllustration = ({ className = "w-full max-w-[340px] h-[160px]" }) => {
   return (
     <div className={`relative flex items-center justify-center select-none ${className}`}>
-      {/* Background Soft Glow */}
-      <div className="absolute w-44 h-44 rounded-full bg-gradient-to-tr from-purple-500/20 via-indigo-500/20 to-blue-400/20 blur-2xl" />
+      {/* Background radial glow */}
+      <div className="absolute w-56 h-36 rounded-full bg-gradient-to-tr from-purple-500/25 via-indigo-500/20 to-blue-400/20 blur-2xl" />
 
-      {/* SVG Canvas for 3D Isometric Papers & AI Neural Scanning */}
       <svg
-        viewBox="0 0 340 240"
+        viewBox="0 0 360 170"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-xl"
+        className="w-full h-full drop-shadow-2xl"
       >
         <defs>
-          <linearGradient id="paperGrad1" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="sheetGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#ffffff" />
             <stop offset="100%" stopColor="#f1f5f9" />
           </linearGradient>
-          <linearGradient id="paperGrad2" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#f8fafc" />
-            <stop offset="100%" stopColor="#e2e8f0" />
+          <linearGradient id="aiBadgeGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#8b5cf6" />
+            <stop offset="100%" stopColor="#6366f1" />
           </linearGradient>
-          <linearGradient id="scanBeam" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#818cf8" stopOpacity="0" />
-            <stop offset="50%" stopColor="#a855f7" stopOpacity="0.85" />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+          <linearGradient id="capGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#312e81" />
+            <stop offset="100%" stopColor="#1e1b4b" />
           </linearGradient>
-          <linearGradient id="aiOrb" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#a855f7" />
+          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#34d399" />
+            <stop offset="100%" stopColor="#10b981" />
           </linearGradient>
+          <filter id="cardShadow" x="-10%" y="-10%" width="125%" height="125%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" floodColor="#0f172a" floodOpacity="0.15" />
+          </filter>
         </defs>
 
-        {/* Base Ellipse Shadow */}
-        <ellipse cx="170" cy="195" rx="120" ry="22" fill="#0f172a" fillOpacity="0.3" filter="blur(4px)" />
-
-        {/* Paper 1: Background Left Isometric */}
-        <g transform="translate(60, 50)">
-          <polygon
-            points="30,20 110,5 140,55 60,70"
-            fill="url(#paperGrad2)"
-            stroke="#cbd5e1"
+        {/* ── 1. MAIN EXAM QUESTION PAPER SHEET (PYQ) ── */}
+        <g transform="translate(70, 18)">
+          {/* Main Paper Body */}
+          <rect
+            x="0"
+            y="0"
+            width="125"
+            height="140"
+            rx="8"
+            fill="url(#sheetGrad)"
+            stroke="#e2e8f0"
             strokeWidth="1.5"
-            opacity="0.8"
+            filter="url(#cardShadow)"
           />
-          <line x1="50" y1="28" x2="100" y2="19" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="55" y1="38" x2="115" y2="28" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="60" y1="48" x2="110" y2="40" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
+          {/* Paper Top Corner Fold */}
+          <path d="M107 0 L125 18 L107 18 Z" fill="#e2e8f0" />
+
+          {/* Heading "PYQ" */}
+          <text x="14" y="24" fill="#4338ca" fontSize="11" fontWeight="900" letterSpacing="0.5">
+            PYQ
+          </text>
+
+          {/* Checklist Items */}
+          {/* Row 1 */}
+          <rect x="14" y="36" width="9" height="9" rx="2.5" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+          <path d="M16 40.5 L17.5 42 L21 38.5" stroke="#059669" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="28" y1="41" x2="95" y2="41" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Row 2 */}
+          <rect x="14" y="52" width="9" height="9" rx="2.5" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+          <path d="M16 56.5 L17.5 58 L21 54.5" stroke="#059669" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="28" y1="57" x2="88" y2="57" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Row 3 */}
+          <rect x="14" y="68" width="9" height="9" rx="2.5" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+          <path d="M16 72.5 L17.5 74 L21 70.5" stroke="#059669" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="28" y1="73" x2="92" y2="73" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Row 4 */}
+          <rect x="14" y="84" width="9" height="9" rx="2.5" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+          <path d="M16 88.5 L17.5 90 L21 86.5" stroke="#059669" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="28" y1="89" x2="80" y2="89" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
+
+          {/* Row 5 */}
+          <rect x="14" y="100" width="9" height="9" rx="2.5" fill="#ecfdf5" stroke="#10b981" strokeWidth="1.2" />
+          <path d="M16 104.5 L17.5 106 L21 102.5" stroke="#059669" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="28" y1="105" x2="72" y2="105" stroke="#cbd5e1" strokeWidth="2.5" strokeLinecap="round" />
         </g>
 
-        {/* Paper 2: Background Right Isometric */}
-        <g transform="translate(130, 40)">
+        {/* ── 2. GRADUATION MORTARBOARD CAP (Top Center) ── */}
+        <g transform="translate(195, 10)">
+          {/* Diamond Cap */}
           <polygon
-            points="40,25 120,12 150,65 70,78"
-            fill="url(#paperGrad2)"
-            stroke="#cbd5e1"
-            strokeWidth="1.5"
-            opacity="0.8"
+            points="45,0 90,14 45,28 0,14"
+            fill="url(#capGrad)"
+            stroke="#4338ca"
+            strokeWidth="1.2"
+            filter="drop-shadow(0 4px 6px rgba(0,0,0,0.3))"
           />
-          <line x1="60" y1="35" x2="110" y2="27" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-          <line x1="65" y1="45" x2="125" y2="37" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-        </g>
-
-        {/* Main Foreground Question Paper (Isometric AKTU Exam Sheet) */}
-        <g transform="translate(95, 65)">
-          <polygon
-            points="35,15 145,5 175,95 65,105"
-            fill="url(#paperGrad1)"
-            stroke="#94a3b8"
-            strokeWidth="1.8"
-          />
-          {/* Header Lines */}
-          <line x1="58" y1="26" x2="125" y2="20" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
-          <line x1="62" y1="34" x2="105" y2="30" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" />
-
-          {/* Question Rows */}
-          <circle cx="68" cy="48" r="2.5" fill="#a855f7" />
-          <line x1="75" y1="47" x2="140" y2="41" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
-
-          <circle cx="72" cy="62" r="2.5" fill="#6366f1" />
-          <line x1="80" y1="61" x2="145" y2="55" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
-          <line x1="82" y1="69" x2="135" y2="64" stroke="#64748b" strokeWidth="1.5" strokeLinecap="round" />
-
-          <circle cx="77" cy="82" r="2.5" fill="#06b6d4" />
-          <line x1="85" y1="81" x2="150" y2="75" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
-
-          {/* Stamp / Verified Badge */}
-          <g transform="translate(130, 68) rotate(-10)">
-            <rect x="0" y="0" width="28" height="15" rx="3" fill="#10b981" fillOpacity="0.15" stroke="#10b981" strokeWidth="1.2" />
-            <text x="5" y="11" fill="#059669" fontSize="7" fontWeight="bold">PYQ</text>
-          </g>
-        </g>
-
-        {/* AI Laser Scanning Beam Sweeping across paper */}
-        <polygon
-          points="80,105 240,88 238,98 78,115"
-          fill="url(#scanBeam)"
-          opacity="0.8"
-        />
-
-        {/* AI Intelligence Core Crystal / Floating Node */}
-        <g transform="translate(225, 45)">
-          <circle cx="25" cy="25" r="22" fill="url(#aiOrb)" filter="drop-shadow(0 4px 12px rgba(129, 140, 248, 0.5))" />
-          {/* Inner Brain / AI Neural Icon */}
+          {/* Skull Cap Base */}
           <path
-            d="M18 20C18 17.5 20.5 15.5 23.5 15.5C25.5 15.5 27 16.5 28 17.5C29 16.5 30.5 15.5 32.5 15.5C35.5 15.5 38 17.5 38 20C38 23.5 35 26.5 32.5 28.5L28 32.5L23.5 28.5C21 26.5 18 23.5 18 20Z"
-            fill="#ffffff"
-            fillOpacity="0.2"
+            d="M20 20 L20 28 C20 36 70 36 70 28 L70 20 Z"
+            fill="#1e1b4b"
+            opacity="0.95"
           />
-          <circle cx="28" cy="22" r="3.5" fill="#ffffff" />
-          <circle cx="21" cy="26" r="2.5" fill="#e0e7ff" />
-          <circle cx="35" cy="26" r="2.5" fill="#e0e7ff" />
-          <line x1="28" y1="22" x2="21" y2="26" stroke="#ffffff" strokeWidth="1.5" />
-          <line x1="28" y1="22" x2="35" y2="26" stroke="#ffffff" strokeWidth="1.5" />
+          {/* Golden Tassel */}
+          <line x1="45" y1="14" x2="78" y2="24" stroke="#fbbf24" strokeWidth="1.6" />
+          <circle cx="78" cy="24" r="1.5" fill="#f59e0b" />
+          <path d="M78 24 L82 34 L76 34 Z" fill="#fbbf24" />
         </g>
 
-        {/* Floating Metrics Pill: 98% Match */}
-        <g transform="translate(35, 120)">
-          <rect x="0" y="0" width="75" height="24" rx="12" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.2" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.06))" />
-          <circle cx="12" cy="12" r="4" fill="#10b981" />
-          <text x="22" y="16" fill="#0f172a" fontSize="9" fontWeight="800">Repeated 4x</text>
+        {/* ── 3. STACKED STUDY BOOKS (Bottom Right) ── */}
+        <g transform="translate(210, 92)">
+          {/* Book 1 (Bottom - Blue) */}
+          <rect x="0" y="24" width="75" height="14" rx="3" fill="#2563eb" stroke="#1d4ed8" strokeWidth="1" />
+          <rect x="4" y="26" width="67" height="10" rx="1.5" fill="#ffffff" />
+          <line x1="2" y1="24" x2="2" y2="38" stroke="#1e40af" strokeWidth="3" />
+
+          {/* Book 2 (Middle - Purple) */}
+          <rect x="5" y="10" width="70" height="14" rx="3" fill="#7c3aed" stroke="#6d28d9" strokeWidth="1" />
+          <rect x="9" y="12" width="62" height="10" rx="1.5" fill="#ffffff" />
+          <line x1="7" y1="10" x2="7" y2="24" stroke="#5b21b6" strokeWidth="3" />
         </g>
 
-        {/* Floating Metrics Pill: Unit 3 Priority */}
-        <g transform="translate(210, 145)">
-          <rect x="0" y="0" width="85" height="24" rx="12" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1.2" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.06))" />
-          <circle cx="12" cy="12" r="4" fill="#6366f1" />
-          <text x="22" y="16" fill="#0f172a" fontSize="9" fontWeight="800">Unit 3 • 28 Marks</text>
+        {/* ── 4. MAGNIFYING GLASS WITH "AI" EMBEDDED IN LENS ── */}
+        <g transform="translate(170, 48)">
+          {/* Handle */}
+          <line
+            x1="38"
+            y1="38"
+            x2="62"
+            y2="62"
+            stroke="#3b82f6"
+            strokeWidth="7"
+            strokeLinecap="round"
+          />
+          <line
+            x1="38"
+            y1="38"
+            x2="62"
+            y2="62"
+            stroke="#1d4ed8"
+            strokeWidth="3"
+            strokeLinecap="round"
+          />
+
+          {/* Outer Ring */}
+          <circle
+            cx="22"
+            cy="22"
+            r="23"
+            fill="none"
+            stroke="#818cf8"
+            strokeWidth="5"
+            filter="drop-shadow(0 4px 10px rgba(99, 102, 241, 0.4))"
+          />
+
+          {/* Inner Glass Lens */}
+          <circle
+            cx="22"
+            cy="22"
+            r="19"
+            fill="url(#aiBadgeGrad)"
+          />
+
+          {/* Glowing "AI" text */}
+          <text
+            x="22"
+            y="28"
+            fill="#ffffff"
+            fontSize="14"
+            fontWeight="900"
+            textAnchor="middle"
+            letterSpacing="0.8"
+          >
+            AI
+          </text>
+        </g>
+
+        {/* ── 5. "Exam Insights" FLOATING CARD (Top Right) ── */}
+        <g transform="translate(255, 30)">
+          {/* Card background */}
+          <rect
+            x="0"
+            y="0"
+            width="82"
+            height="50"
+            rx="6"
+            fill="#1e1b4b"
+            fillOpacity="0.85"
+            stroke="#4338ca"
+            strokeWidth="1"
+            filter="drop-shadow(0 6px 14px rgba(0,0,0,0.35))"
+          />
+          {/* Header */}
+          <text x="8" y="13" fill="#c7d2fe" fontSize="8" fontWeight="700">
+            Exam Insights
+          </text>
+
+          {/* Mini Bar Chart */}
+          {/* Bar 1 */}
+          <rect x="12" y="32" width="6" height="8" rx="1.5" fill="url(#barGrad)" />
+          {/* Bar 2 */}
+          <rect x="22" y="27" width="6" height="13" rx="1.5" fill="url(#barGrad)" />
+          {/* Bar 3 */}
+          <rect x="32" y="23" width="6" height="17" rx="1.5" fill="url(#barGrad)" />
+          {/* Bar 4 */}
+          <rect x="42" y="19" width="6" height="21" rx="1.5" fill="url(#barGrad)" />
+          {/* Bar 5 */}
+          <rect x="52" y="16" width="6" height="24" rx="1.5" fill="url(#barGrad)" />
+          {/* Baseline */}
+          <line x1="8" y1="41" x2="74" y2="41" stroke="#3730a3" strokeWidth="1" />
         </g>
       </svg>
     </div>
@@ -135,4 +213,3 @@ export const PYQIntelligenceIllustration = ({ className = "w-full max-w-[280px] 
 };
 
 export default PYQIntelligenceIllustration;
-
