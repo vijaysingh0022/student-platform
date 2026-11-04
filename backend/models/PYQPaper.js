@@ -2,26 +2,87 @@ import mongoose from "mongoose";
 
 const pyqPaperSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    university: { type: String, default: "AKTU", index: true },
-    course: { type: String, default: "B.Tech" },
-    branch: { type: String, default: "Computer Science & Engineering" },
-    semester: { type: Number, default: 3, index: true },
-    subjectId: { type: String, required: true, index: true },
-    subjectName: { type: String, required: true },
-    subjectCode: { type: String, default: "" },
-    academicYear: { type: String, default: "2023-2024", index: true },
-    examType: {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    title: {
       type: String,
-      enum: ["End Semester", "Mid Semester / Sessional", "Back Paper / Carry Over", "Model Paper"],
+      required: true,
+      trim: true,
+    },
+    originalFilename: {
+      type: String,
+      required: true,
+    },
+    fileSize: {
+      type: Number,
+      default: 0,
+    },
+    mimeType: {
+      type: String,
+      default: "application/pdf",
+    },
+    fileData: {
+      type: String, // Base64 data URI for reliable standalone persistence
+      select: false, // Don't fetch by default for faster metadata queries
+    },
+    // Configuration details
+    university: {
+      type: String,
+      default: "Dr. A.P.J. Abdul Kalam Technical University (AKTU)",
+      trim: true,
+    },
+    course: {
+      type: String,
+      default: "B.Tech",
+      trim: true,
+    },
+    branch: {
+      type: String,
+      default: "Computer Science & Engineering (CSE)",
+      trim: true,
+    },
+    semester: {
+      type: Number,
+      default: 4,
+    },
+    subjectId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    subjectName: {
+      type: String,
+      required: true,
+    },
+    subjectCode: {
+      type: String,
+      default: "KCS-401",
+      trim: true,
+    },
+    academicYear: {
+      type: String,
+      default: "2023-24",
+      trim: true,
+    },
+    examSession: {
+      type: String,
+      enum: ["End Semester", "Mid Semester", "Carry Over / Special", "Class Test", "Supplementary"],
       default: "End Semester",
     },
-    fileName: { type: String, required: true },
-    fileSize: { type: Number, default: 0 },
-    mimeType: { type: String, default: "application/pdf" },
-    rawText: { type: String, default: "" },
-    pageCount: { type: Number, default: 1 },
-    processingStatus: {
+    totalMarks: {
+      type: Number,
+      default: 100,
+    },
+    durationMinutes: {
+      type: Number,
+      default: 180,
+    },
+    // Processing Pipeline Status
+    status: {
       type: String,
       enum: [
         "Uploaded",
@@ -35,15 +96,44 @@ const pyqPaperSchema = new mongoose.Schema(
       default: "Uploaded",
       index: true,
     },
-    progressPercent: { type: Number, default: 0 },
-    statusMessage: { type: String, default: "Queued for extraction" },
-    errorMessage: { type: String, default: "" },
-    extractedQuestionCount: { type: Number, default: 0 },
-    mappedQuestionCount: { type: Number, default: 0 },
+    progressPercent: {
+      type: Number,
+      default: 0,
+    },
+    statusMessage: {
+      type: String,
+      default: "Paper queued for extraction and analysis.",
+    },
+    pageCount: {
+      type: Number,
+      default: 1,
+    },
+    rawExtractedText: {
+      type: String,
+      default: "",
+    },
+    isOcrUsed: {
+      type: Boolean,
+      default: false,
+    },
+    extractedQuestionCount: {
+      type: Number,
+      default: 0,
+    },
+    verifiedQuestionCount: {
+      type: Number,
+      default: 0,
+    },
+    repeatedQuestionCount: {
+      type: Number,
+      default: 0,
+    },
+    errorDetails: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
-const PYQPaper = mongoose.model("PYQPaper", pyqPaperSchema);
-export default PYQPaper;
-
+export default mongoose.model("PYQPaper", pyqPaperSchema);

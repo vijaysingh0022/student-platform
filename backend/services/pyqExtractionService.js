@@ -1,252 +1,242 @@
-import pdf from "pdf-parse/lib/pdf-parse.js";
+import { createRequire } from "module";
+import { createWorker } from "tesseract.js";
+
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
 
 /**
- * Extracts raw text from an uploaded buffer (PDF, scanned PDF, or image).
- * If PDF contains selectable text, returns it directly.
- * If PDF has minimal or zero text (scanned PDF), runs OCR on image buffers or passes to fallback OCR.
+ * Normalizes text for similarity and keyword matching
  */
-export async function extractDocumentText(buffer, mimeType = "application/pdf") {
+export const normalizeText = (text = "") => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+/**
+ * Extracts raw text from Buffer (PDF, Images, etc.)
+ * Intelligently switches between direct text stream extraction and OCR.
+ */
+export async function extractTextFromBuffer(buffer, mimeType, filename = "") {
+  const isPdf = mimeType.includes("pdf") || filename.toLowerCase().endsWith(".pdf");
   const isImage =
     mimeType.includes("image") ||
-    mimeType.includes("jpeg") ||
-    mimeType.includes("jpg") ||
-    mimeType.includes("png");
+    filename.toLowerCase().endsWith(".png") ||
+    filename.toLowerCase().endsWith(".jpg") ||
+    filename.toLowerCase().endsWith(".jpeg");
 
-  if (isImage) {
-    return await runTesseractOCR(buffer);
-  }
-
-  // Handle PDF
-  try {
-    const data = await pdf(buffer);
-    const text = data.text ? data.text.trim() : "";
-
-    // If text has reasonable length (> 120 characters), standard extraction worked
-    if (text.length > 120) {
-      return {
-        text,
-        pageCount: data.numpages || 1,
-        sourceType: "pdf_selectable",
-      };
-    }
-
-    // Otherwise, likely a scanned PDF image! Try OCR fallback
-    const ocrResult = await runTesseractOCR(buffer);
-    return {
-      text: ocrResult.text || text,
-      pageCount: data.numpages || 1,
-      sourceType: "pdf_scanned_ocr",
-    };
-  } catch (err) {
-    console.warn("PDF parse fallback to OCR:", err.message);
+  if (isPdf) {
     try {
-      const ocrResult = await runTesseractOCR(buffer);
-      return {
-        text: ocrResult.text,
-        pageCount: 1,
-        sourceType: "ocr_direct",
-      };
-    } catch (ocrErr) {
-      throw new Error(`Text extraction failed: ${err.message}. OCR error: ${ocrErr.message}`);
+      const data = await pdfParse(buffer);
+      const text = (data.text || "").trim();
+      const pageCount = data.numpages || 1;
+
+      // If PDF has sufficient selectable text (at least 60 characters)
+      if (text.length > 60) {
+        return {
+          text,
+          pageCount,
+          isOcrUsed: false,
+          charCount: text.length,
+        };
+      }
+      console.log(`PDF "${filename}" has sparse text (${text.length} chars). Falling back to OCR.`);
+    } catch (pdfErr) {
+      console.warn("pdf-parse encountered error, falling back to OCR if possible:", pdfErr.message);
     }
   }
-}
 
-/**
- * Tesseract OCR Engine wrapper with dynamic lazy import
- */
-async function runTesseractOCR(buffer) {
-  let worker = null;
+  // If image or scanned PDF requiring OCR
   try {
-    const tesseract = await import("tesseract.js");
-    const createWorker = tesseract.createWorker || tesseract.default?.createWorker;
-    if (!createWorker) {
-      throw new Error("createWorker not found in tesseract.js");
-    }
-    worker = await createWorker("eng");
+    const worker = await createWorker("eng");
     const ret = await worker.recognize(buffer);
     await worker.terminate();
+
     return {
-      text: ret.data.text || "",
-      confidence: ret.data.confidence || 0,
+      text: (ret.data?.text || "").trim(),
+      pageCount: 1,
+      isOcrUsed: true,
+      charCount: (ret.data?.text || "").length,
     };
-  } catch (err) {
-    if (worker) {
-      try {
-        await worker.terminate();
-      } catch (_) {}
-    }
-    console.error("Tesseract OCR execution error:", err.message);
-    return {
-      text: "",
-      confidence: 0,
-      error: err.message,
-    };
+  } catch (ocrErr) {
+    console.error("OCR error during extraction:", ocrErr.message);
+    throw new Error(`Failed to extract text via OCR: ${ocrErr.message}`);
   }
 }
 
 /**
- * Segments raw examination paper text into structured question objects.
- * Handles patterns like:
- * - "Q1(a) Explain...", "1. (b) What is...", "Section A", "Attempt any five...", etc.
+ * Parses raw text into discrete university question blocks.
+ * Handles AKTU / Indian University standard pattern:
+ * - Section A: Q1 (a) to (j) [2 marks each]
+ * - Section B: Q2 (a) to (e) [7 or 10 marks each]
+ * - Section C: Q3, Q4, Q5, Q6, Q7 with (a) OR (b) internal choices
  */
-export function segmentQuestionsFromText(rawText, paperMeta = {}) {
-  if (!rawText || typeof rawText !== "string") return [];
+export function parseRawTextIntoQuestions(rawText, defaultMarks = 2) {
+  if (!rawText || rawText.length < 20) return [];
 
   const lines = rawText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const questions = [];
 
-  // Patterns for Question boundaries
-  const questionNumberRegex = /^(?:Q(?:uestion)?\.?\s*(\d+)|(\d+)[\.\)]|(?:Part|Section)\s*([A-Za-z0-9]+))(?:\s*[\(\[]?([a-zA-Z0-9]+)[\)\]]?)?/i;
-  const marksRegex = /(?:\[\s*(\d+)\s*(?:Marks?|M)?\s*\]|\(\s*(\d+)\s*(?:Marks?|M)?\s*\)|(?:Marks?|CO\d+)\s*[:=-]?\s*(\d+)|(\d+)\s*Marks)/i;
-
-  let currentQuestion = null;
   let currentSection = "Section A";
+  let activeQuestion = null;
+
+  // Regex patterns for section headers
+  const sectionHeaderRegex = /^(?:SECTION|PART|GROUP)\s*[-:]?\s*([A-E1-5])/i;
+
+  // Regex patterns for questions:
+  // Examples:
+  // "1. (a) Define Abstract Data Type."
+  // "Q.1 a) Explain B-Tree."
+  // "1(a) Differentiate between stack and queue."
+  // "2. Attempt any three of the following:"
+  // "(a) Construct AVL tree..."
+  // "Q3. What is normalisation?"
+  const qNumRegex =
+    /^(?:Q(?:uestion)?\.?\s*)?(\d{1,2})\s*(?:[.)\s]|\((?:[a-z]|[0-9]+)\)|(?:[a-z]\)))/i;
+  const subQRegex = /^\(?([a-jA-J]|\d{1,2})\)?\s*[\.\):\-]\s*(.*)$/;
+
+  let runningQNumber = 1;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Detect section header
-    if (/^section\s+[a-c]/i.test(line) || /^part\s+[a-c]/i.test(line)) {
-      currentSection = line;
+    // Check Section change
+    const secMatch = line.match(sectionHeaderRegex);
+    if (secMatch) {
+      currentSection = `Section ${secMatch[1].toUpperCase()}`;
       continue;
     }
 
-    // Skip university header noise and meta instructions like "Attempt any three...", "Attempt all questions..."
+    // Skip university header noise and instructions
     if (
-      /^(roll no|paper id|time\s*:|maximum marks|printed pages|total marks|b\.tech|examination|note\s*:|attempt\s+(?:all|any|one)|answer\s+(?:any|all))/i.test(
-        line
-      ) ||
-      /^(\d+[\.\)]\s*attempt\s+(?:all|any|one))/i.test(line)
+      line.match(/roll\s*no/i) ||
+      line.match(/printed\s*pages/i) ||
+      line.match(/paper\s*id/i) ||
+      line.match(/total\s*marks/i) ||
+      line.match(/time\s*:\s*\d/i) ||
+      line.match(/b\.?\s*tech/i) ||
+      line.match(/dr\.\s*a\.p\.j/i) ||
+      line.match(/examination\s*\d/i) ||
+      line.match(/semester\s*examination/i) ||
+      line.match(/data\s*structures\s*&\s*algorithms\s*\(kcs/i) ||
+      line.match(/attempt\s*(?:all|any)/i) ||
+      line.match(/note\s*:\s*attempt/i)
     ) {
       continue;
     }
 
-    const match = line.match(questionNumberRegex);
-    if (match) {
-      // Save previous question
-      if (currentQuestion && currentQuestion.lines.join(" ").trim().length > 15) {
-        questions.push(finalizeQuestion(currentQuestion, paperMeta));
+    // Check if line starts a question
+    const qMatch = line.match(/^(?:Q\.?\s*)?(\d{1,2})\s*[\.\)]\s*(.*)$/i);
+    const subMatch = line.match(/^[\(\[]?([a-jA-J])[\)\]\.]\s*(.*)$/);
+
+    if (qMatch) {
+      if (activeQuestion && activeQuestion.text.length > 5) {
+        questions.push(finalizeQuestion(activeQuestion, defaultMarks));
       }
-
-      // Start new question
-      const qNum = match[1] || match[2] || `${questions.length + 1}`;
-      const subPart = match[4] ? `(${match[4]})` : "";
-      const fullQNumber = subPart ? `Q${qNum}${subPart}` : `Q${qNum}`;
-
-      // Extract marks if present on this line
-      const marksMatch = line.match(marksRegex);
-      const marksVal = marksMatch ? parseInt(marksMatch[1] || marksMatch[2] || marksMatch[3] || marksMatch[4], 10) : 5;
-
-      // Clean line from question prefix
-      const strippedText = line.replace(questionNumberRegex, "").trim();
-
-      currentQuestion = {
-        questionNumber: fullQNumber,
+      const qNum = qMatch[1];
+      const rest = qMatch[2] || "";
+      activeQuestion = {
+        number: `Q${qNum}`,
         section: currentSection,
-        lines: strippedText ? [strippedText] : [],
-        marks: marksVal || 5,
-        pageNumber: 1,
+        text: rest,
+        marks: deriveMarksFromLine(line, currentSection),
       };
-    } else if (currentQuestion) {
-      // Check if this continuation line has marks indicator
-      const marksMatch = line.match(marksRegex);
-      if (marksMatch && currentQuestion.marks === 5) {
-        currentQuestion.marks = parseInt(
-          marksMatch[1] || marksMatch[2] || marksMatch[3] || marksMatch[4],
-          10
-        );
+      runningQNumber = parseInt(qNum, 10) + 1;
+    } else if (subMatch) {
+      if (activeQuestion && activeQuestion.text.length > 5) {
+        questions.push(finalizeQuestion(activeQuestion, defaultMarks));
       }
-      currentQuestion.lines.push(line);
+      const subLetter = subMatch[1].toLowerCase();
+      const rest = subMatch[2] || "";
+      const parentNum = activeQuestion ? activeQuestion.number.replace(/[a-z\(\)]/gi, "") : `Q${runningQNumber}`;
+      activeQuestion = {
+        number: `${parentNum}(${subLetter})`,
+        section: currentSection,
+        text: rest,
+        marks: deriveMarksFromLine(line, currentSection),
+      };
+    } else if (activeQuestion) {
+      // Continue appending text to the current question
+      // Check if line indicates marks e.g. "(7 Marks)" or "[10]"
+      const explicitMarks = line.match(/[\(\[]\s*(\d{1,2})\s*(?:marks?|m)?\s*[\)\]]$/i);
+      if (explicitMarks) {
+        activeQuestion.marks = parseInt(explicitMarks[1], 10);
+      }
+      activeQuestion.text += " " + line;
+    } else if (line.length > 15 && !line.includes("===")) {
+      // Freeform line without clear prefix
+      activeQuestion = {
+        number: `Q${runningQNumber}`,
+        section: currentSection,
+        text: line,
+        marks: deriveMarksFromLine(line, currentSection),
+      };
+      runningQNumber++;
     }
   }
 
-  if (currentQuestion && currentQuestion.lines.join(" ").trim().length > 15) {
-    questions.push(finalizeQuestion(currentQuestion, paperMeta));
+  if (activeQuestion && activeQuestion.text.length > 5) {
+    questions.push(finalizeQuestion(activeQuestion, defaultMarks));
   }
 
-  // Fallback if regex found 0 questions (e.g. non-standard format)
-  if (questions.length === 0 && lines.length > 5) {
-    return fallbackQuestionChunking(lines, paperMeta);
-  }
-
-  return questions;
+  return questions.filter((q) => q.questionText && q.questionText.length > 8);
 }
 
-function finalizeQuestion(qObj, paperMeta) {
-  const fullText = qObj.lines.join(" ").replace(/\s+/g, " ").trim();
-  const qType = detectQuestionType(fullText, qObj.marks);
-  const diff = detectDifficulty(fullText, qObj.marks);
+function deriveMarksFromLine(line, section) {
+  const explicit = line.match(/[\(\[]\s*(\d{1,2})\s*(?:marks?|m)?\s*[\)\]]/i);
+  if (explicit) {
+    return parseInt(explicit[1], 10);
+  }
+  if (section.toLowerCase().includes("b") || section.toLowerCase().includes("c")) {
+    return 7;
+  }
+  return 2;
+}
 
+function finalizeQuestion(rawObj, defaultMarks) {
+  const cleanText = rawObj.text.replace(/\s+/g, " ").trim();
+  const qType = detectQuestionType(cleanText);
   return {
-    questionNumber: qObj.questionNumber || "Q1",
-    questionText: fullText,
-    rawQuestionText: fullText,
-    marks: qObj.marks || (qType === "Short Answer" ? 2 : 7),
+    questionNumber: rawObj.number,
+    section: rawObj.section,
+    questionText: cleanText,
+    marks: rawObj.marks || defaultMarks,
     questionType: qType,
-    difficulty: diff,
-    pageNumber: qObj.pageNumber || 1,
-    academicYear: paperMeta.academicYear || "2023-2024",
-    university: paperMeta.university || "AKTU",
-    subjectId: paperMeta.subjectId || "dsa",
-    subjectName: paperMeta.subjectName || "Data Structures & Algorithms",
+    difficulty: deriveDifficulty(cleanText, rawObj.marks || defaultMarks),
   };
 }
 
-function fallbackQuestionChunking(lines, paperMeta) {
-  const chunks = [];
-  let current = [];
-  for (const line of lines) {
-    if (
-      /^[a-z0-9][\.\)]/i.test(line) ||
-      /\?\s*$/i.test(line) ||
-      current.length >= 4
-    ) {
-      if (current.length > 0) {
-        chunks.push(current.join(" "));
-        current = [];
-      }
-    }
-    current.push(line);
-  }
-  if (current.length > 0) chunks.push(current.join(" "));
-
-  return chunks
-    .filter((c) => c.length > 20)
-    .map((text, idx) => ({
-      questionNumber: `Q${idx + 1}`,
-      questionText: text,
-      rawQuestionText: text,
-      marks: text.length > 200 ? 7 : 5,
-      questionType: detectQuestionType(text, 5),
-      difficulty: "Medium",
-      pageNumber: 1,
-      academicYear: paperMeta.academicYear || "2023-2024",
-      university: paperMeta.university || "AKTU",
-      subjectId: paperMeta.subjectId || "dsa",
-      subjectName: paperMeta.subjectName || "Data Structures & Algorithms",
-    }));
-}
-
-function detectQuestionType(text, marks) {
+export function detectQuestionType(text) {
   const lower = text.toLowerCase();
-  if (/\b(mcq|choose the correct|select the)\b/i.test(lower)) return "MCQ";
-  if (/\b(derive|derivation|prove that|mathematical proof)\b/i.test(lower)) return "Derivation";
-  if (/\b(calculate|compute|solve for|find the value|evaluate the following expression)\b/i.test(lower) || /\d+\s*[\+\*\-\/]\s*\d+/.test(lower)) return "Numerical";
-  if (/\b(write a program|c\+\+|java|python|pseudo-code|algorithm to|code)\b/i.test(lower)) return "Programming Questions";
-  if (/\b(diagram|draw|schematic|architecture diagram|flowchart)\b/i.test(lower)) return "Diagram-based Questions";
-  if (/\b(case study|scenario|consider a company|suppose an organization)\b/i.test(lower)) return "Case-based Questions";
-  if (marks <= 2 || /\b(define|what is|name the|state)\b/i.test(lower)) return "Short Answer";
+  if (lower.match(/^(?:calculate|find|solve|evaluate|determine the value|for the following data)/i) || lower.match(/\b(?:eigenvalue|fifo|sjf|round robin|disk scheduling|b-tree insertion|avl rotation|dijkstra)\b/i)) {
+    return "Numerical";
+  }
+  if (lower.match(/\b(?:derive|prove that|mathematical proof|induction)\b/i)) {
+    return "Derivation";
+  }
+  if (lower.match(/\b(?:write a (?:program|c|c\+\+|python|java|function|algorithm)|code|pseudo-?code|implement)\b/i)) {
+    return "Programming Question";
+  }
+  if (lower.match(/\b(?:draw|diagram|architecture|schematic|illustrate with diagram)\b/i)) {
+    return "Diagram-based Question";
+  }
+  if (lower.match(/\b(?:case study|scenario|assume you are|real-world application)\b/i)) {
+    return "Case-based Question";
+  }
+  if (lower.length < 80 || lower.match(/\b(?:define|what is|state|list|name)\b/i)) {
+    return "Short Answer";
+  }
   return "Long Answer";
 }
 
-function detectDifficulty(text, marks) {
-  const lower = text.toLowerCase();
-  if (marks >= 10 || /\b(design|synthesize|derive|prove that|critically analyze)\b/i.test(lower)) {
+function deriveDifficulty(text, marks) {
+  if (marks >= 10 || text.toLowerCase().includes("design and analyze") || text.toLowerCase().includes("prove that")) {
     return "Hard";
   }
-  if (marks <= 2 || /\b(define|list|state|what is)\b/i.test(lower)) {
-    return "Easy";
+  if (marks >= 5 || text.length > 150) {
+    return "Medium";
   }
-  return "Medium";
+  return "Easy";
 }

@@ -1,337 +1,364 @@
 import PYQPaper from "../models/PYQPaper.js";
 import PYQQuestion from "../models/PYQQuestion.js";
 import PYQMockPaper from "../models/PYQMockPaper.js";
-import { extractDocumentText, segmentQuestionsFromText } from "../services/pyqExtractionService.js";
-import { mapQuestionToSyllabus, computeQuestionSimilarity } from "../services/pyqSyllabusService.js";
 import {
-  generateExamAnswerForQuestion,
-  generateAIPracticeQuestions,
-  askPYQChat,
-} from "../services/pyqAIService.js";
+  extractTextFromBuffer,
+  parseRawTextIntoQuestions,
+  normalizeText,
+} from "../services/pyqExtractionService.js";
+import {
+  mapQuestionToSyllabus,
+  calculateQuestionSimilarity,
+  computeQuestionPriority,
+} from "../services/pyqSyllabusService.js";
+import { getAIClient, getAIModel } from "../config/ai.js";
+import { CURRICULUM_SUBJECTS } from "../seed/curriculumData.js";
 
-// ── 1. GET DASHBOARD METRICS ──────────────────────────────────────────────────
-export const getPYQDashboardMetrics = async (req, res) => {
+// ─── 1. GET PYQ DASHBOARD METRICS & RECENT PAPERS ───────────────────────────
+// @route GET /api/pyq/dashboard
+export const getPYQDashboard = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { subjectId } = req.query;
 
-    const paperFilter = { userId };
-    const questionFilter = { userId };
-    if (subjectId) {
-      paperFilter.subjectId = subjectId;
-      questionFilter.subjectId = subjectId;
-    }
-
-    const [papers, questions, mockPapers] = await Promise.all([
-      PYQPaper.find(paperFilter).sort({ createdAt: -1 }).lean(),
-      PYQQuestion.find(questionFilter).lean(),
-      PYQMockPaper.find({ userId }).sort({ createdAt: -1 }).lean(),
+    const [papers, totalQuestions, repeatedQuestions] = await Promise.all([
+      PYQPaper.find({ userId }).sort({ createdAt: -1 }).lean(),
+      PYQQuestion.countDocuments({ userId }),
+      PYQQuestion.countDocuments({ userId, isRepeated: true }),
     ]);
 
-    const subjectsSet = new Set(papers.map((p) => p.subjectId).filter(Boolean));
-    const unitsSet = new Set(questions.map((q) => q.unitId).filter(Boolean));
-    const repeatedQuestions = questions.filter(
-      (q) => q.isExactDuplicate || q.isConceptuallySimilar || q.similarQuestionCount > 0
-    );
-
-    // Group questions by unit
-    const unitStats = {};
-    const topicStats = {};
-    const yearStats = {};
-    const typeStats = {};
-
-    questions.forEach((q) => {
-      // Unit stats
-      const uKey = q.unitName || q.unitId || "General";
-      unitStats[uKey] = (unitStats[uKey] || 0) + 1;
-
-      // Topic stats
-      if (q.topicTitle) {
-        topicStats[q.topicTitle] = (topicStats[q.topicTitle] || 0) + 1;
-      }
-
-      // Year stats
-      const yKey = q.academicYear || "Unknown";
-      yearStats[yKey] = (yearStats[yKey] || 0) + 1;
-
-      // Type stats
-      const tKey = q.questionType || "Long Answer";
-      typeStats[tKey] = (typeStats[tKey] || 0) + 1;
-    });
-
-    const unitDistribution = Object.entries(unitStats).map(([name, count]) => ({ name, count }));
-    const topicDistribution = Object.entries(topicStats)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-    const yearDistribution = Object.entries(yearStats).map(([name, count]) => ({ name, count }));
-    const typeDistribution = Object.entries(typeStats).map(([name, count]) => ({ name, count }));
-
-    // Preparation status breakdown
-    const prepBreakdown = {
-      notStarted: questions.filter((q) => q.prepStatus === "Not Started").length,
-      learning: questions.filter((q) => q.prepStatus === "Learning").length,
-      revised: questions.filter((q) => q.prepStatus === "Revised").length,
-      confident: questions.filter((q) => q.prepStatus === "Confident").length,
-    };
+    // Unique subjects analyzed
+    const subjectSet = new Set(papers.map((p) => p.subjectId));
+    // Unique units covered
+    const unitAggregation = await PYQQuestion.distinct("unitNumber", { userId });
 
     return res.json({
       success: true,
       metrics: {
-        papersAnalyzed: papers.length,
-        questionsExtracted: questions.length,
-        repeatedQuestionsFound: repeatedQuestions.length,
-        subjectsAnalyzed: subjectsSet.size,
-        unitsCovered: unitsSet.size,
-        mockPapersGenerated: mockPapers.length,
+        papersAnalyzed: papers.filter((p) => p.status === "Analysis Complete").length,
+        totalPapersUploaded: papers.length,
+        questionsExtracted: totalQuestions,
+        repeatedQuestionsFound: repeatedQuestions,
+        subjectsAnalyzed: subjectSet.size,
+        unitsCovered: unitAggregation.length || 0,
       },
-      papers: papers.slice(0, 10),
-      charts: {
-        unitDistribution,
-        topicDistribution,
-        yearDistribution,
-        typeDistribution,
-      },
-      prepBreakdown,
+      recentPapers: papers.slice(0, 10),
     });
-  } catch (err) {
-    console.error("PYQ Dashboard metrics error:", err);
-    return res.status(500).json({ success: false, message: "Failed to load dashboard metrics" });
+  } catch (error) {
+    console.error("PYQ Dashboard Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load PYQ dashboard metrics." });
   }
 };
 
-// ── 2. UPLOAD & PROCESS PYQ PAPER ─────────────────────────────────────────────
-export const uploadAndProcessPaper = async (req, res) => {
+// ─── 2. BATCH UPLOAD PREVIOUS YEAR PAPERS ───────────────────────────────────
+// @route POST /api/pyq/upload
+export const uploadPYQPapers = async (req, res) => {
   try {
     const userId = req.user._id;
-    const file = req.file;
+    const files = req.files || [];
 
-    if (!file) {
-      return res.status(400).json({ success: false, message: "No file provided for upload" });
+    if (!files || files.length === 0) {
+      return res.status(400).json({ success: false, message: "No question paper files uploaded." });
     }
 
     const {
-      university = "AKTU",
+      university = "Dr. A.P.J. Abdul Kalam Technical University (AKTU)",
       course = "B.Tech",
-      branch = "Computer Science & Engineering",
-      semester = 3,
+      branch = "Computer Science & Engineering (CSE)",
+      semester = 4,
       subjectId = "dsa",
-      subjectName = "Data Structures & Algorithms",
-      subjectCode = "KCS-301",
-      academicYear = "2023-2024",
-      examType = "End Semester",
+      subjectName,
+      subjectCode = "KCS-401",
+      academicYear = "2023-24",
+      examSession = "End Semester",
+      totalMarks = 100,
+      durationMinutes = 180,
     } = req.body;
 
-    // 1. Create Paper record
-    const paper = new PYQPaper({
-      userId,
-      university,
-      course,
-      branch,
-      semester: Number(semester),
-      subjectId,
-      subjectName,
-      subjectCode,
-      academicYear,
-      examType,
-      fileName: file.originalname,
-      fileSize: file.size,
-      mimeType: file.mimetype,
-      processingStatus: "Extracting Text",
-      progressPercent: 20,
-      statusMessage: "Reading document contents...",
-    });
+    const resolvedSubjectName =
+      subjectName ||
+      CURRICULUM_SUBJECTS.find((s) => s.subjectId === subjectId)?.name ||
+      "Data Structures & Algorithms";
 
-    await paper.save();
+    const createdPapers = [];
 
-    // 2. Perform Extraction (Synchronous in request or async)
-    const docResult = await extractDocumentText(file.buffer, file.mimetype);
-    paper.rawText = docResult.text || "";
-    paper.pageCount = docResult.pageCount || 1;
-    paper.processingStatus = "Identifying Questions";
-    paper.progressPercent = 50;
-    paper.statusMessage = "Segmenting questions and boundary markers...";
-    await paper.save();
+    for (const file of files) {
+      const base64Data = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-    // 3. Segment Questions
-    const rawQuestions = segmentQuestionsFromText(paper.rawText, {
-      academicYear,
-      university,
-      subjectId,
-      subjectName,
-    });
-
-    paper.processingStatus = "Mapping Syllabus";
-    paper.progressPercent = 75;
-    paper.statusMessage = `Mapping ${rawQuestions.length} extracted questions to curriculum topics...`;
-    await paper.save();
-
-    // 4. Map questions to LearnX curriculum & insert
-    const insertedQuestions = [];
-    const existingSubjectQuestions = await PYQQuestion.find({ userId, subjectId }).lean();
-
-    for (const rq of rawQuestions) {
-      const mapping = await mapQuestionToSyllabus(rq.questionText, subjectId);
-
-      // Check duplicates against existing questions in this subject
-      let isExact = false;
-      let isSimilar = false;
-      let matchedId = null;
-
-      for (const ex of existingSubjectQuestions) {
-        const sim = computeQuestionSimilarity(rq.questionText, ex.questionText);
-        if (sim.isExact) {
-          isExact = true;
-          matchedId = ex._id;
-          break;
-        } else if (sim.isConceptuallySimilar) {
-          isSimilar = true;
-          matchedId = ex._id;
-        }
-      }
-
-      // Priority calculation
-      let priorityLevel = "Medium Priority";
-      let priorityReason = "Standard curriculum topic";
-      if (isExact || isSimilar) {
-        priorityLevel = "High Priority";
-        priorityReason = "Frequently observed across multiple previous exam cycles";
-      } else if (mapping.mappingConfidence > 0.6) {
-        priorityLevel = "High Priority";
-        priorityReason = `Core high-yield topic in ${mapping.topicTitle || "curriculum"}`;
-      }
-
-      const qDoc = new PYQQuestion({
+      const newPaper = await PYQPaper.create({
         userId,
-        paperId: paper._id,
-        subjectId,
-        subjectName,
+        title: `${resolvedSubjectName} (${academicYear} ${examSession})`,
+        originalFilename: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        fileData: base64Data,
         university,
+        course,
+        branch,
+        semester: Number(semester) || 4,
+        subjectId,
+        subjectName: resolvedSubjectName,
+        subjectCode,
         academicYear,
-        examType,
-        questionNumber: rq.questionNumber,
-        rawQuestionText: rq.rawQuestionText,
-        questionText: rq.questionText,
-        marks: rq.marks,
-        pageNumber: rq.pageNumber,
-        questionType: rq.questionType,
-        difficulty: rq.difficulty,
-
-        unitId: mapping.unitId,
-        unitName: mapping.unitName,
-        chapterId: mapping.chapterId,
-        chapterName: mapping.chapterName,
-        topicId: mapping.topicId,
-        topicTitle: mapping.topicTitle,
-        subtopics: mapping.subtopics,
-        mappingConfidence: mapping.mappingConfidence,
-        mappingEvidence: mapping.mappingEvidence,
-        verificationStatus: mapping.verificationStatus,
-        suggestedTopics: mapping.suggestedTopics,
-
-        isExactDuplicate: isExact,
-        isConceptuallySimilar: isSimilar,
-        similarQuestionCount: isExact || isSimilar ? 1 : 0,
-        matchedQuestionIds: matchedId ? [matchedId] : [],
-        priorityLevel,
-        priorityReason,
+        examSession,
+        totalMarks: Number(totalMarks) || 100,
+        durationMinutes: Number(durationMinutes) || 180,
+        status: "Uploaded",
+        progressPercent: 10,
+        statusMessage: "File received securely. Queued for extraction.",
       });
 
-      await qDoc.save();
-      insertedQuestions.push(qDoc);
+      createdPapers.push(newPaper);
+
+      // Trigger asynchronous background extraction pipeline
+      processPaperBackground(newPaper._id, file.buffer, file.mimetype, file.originalname, userId).catch(
+        (pipelineErr) => {
+          console.error(`Pipeline failure for paper ${newPaper._id}:`, pipelineErr);
+        }
+      );
     }
 
-    // 5. Finalize Paper Status
-    paper.extractedQuestionCount = insertedQuestions.length;
-    paper.mappedQuestionCount = insertedQuestions.filter(
-      (q) => q.verificationStatus === "Auto Mapped"
-    ).length;
-    paper.processingStatus = "Analysis Complete";
-    paper.progressPercent = 100;
-    paper.statusMessage = `Analysis complete! Successfully extracted ${insertedQuestions.length} questions.`;
-    await paper.save();
-
-    return res.json({
+    return res.status(201).json({
       success: true,
-      paper,
-      questionsCount: insertedQuestions.length,
+      message: `Successfully uploaded ${createdPapers.length} question paper(s). Processing in background.`,
+      papers: createdPapers,
     });
-  } catch (err) {
-    console.error("Upload & Process PYQ error:", err);
-    return res.status(500).json({ success: false, message: `Processing failed: ${err.message}` });
+  } catch (error) {
+    console.error("Upload PYQ Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to upload question paper files." });
   }
 };
 
-// ── 3. LIST EXTRACTED QUESTIONS WITH ADVANCED FILTERS ──────────────────────────
+// ─── 3. ASYNCHRONOUS PIPELINE: TEXT EXTRACTION, OCR & SYLLABUS MAPPING ───────
+async function processPaperBackground(paperId, buffer, mimeType, filename, userId) {
+  try {
+    const paper = await PYQPaper.findById(paperId);
+    if (!paper) return;
+
+    // Step 1: Text extraction / OCR
+    await PYQPaper.findByIdAndUpdate(paperId, {
+      status: "Extracting Text",
+      progressPercent: 30,
+      statusMessage: "Reading PDF document and optical stream...",
+    });
+
+    const { text, pageCount, isOcrUsed } = await extractTextFromBuffer(buffer, mimeType, filename);
+
+    if (!text || text.length < 20) {
+      await PYQPaper.findByIdAndUpdate(paperId, {
+        status: "Failed / Needs Review",
+        progressPercent: 100,
+        statusMessage: "Could not extract legible text. Please upload a clearer scan or selectable PDF.",
+        errorDetails: "Extracted text length is under minimum threshold.",
+      });
+      return;
+    }
+
+    // Step 2: Boundary detection & Question splitting
+    await PYQPaper.findByIdAndUpdate(paperId, {
+      status: isOcrUsed ? "OCR Processing" : "Identifying Questions",
+      progressPercent: 55,
+      rawExtractedText: text,
+      pageCount,
+      isOcrUsed,
+      statusMessage: "Detecting question boundaries, sub-questions, and marks allocation...",
+    });
+
+    const parsedQuestions = parseRawTextIntoQuestions(text, 2);
+
+    if (parsedQuestions.length === 0) {
+      await PYQPaper.findByIdAndUpdate(paperId, {
+        status: "Failed / Needs Review",
+        progressPercent: 100,
+        statusMessage: "No questions could be isolated from this layout. Marked for review.",
+        errorDetails: "Zero question markers identified.",
+      });
+      return;
+    }
+
+    // Step 3: Syllabus Mapping & Priority Calculation
+    await PYQPaper.findByIdAndUpdate(paperId, {
+      status: "Mapping Syllabus",
+      progressPercent: 75,
+      statusMessage: `Mapping ${parsedQuestions.length} extracted questions to LearnX curriculum units...`,
+    });
+
+    const existingUserQuestions = await PYQQuestion.find({
+      userId,
+      subjectId: paper.subjectId,
+    }).lean();
+
+    const insertedDocs = [];
+
+    for (const q of parsedQuestions) {
+      const syllabusMap = await mapQuestionToSyllabus(q.questionText, paper.subjectId);
+      const normQ = normalizeText(q.questionText);
+
+      // Check duplicates against previous papers for this user
+      let isRep = false;
+      let repeatCount = 1;
+      const repeatedYears = [paper.academicYear];
+      const similarRefs = [];
+
+      for (const ex of existingUserQuestions) {
+        if (ex.paperId.toString() === paperId.toString()) continue;
+        const sim = calculateQuestionSimilarity(q.questionText, ex.questionText);
+        if (sim.type !== "Unrelated") {
+          isRep = true;
+          repeatCount++;
+          if (!repeatedYears.includes(ex.academicYear)) repeatedYears.push(ex.academicYear);
+          similarRefs.push({
+            questionId: ex._id,
+            paperId: ex.paperId,
+            year: ex.academicYear,
+            questionNumber: ex.questionNumber,
+            similarityScore: sim.score,
+            similarityType: sim.type,
+          });
+        }
+      }
+
+      const priority = computeQuestionPriority({
+        repeatCount,
+        marks: q.marks,
+        academicYear: paper.academicYear,
+        topicTitle: syllabusMap.topicTitle,
+      });
+
+      const questionDoc = {
+        userId,
+        paperId: paper._id,
+        subjectId: paper.subjectId,
+        subjectName: paper.subjectName,
+        academicYear: paper.academicYear,
+        examSession: paper.examSession,
+        paperTitle: paper.title,
+        pageNumber: 1,
+        questionNumber: q.questionNumber,
+        section: q.section,
+        questionText: q.questionText,
+        normalizedText: normQ,
+        marks: q.marks,
+        questionType: q.questionType,
+        difficulty: q.difficulty,
+        unitId: syllabusMap.unitId,
+        unitNumber: syllabusMap.unitNumber,
+        unitName: syllabusMap.unitName,
+        chapterId: syllabusMap.chapterId,
+        topicId: syllabusMap.topicId,
+        topicTitle: syllabusMap.topicTitle,
+        subtopics: syllabusMap.subtopics,
+        mappingConfidence: syllabusMap.mappingConfidence,
+        mappingEvidence: syllabusMap.mappingEvidence,
+        verificationStatus: syllabusMap.verificationStatus,
+        isRepeated: isRep,
+        repeatCount,
+        repeatedYears,
+        similarQuestionReferences: similarRefs,
+        priorityLevel: priority.priorityLevel,
+        priorityScore: priority.score,
+        priorityReason: priority.priorityReason,
+        studyStatus: "Not Started",
+      };
+
+      insertedDocs.push(questionDoc);
+    }
+
+    await PYQQuestion.insertMany(insertedDocs);
+
+    // Finalize Paper Record
+    const repeatedCount = insertedDocs.filter((d) => d.isRepeated).length;
+    await PYQPaper.findByIdAndUpdate(paperId, {
+      status: "Analysis Complete",
+      progressPercent: 100,
+      extractedQuestionCount: insertedDocs.length,
+      verifiedQuestionCount: insertedDocs.filter((d) => d.verificationStatus === "Verified").length,
+      repeatedQuestionCount: repeatedCount,
+      statusMessage: `Successfully extracted ${insertedDocs.length} questions across all sections.`,
+    });
+  } catch (err) {
+    console.error("Paper background pipeline error:", err);
+    await PYQPaper.findByIdAndUpdate(paperId, {
+      status: "Failed / Needs Review",
+      progressPercent: 100,
+      statusMessage: `Pipeline error: ${err.message}`,
+      errorDetails: err.stack,
+    });
+  }
+}
+
+// ─── 4. GET PROCESSING STATUS FOR POLLING/PROGRESS ──────────────────────────
+// @route GET /api/pyq/papers/:paperId/status
+export const getPaperStatus = async (req, res) => {
+  try {
+    const { paperId } = req.params;
+    const paper = await PYQPaper.findOne({ _id: paperId, userId: req.user._id })
+      .select("status progressPercent statusMessage extractedQuestionCount repeatedQuestionCount")
+      .lean();
+
+    if (!paper) {
+      return res.status(404).json({ success: false, message: "Paper not found." });
+    }
+
+    return res.json({ success: true, paper });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch status." });
+  }
+};
+
+// ─── 5. GET EXTRACTED QUESTIONS WITH ADVANCED FILTERS ───────────────────────
+// @route GET /api/pyq/questions
 export const getPYQQuestions = async (req, res) => {
   try {
     const userId = req.user._id;
     const {
       subjectId,
       paperId,
-      unitId,
-      topicId,
+      unitNumber,
+      priorityLevel,
       questionType,
       difficulty,
-      marks,
-      priorityLevel,
-      prepStatus,
+      isRepeated,
+      studyStatus,
       search,
     } = req.query;
 
     const filter = { userId };
+
     if (subjectId) filter.subjectId = subjectId;
     if (paperId) filter.paperId = paperId;
-    if (unitId) filter.unitId = unitId;
-    if (topicId) filter.topicId = topicId;
+    if (unitNumber) filter.unitNumber = Number(unitNumber);
+    if (priorityLevel) filter.priorityLevel = priorityLevel;
     if (questionType) filter.questionType = questionType;
     if (difficulty) filter.difficulty = difficulty;
-    if (marks) filter.marks = Number(marks);
-    if (priorityLevel) filter.priorityLevel = priorityLevel;
-    if (prepStatus) filter.prepStatus = prepStatus;
+    if (isRepeated !== undefined) filter.isRepeated = isRepeated === "true";
+    if (studyStatus) filter.studyStatus = studyStatus;
 
-    if (search) {
-      filter.$text = { $search: search };
+    if (search && search.trim()) {
+      filter.questionText = { $regex: search.trim(), $options: "i" };
     }
 
     const questions = await PYQQuestion.find(filter)
-      .sort({ createdAt: -1 })
-      .populate("paperId", "fileName academicYear examType")
+      .sort({ marks: -1, priorityScore: -1, questionNumber: 1 })
       .lean();
 
     return res.json({ success: true, count: questions.length, questions });
-  } catch (err) {
-    console.error("Get PYQ questions error:", err);
-    return res.status(500).json({ success: false, message: "Failed to fetch questions" });
+  } catch (error) {
+    console.error("Get Questions Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load questions." });
   }
 };
 
-// ── 4. UPDATE QUESTION PREPARATION STATUS OR MANUAL SYLLABUS CORRECTION ─────
+// ─── 6. UPDATE QUESTION DETAILS / MANUAL CORRECTION ─────────────────────────
+// @route PATCH /api/pyq/questions/:questionId
 export const updatePYQQuestion = async (req, res) => {
   try {
-    const userId = req.user._id;
     const { questionId } = req.params;
-    const {
-      prepStatus,
-      userNotes,
-      topicId,
-      topicTitle,
-      unitId,
-      unitName,
-      verificationStatus,
-    } = req.body;
+    const userId = req.user._id;
+    const updates = req.body;
 
-    const updates = {};
-    if (prepStatus) {
-      updates.prepStatus = prepStatus;
-      updates.lastRevisedAt = new Date();
+    if (updates.topicTitle || updates.unitNumber) {
+      updates.verificationStatus = "Manually Edited";
     }
-    if (userNotes !== undefined) updates.userNotes = userNotes;
-    if (topicId) updates.topicId = topicId;
-    if (topicTitle) updates.topicTitle = topicTitle;
-    if (unitId) updates.unitId = unitId;
-    if (unitName) updates.unitName = unitName;
-    if (verificationStatus) updates.verificationStatus = verificationStatus;
 
     const updated = await PYQQuestion.findOneAndUpdate(
       { _id: questionId, userId },
@@ -340,239 +367,566 @@ export const updatePYQQuestion = async (req, res) => {
     );
 
     if (!updated) {
-      return res.status(404).json({ success: false, message: "Question not found" });
+      return res.status(404).json({ success: false, message: "Question not found." });
     }
 
     return res.json({ success: true, question: updated });
-  } catch (err) {
-    console.error("Update PYQ Question error:", err);
-    return res.status(500).json({ success: false, message: "Failed to update question" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to update question." });
   }
 };
 
-// ── 5. AI EXAM ANSWER STUDIO ──────────────────────────────────────────────────
-export const getAIExamAnswer = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { questionId } = req.params;
-    const { marks = 5, mode = "standard" } = req.body;
-
-    const question = await PYQQuestion.findOne({ _id: questionId, userId });
-    if (!question) {
-      return res.status(404).json({ success: false, message: "Question not found" });
-    }
-
-    const answer = await generateExamAnswerForQuestion({
-      questionText: question.questionText,
-      marks: Number(marks) || question.marks || 5,
-      subjectName: question.subjectName,
-      topicTitle: question.topicTitle,
-      mode,
-    });
-
-    return res.json({
-      success: true,
-      questionId,
-      questionText: question.questionText,
-      marks,
-      mode,
-      answer,
-    });
-  } catch (err) {
-    console.error("AI Exam Answer error:", err);
-    return res.status(500).json({ success: false, message: "Failed to generate answer" });
-  }
-};
-
-// ── 6. REPEATED QUESTIONS INTELLIGENCE ────────────────────────────────────────
-export const getRepeatedQuestions = async (req, res) => {
+// ─── 7. REPEATED QUESTIONS INTELLIGENCE VIEW ─────────────────────────────────
+// @route GET /api/pyq/repeated
+export const getRepeatedQuestionsIntelligence = async (req, res) => {
   try {
     const userId = req.user._id;
     const { subjectId } = req.query;
 
-    const filter = {
-      userId,
-      $or: [{ isExactDuplicate: true }, { isConceptuallySimilar: true }, { similarQuestionCount: { $gt: 0 } }],
-    };
+    const filter = { userId, isRepeated: true };
     if (subjectId) filter.subjectId = subjectId;
 
-    const repeated = await PYQQuestion.find(filter)
-      .populate("paperId", "fileName academicYear examType")
-      .populate("matchedQuestionIds", "questionNumber questionText academicYear marks")
-      .sort({ marks: -1 })
+    const repeatedQuestions = await PYQQuestion.find(filter)
+      .sort({ repeatCount: -1, priorityScore: -1 })
       .lean();
 
-    return res.json({ success: true, count: repeated.length, questions: repeated });
-  } catch (err) {
-    console.error("Get repeated questions error:", err);
-    return res.status(500).json({ success: false, message: "Failed to load repeated questions" });
+    // Group by similarity type
+    const exactMatches = repeatedQuestions.filter((q) =>
+      q.similarQuestionReferences.some((r) => r.similarityType === "Exact Match")
+    );
+    const variants = repeatedQuestions.filter((q) =>
+      q.similarQuestionReferences.some((r) => r.similarityType === "Modified Variant")
+    );
+    const conceptual = repeatedQuestions.filter((q) =>
+      q.similarQuestionReferences.some((r) => r.similarityType === "Conceptually Similar")
+    );
+
+    return res.json({
+      success: true,
+      totalRepeated: repeatedQuestions.length,
+      groups: {
+        exactMatches,
+        modifiedVariants: variants,
+        conceptuallySimilar: conceptual,
+      },
+    });
+  } catch (error) {
+    console.error("Repeated Questions Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch repeated questions." });
   }
 };
 
-// ── 7. GENERATE AI MOCK PAPER ────────────────────────────────────────────────
-export const generateMockPaper = async (req, res) => {
+// ─── 8. UNIT-WISE & TOPIC-WISE ANALYTICS ────────────────────────────────────
+// @route GET /api/pyq/analytics
+export const getPYQAnalytics = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { subjectId } = req.query;
+
+    const matchStage = { userId };
+    if (subjectId) matchStage.subjectId = subjectId;
+
+    const [
+      unitStats,
+      topicStats,
+      marksStats,
+      difficultyStats,
+      questionTypeStats,
+      yearStats,
+    ] = await Promise.all([
+      // Questions & Marks per Unit
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        {
+          $group: {
+            _id: "$unitNumber",
+            unitName: { $first: "$unitName" },
+            count: { $sum: 1 },
+            totalMarks: { $sum: "$marks" },
+            repeatedCount: { $sum: { $cond: ["$isRepeated", 1, 0] } },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      // Top Topics by Frequency
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        {
+          $group: {
+            _id: "$topicTitle",
+            count: { $sum: 1 },
+            totalMarks: { $sum: "$marks" },
+            unitNumber: { $first: "$unitNumber" },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 12 },
+      ]),
+      // Marks distribution
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        { $group: { _id: "$marks", count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]),
+      // Difficulty distribution
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        { $group: { _id: "$difficulty", count: { $sum: 1 } } },
+      ]),
+      // Question Type distribution
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        { $group: { _id: "$questionType", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      // Year-wise Frequency
+      PYQQuestion.aggregate([
+        { $match: matchStage },
+        { $group: { _id: "$academicYear", count: { $sum: 1 }, totalMarks: { $sum: "$marks" } } },
+        { $sort: { _id: 1 } },
+      ]),
+    ]);
+
+    return res.json({
+      success: true,
+      analytics: {
+        unitStats: unitStats.map((u) => ({
+          unitNumber: u._id || 1,
+          name: u.unitName || `Unit ${u._id || 1}`,
+          questionCount: u.count,
+          totalMarks: u.totalMarks,
+          repeatedCount: u.repeatedCount,
+        })),
+        topicStats: topicStats.map((t) => ({
+          topic: t._id || "General Concept",
+          unit: t.unitNumber || 1,
+          frequency: t.count,
+          marks: t.totalMarks,
+        })),
+        marksDistribution: marksStats.map((m) => ({ marks: `${m._id} Marks`, count: m.count })),
+        difficultyDistribution: difficultyStats.map((d) => ({ difficulty: d._id || "Medium", count: d.count })),
+        questionTypeDistribution: questionTypeStats.map((q) => ({ type: q._id || "Short Answer", count: q.count })),
+        yearWiseDistribution: yearStats.map((y) => ({ year: y._id, count: y.count, marks: y.totalMarks })),
+      },
+    });
+  } catch (error) {
+    console.error("PYQ Analytics Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to calculate analytics." });
+  }
+};
+
+// ─── 9. AI ANSWER GENERATOR WITH MULTI-MARK TIERS ───────────────────────────
+// @route POST /api/pyq/questions/:questionId/answer
+export const generatePYQAnswer = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { marks = 5, answerStyle = "Exam-Oriented" } = req.body;
+    const userId = req.user._id;
+
+    const question = await PYQQuestion.findOne({ _id: questionId, userId });
+    if (!question) {
+      return res.status(404).json({ success: false, message: "Question not found." });
+    }
+
+    const marksKey = `${marks}Marks`;
+    if (question.solutions && question.solutions.get(marksKey)) {
+      return res.json({
+        success: true,
+        isCached: true,
+        answer: question.solutions.get(marksKey),
+      });
+    }
+
+    const aiClient = getAIClient();
+    if (!aiClient) {
+      const fallbackSolution = {
+        simpleExplanation: `In ${question.subjectName}, "${question.questionText}" assesses fundamental understanding of ${question.topicTitle}.`,
+        examOrientedAnswer: `1. Definition & Core Axioms\n2. Key Operational Rules & Invariants\n3. Engineering trade-offs and complexity bounds.`,
+        stepByStepSolution: [
+          "State formal definition clearly.",
+          "Draw or explain the associated state representation.",
+          "List boundary conditions and computational limits.",
+        ],
+        importantDefinitions: [`${question.topicTitle}: Core engineering primitive.`],
+        relevantFormulas: ["O(log N) or standard closed-form complexity."],
+        numericalCalculation: question.questionType === "Numerical" ? "Formulate given parameters, substitute values, and verify dimensions." : "",
+        keyPointsToRemember: ["Keep diagrams neatly labelled.", "Mention Big-O bounds explicitly."],
+        expectedStructure: `Structured ${marks}-mark response with definition, explanation, and example.`,
+      };
+      return res.json({ success: true, isCached: false, answer: fallbackSolution });
+    }
+
+    const prompt = `You are a university engineering professor grading previous-year examination papers for ${question.subjectName}.
+Question: "${question.questionText}"
+Marks allocated: ${marks} Marks
+Question Type: ${question.questionType}
+Topic: ${question.topicTitle}
+
+Provide an authentic, academic, exam-oriented solution structured for maximum scoring in university examinations.
+Respond ONLY with a valid JSON object matching this schema:
+{
+  "simpleExplanation": "Plain language explanation of the underlying intuition (2-3 sentences)",
+  "examOrientedAnswer": "Complete point-by-point university exam answer formatted in markdown",
+  "stepByStepSolution": ["Step 1...", "Step 2...", "Step 3..."],
+  "importantDefinitions": ["Definition 1..."],
+  "relevantFormulas": ["Formula 1 if applicable"],
+  "numericalCalculation": "Full working for numerical questions or empty string",
+  "keyPointsToRemember": ["Point 1...", "Point 2..."],
+  "expectedStructure": "Recommended structure for ${marks} marks"
+}`;
+
+    const completion = await aiClient.chat.completions.create({
+      model: getAIModel(),
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 1400,
+    });
+
+    const parsed = JSON.parse(completion.choices[0]?.message?.content || "{}");
+
+    // Cache solution onto question doc
+    if (!question.solutions) question.solutions = new Map();
+    question.solutions.set(marksKey, parsed);
+    await question.save();
+
+    return res.json({ success: true, isCached: false, answer: parsed });
+  } catch (error) {
+    console.error("AI Answer Generation Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to generate answer." });
+  }
+};
+
+// ─── 10. GENERATE AI SIMILAR PRACTICE QUESTIONS ─────────────────────────────
+// @route POST /api/pyq/questions/:questionId/generate-practice
+export const generateSimilarPracticeQuestions = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const userId = req.user._id;
+
+    const question = await PYQQuestion.findOne({ _id: questionId, userId });
+    if (!question) {
+      return res.status(404).json({ success: false, message: "Question not found." });
+    }
+
+    const aiClient = getAIClient();
+    if (!aiClient) {
+      return res.json({
+        success: true,
+        practiceQuestions: [
+          {
+            text: `Explain an alternative variant of ${question.questionText} under modified constraints.`,
+            marks: question.marks,
+            difficulty: "Medium",
+            sourceType: "AI Generated",
+            originReference: `Derived from Q# ${question.questionNumber} (${question.academicYear})`,
+          },
+        ],
+      });
+    }
+
+    const prompt = `Based on this real university exam question:
+Question: "${question.questionText}"
+Subject: ${question.subjectName}
+Unit: ${question.unitName}
+Topic: ${question.topicTitle}
+Marks: ${question.marks}
+
+Generate 3 high-quality similar practice questions testing the same core concepts with variations (one slightly easier, one same level, one applied numerical/conceptual variant).
+Mark them clearly as AI Generated practice questions (never misrepresent them as real past papers).
+
+Respond ONLY with valid JSON:
+{
+  "practiceQuestions": [
+    {
+      "text": "Question text...",
+      "marks": ${question.marks},
+      "difficulty": "Easy" | "Medium" | "Hard",
+      "sourceType": "AI Generated",
+      "learningObjective": "Why this question helps reinforce the concept"
+    }
+  ]
+}`;
+
+    const completion = await aiClient.chat.completions.create({
+      model: getAIModel(),
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 800,
+    });
+
+    const parsed = JSON.parse(completion.choices[0]?.message?.content || '{"practiceQuestions":[]}');
+
+    return res.json({
+      success: true,
+      originalQuestion: {
+        number: question.questionNumber,
+        text: question.questionText,
+        year: question.academicYear,
+      },
+      practiceQuestions: parsed.practiceQuestions,
+    });
+  } catch (error) {
+    console.error("Practice Generation Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to generate practice questions." });
+  }
+};
+
+// ─── 11. GENERATE BALANCED UNIVERSITY MOCK PAPER ────────────────────────────
+// @route POST /api/pyq/mock-paper/generate
+export const generateUniversityMockPaper = async (req, res) => {
   try {
     const userId = req.user._id;
     const {
       subjectId = "dsa",
-      subjectName = "Data Structures & Algorithms",
-      totalMarks = 70,
+      subjectName,
+      semester = 4,
+      selectedUnits = [1, 2, 3, 4, 5],
+      totalMarks = 100,
       durationMinutes = 180,
-      difficulty = "Medium",
-      units = [],
+      difficulty = "Standard University",
     } = req.body;
 
-    // Fetch existing PYQs for this subject
-    const pyqs = await PYQQuestion.find({ userId, subjectId }).lean();
+    const resolvedSubjectName =
+      subjectName ||
+      CURRICULUM_SUBJECTS.find((s) => s.subjectId === subjectId)?.name ||
+      "Data Structures & Algorithms";
 
-    // Group questions into university style sections
-    // Section A: 7 Short questions (2 marks each = 14 marks)
-    // Section B: 3 Medium questions out of 5 (7 marks each = 21 marks)
-    // Section C: 5 Long questions (7 marks each = 35 marks)
-    const shortPool = pyqs.filter((q) => q.marks <= 3 || q.questionType === "Short Answer");
-    const mediumPool = pyqs.filter((q) => q.marks > 3 && q.marks <= 7);
-    const longPool = pyqs.filter((q) => q.marks > 7 || q.questionType === "Long Answer");
-
-    const sample = (arr, count) => {
-      const shuffled = [...arr].sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, count);
-    };
-
-    const sectionAQuestions = (shortPool.length >= 7 ? sample(shortPool, 7) : pyqs.slice(0, 7)).map(
-      (q, idx) => ({
-        questionNumber: `1.${String.fromCharCode(97 + idx)}`,
-        questionText: q.questionText,
-        marks: 2,
-        unitId: q.unitId,
-        unitName: q.unitName,
-        topicId: q.topicId,
-        topicTitle: q.topicTitle,
-        questionType: "Short Answer",
-        isAiGenerated: false,
-        sourcePYQId: q._id,
-        sourcePaperYear: q.academicYear,
-      })
-    );
-
-    const sectionBQuestions = (mediumPool.length >= 5 ? sample(mediumPool, 5) : pyqs.slice(2, 7)).map(
-      (q, idx) => ({
-        questionNumber: `2.${String.fromCharCode(97 + idx)}`,
-        questionText: q.questionText,
-        marks: 7,
-        unitId: q.unitId,
-        unitName: q.unitName,
-        topicId: q.topicId,
-        topicTitle: q.topicTitle,
-        questionType: "Medium Answer",
-        isAiGenerated: false,
-        sourcePYQId: q._id,
-        sourcePaperYear: q.academicYear,
-      })
-    );
-
-    const sectionCQuestions = (longPool.length >= 5 ? sample(longPool, 5) : pyqs.slice(0, 5)).map(
-      (q, idx) => ({
-        questionNumber: `${3 + idx}`,
-        questionText: q.questionText,
-        marks: 7,
-        unitId: q.unitId,
-        unitName: q.unitName,
-        topicId: q.topicId,
-        topicTitle: q.topicTitle,
-        questionType: "Long Answer",
-        isAiGenerated: false,
-        sourcePYQId: q._id,
-        sourcePaperYear: q.academicYear,
-      })
-    );
-
-    const mockPaper = new PYQMockPaper({
+    // Query pool of extracted PYQ questions for this subject
+    const pool = await PYQQuestion.find({
       userId,
-      title: `${subjectName} University Mock Examination`,
       subjectId,
-      subjectName,
+      unitNumber: { $in: selectedUnits },
+    }).lean();
+
+    // Standard AKTU University Paper Blueprint:
+    // Section A: 10 Short questions (2 marks each) = 20 Marks (2 from each of 5 units)
+    // Section B: 5 Long questions (Attempt 3, 10 marks each) = 30 Marks
+    // Section C: 5 pairs of OR questions (Attempt 1 from each pair, 10 marks each) = 50 Marks
+    const blueprint = [
+      {
+        section: "Section A",
+        description: "Compulsory Short Answer Questions across all units",
+        totalQuestions: 10,
+        mandatoryCount: 10,
+        marksPerQuestion: 2,
+        totalSectionMarks: 20,
+      },
+      {
+        section: "Section B",
+        description: "Attempt any THREE out of FIVE questions",
+        totalQuestions: 5,
+        mandatoryCount: 3,
+        marksPerQuestion: 10,
+        totalSectionMarks: 30,
+      },
+      {
+        section: "Section C",
+        description: "Attempt any ONE question from each of the 5 Unit modules (Internal Choice)",
+        totalQuestions: 10,
+        mandatoryCount: 5,
+        marksPerQuestion: 10,
+        totalSectionMarks: 50,
+      },
+    ];
+
+    // Assemble questions from uploaded PYQs or synthesize practice variants
+    const sections = [];
+
+    // Assemble Section A
+    const secAQuestions = [];
+    for (let i = 1; i <= 10; i++) {
+      const targetUnit = ((i - 1) % 5) + 1;
+      const match = pool.find((q) => q.unitNumber === targetUnit && q.marks <= 4 && !secAQuestions.some((x) => x.questionText === q.questionText));
+      const letter = String.fromCharCode(96 + i); // a, b, c...
+      secAQuestions.push({
+        questionNumber: `1(${letter})`,
+        questionText: match ? match.questionText : `Define key invariants and memory model of Unit ${targetUnit} concepts in ${resolvedSubjectName}.`,
+        marks: 2,
+        unitNumber: targetUnit,
+        topicTitle: match?.topicTitle || `Unit ${targetUnit} Core Concept`,
+        difficulty: "Easy",
+        sourceType: match ? "Original PYQ" : "AI Generated",
+        originalPaperYear: match?.academicYear || "Synthetic",
+        originalQuestionNumber: match?.questionNumber || "",
+        solutionGuide: "Provide concise definition with 1 example or equation.",
+      });
+    }
+
+    sections.push({
+      name: "Section A (Short Questions - Compulsory)",
+      instructions: "Attempt all questions in brief. Each question carries 2 marks.",
+      marksPerQuestion: 2,
+      questions: secAQuestions,
+    });
+
+    // Assemble Section B
+    const secBQuestions = [];
+    for (let i = 1; i <= 5; i++) {
+      const match = pool.find((q) => q.unitNumber === i && q.marks >= 5 && !secBQuestions.some((x) => x.questionText === q.questionText));
+      secBQuestions.push({
+        questionNumber: `2(${String.fromCharCode(96 + i)})`,
+        questionText: match ? match.questionText : `Explain the complete architectural walkthrough and algorithmic complexity for Unit ${i} in ${resolvedSubjectName}.`,
+        marks: 10,
+        unitNumber: i,
+        topicTitle: match?.topicTitle || `Unit ${i} Core Architecture`,
+        difficulty: "Medium",
+        sourceType: match ? "Original PYQ" : "AI Generated",
+        originalPaperYear: match?.academicYear || "Synthetic",
+        originalQuestionNumber: match?.questionNumber || "",
+        solutionGuide: "Detailed mathematical walkthrough with diagram.",
+      });
+    }
+
+    sections.push({
+      name: "Section B (Comprehensive Problems - Attempt Any 3)",
+      instructions: "Attempt any THREE questions from this section. Each question carries 10 marks.",
+      marksPerQuestion: 10,
+      questions: secBQuestions,
+    });
+
+    // Assemble Section C (Internal choice questions)
+    const secCQuestions = [];
+    for (let u = 1; u <= 5; u++) {
+      const qNum = u + 2; // Q3 to Q7
+      const match1 = pool.find((q) => q.unitNumber === u && !secCQuestions.some((x) => x.questionText === q.questionText));
+      const match2 = pool.find((q) => q.unitNumber === u && q._id !== match1?._id && !secCQuestions.some((x) => x.questionText === q.questionText));
+
+      secCQuestions.push({
+        questionNumber: `${qNum}(a)`,
+        questionText: match1 ? match1.questionText : `Discuss primary algorithms and data structures of Unit ${u} with formal proof.`,
+        marks: 10,
+        unitNumber: u,
+        topicTitle: match1?.topicTitle || `Unit ${u} Theory`,
+        difficulty: "Hard",
+        sourceType: match1 ? "Original PYQ" : "AI Generated",
+        originalPaperYear: match1?.academicYear || "Synthetic",
+        originalQuestionNumber: match1?.questionNumber || "",
+        solutionGuide: "Derivation or structural walkthrough.",
+      });
+
+      secCQuestions.push({
+        questionNumber: `${qNum}(b) [OR]`,
+        questionText: match2 ? match2.questionText : `Provide an applied case study or numerical problem solving scenario for Unit ${u}.`,
+        marks: 10,
+        unitNumber: u,
+        topicTitle: match2?.topicTitle || `Unit ${u} Numerical`,
+        difficulty: "Medium",
+        sourceType: match2 ? "Original PYQ" : "AI Generated",
+        originalPaperYear: match2?.academicYear || "Synthetic",
+        originalQuestionNumber: match2?.questionNumber || "",
+        solutionGuide: "Numerical computation or system architecture.",
+      });
+    }
+
+    sections.push({
+      name: "Section C (Unit Choice Questions - Attempt 1 from each)",
+      instructions: "Attempt any ONE question from each question pair (Q3 to Q7). Each question carries 10 marks.",
+      marksPerQuestion: 10,
+      questions: secCQuestions,
+    });
+
+    const mockPaper = await PYQMockPaper.create({
+      userId,
+      title: `${resolvedSubjectName} — University Simulation Mock Paper`,
+      subjectId,
+      subjectName: resolvedSubjectName,
+      semester,
+      selectedUnits,
       totalMarks,
       durationMinutes,
       difficulty,
-      unitsCovered: units,
-      blueprint: {
-        sections: [
-          { sectionName: "Section A", description: "Short Compulsory Questions", totalQuestions: 7, attemptRequired: 7, marksPerQuestion: 2 },
-          { sectionName: "Section B", description: "Analytical & Problem Solving", totalQuestions: 5, attemptRequired: 3, marksPerQuestion: 7 },
-          { sectionName: "Section C", description: "In-depth Long Design & Proof Questions", totalQuestions: 5, attemptRequired: 5, marksPerQuestion: 7 },
-        ],
-      },
-      sections: [
-        { sectionName: "Section A (Compulsory Short Answers)", instructions: "Attempt all questions (2 Marks each).", marksPerQuestion: 2, questions: sectionAQuestions },
-        { sectionName: "Section B (Attempt Any 3)", instructions: "Attempt any three questions (7 Marks each).", marksPerQuestion: 7, questions: sectionBQuestions },
-        { sectionName: "Section C (Attempt All Questions)", instructions: "Attempt all questions (7 Marks each).", marksPerQuestion: 7, questions: sectionCQuestions },
-      ],
+      blueprint,
+      sections,
     });
 
-    await mockPaper.save();
-
-    return res.json({ success: true, mockPaper });
-  } catch (err) {
-    console.error("Generate mock paper error:", err);
-    return res.status(500).json({ success: false, message: "Failed to generate mock paper" });
+    return res.status(201).json({ success: true, mockPaper });
+  } catch (error) {
+    console.error("Mock Paper Generation Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to generate mock paper." });
   }
 };
 
-// ── 8. AI PYQ CONTEXTUAL CHAT ─────────────────────────────────────────────────
-export const chatWithPYQs = async (req, res) => {
+// ─── 12. AI QUESTION PAPER CONTEXTUAL CHAT ──────────────────────────────────
+// @route POST /api/pyq/chat
+export const chatWithPYQPapers = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { query, subjectId = "dsa", subjectName = "Data Structures & Algorithms" } = req.body;
+    const { message, subjectId, paperId } = req.body;
 
-    if (!query) {
-      return res.status(400).json({ success: false, message: "Query text is required" });
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: "Chat message cannot be empty." });
     }
 
-    const [papers, questions] = await Promise.all([
-      PYQPaper.find({ userId, subjectId }).lean(),
-      PYQQuestion.find({ userId, subjectId }).limit(30).lean(),
-    ]);
+    const filter = { userId };
+    if (subjectId) filter.subjectId = subjectId;
+    if (paperId) filter.paperId = paperId;
 
-    const paperSummary = {
-      totalPapers: papers.length,
-      years: papers.map((p) => p.academicYear),
-      examTypes: papers.map((p) => p.examType),
-    };
+    const questions = await PYQQuestion.find(filter)
+      .sort({ marks: -1 })
+      .limit(25)
+      .lean();
 
-    const reply = await askPYQChat({
-      query,
-      subjectName,
-      paperSummary,
-      extractedQuestions: questions,
+    const aiClient = getAIClient();
+    if (!aiClient) {
+      return res.json({
+        success: true,
+        reply: `Based on your analyzed papers in ${subjectId || "your selected subject"}, the most recurring themes are Unit 1 fundamentals and Unit 5 high-mark questions. To improve your exam score, focus on repeating numerical questions in Section B.`,
+      });
+    }
+
+    const contextSnippet = questions
+      .map(
+        (q) =>
+          `[Year: ${q.academicYear} | Q#: ${q.questionNumber} | ${q.marks} Marks | Unit ${q.unitNumber} (${q.topicTitle})]: ${q.questionText}`
+      )
+      .join("\n");
+
+    const prompt = `You are the LearnX AI PYQ Intelligence Exam Copilot.
+You have direct access to the student's actual extracted university question papers:
+
+Available Extracted Questions in Database:
+${contextSnippet}
+
+Student's Query: "${message}"
+
+Guidelines:
+1. Answer accurately using the real extracted questions listed above.
+2. Quote exact Question Numbers, Years, Marks, and Units whenever citing questions.
+3. Be professional, supportive, and exam-oriented.
+4. If asked to compare or prioritize, explain the reasoning clearly based on actual data.`;
+
+    const completion = await aiClient.chat.completions.create({
+      model: getAIModel(),
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 900,
     });
 
-    return res.json({ success: true, response: reply });
-  } catch (err) {
-    console.error("Chat with PYQs error:", err);
-    return res.status(500).json({ success: false, message: "Chat assistance failed" });
+    const reply = completion.choices[0]?.message?.content || "Could not generate analysis.";
+    return res.json({ success: true, reply });
+  } catch (error) {
+    console.error("PYQ Chat Error:", error);
+    return res.status(500).json({ success: false, message: "Chat error." });
   }
 };
 
-// ── 9. DELETE PAPER & ASSOCIATED QUESTIONS ───────────────────────────────────
+// ─── 13. DELETE QUESTION PAPER & ITS QUESTIONS ──────────────────────────────
+// @route DELETE /api/pyq/papers/:paperId
 export const deletePYQPaper = async (req, res) => {
   try {
-    const userId = req.user._id;
     const { paperId } = req.params;
+    const userId = req.user._id;
 
-    const paper = await PYQPaper.findOne({ _id: paperId, userId });
-    if (!paper) {
-      return res.status(404).json({ success: false, message: "Paper not found" });
+    const deleted = await PYQPaper.findOneAndDelete({ _id: paperId, userId });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: "Paper not found." });
     }
 
-    await Promise.all([
-      PYQPaper.deleteOne({ _id: paperId, userId }),
-      PYQQuestion.deleteMany({ paperId, userId }),
-    ]);
+    // Delete all extracted questions belonging to this paper
+    await PYQQuestion.deleteMany({ paperId, userId });
 
-    return res.json({ success: true, message: "Paper and associated questions removed successfully" });
-  } catch (err) {
-    console.error("Delete PYQ paper error:", err);
-    return res.status(500).json({ success: false, message: "Failed to delete paper" });
+    return res.json({ success: true, message: "Question paper and associated questions deleted successfully." });
+  } catch (error) {
+    console.error("Delete Paper Error:", error);
+    return res.status(500).json({ success: false, message: "Failed to delete question paper." });
   }
 };
-

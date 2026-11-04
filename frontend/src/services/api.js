@@ -505,16 +505,24 @@ export const deleteResumeData = async (id, config = {}) => {
   return api.delete(`/career-intelligence/resume/${id}`, config);
 };
 
-// ─── AI PYQ Intelligence Endpoints ───────────────────────────────────────────
-export const getPYQDashboardMetrics = async (params = {}, config = {}) => {
-  return api.get("/pyq/dashboard", { params, ...config });
+// ─── AI PYQ Intelligence Engine APIs ─────────────────────────────────────────
+export const getPYQDashboard = async (config = {}) => {
+  return api.get("/pyq/dashboard", config);
 };
 
-export const uploadPYQPaper = async (formData, config = {}) => {
+export const uploadPYQPapers = async (formData, config = {}) => {
   return api.post("/pyq/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
     ...config,
   });
+};
+
+export const getPYQPaperStatus = async (paperId, config = {}) => {
+  return api.get(`/pyq/papers/${paperId}/status`, config);
+};
+
+export const deletePYQPaper = async (paperId, config = {}) => {
+  return api.delete(`/pyq/papers/${paperId}`, config);
 };
 
 export const getPYQQuestions = async (params = {}, config = {}) => {
@@ -525,25 +533,30 @@ export const updatePYQQuestion = async (questionId, data, config = {}) => {
   return api.patch(`/pyq/questions/${questionId}`, data, config);
 };
 
-export const getAIPYQSolution = async (questionId, data, config = {}) => {
-  return api.post(`/pyq/questions/${questionId}/solution`, data, config);
-};
-
-export const getRepeatedPYQs = async (params = {}, config = {}) => {
+export const getPYQRepeatedQuestions = async (params = {}, config = {}) => {
   return api.get("/pyq/repeated", { params, ...config });
 };
 
-export const generatePYQMockPaper = async (data, config = {}) => {
+export const getPYQAnalytics = async (params = {}, config = {}) => {
+  return api.get("/pyq/analytics", { params, ...config });
+};
+
+export const generatePYQAnswer = async (questionId, data = {}, config = {}) => {
+  return api.post(`/pyq/questions/${questionId}/answer`, data, config);
+};
+
+export const generatePYQSimilarPractice = async (questionId, config = {}) => {
+  return api.post(`/pyq/questions/${questionId}/generate-practice`, {}, config);
+};
+
+export const generatePYQMockPaper = async (data = {}, config = {}) => {
   return api.post("/pyq/mock-paper/generate", data, config);
 };
 
-export const chatWithPYQIntelligence = async (data, config = {}) => {
+export const chatWithPYQPapers = async (data = {}, config = {}) => {
   return api.post("/pyq/chat", data, config);
 };
 
-export const deletePYQPaper = async (paperId, config = {}) => {
-  return api.delete(`/pyq/papers/${paperId}`, config);
-};
-
 export default api;
+
 

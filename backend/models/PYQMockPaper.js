@@ -2,30 +2,63 @@ import mongoose from "mongoose";
 
 const pyqMockPaperSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    title: { type: String, required: true },
-    subjectId: { type: String, required: true, index: true },
-    subjectName: { type: String, required: true },
-    university: { type: String, default: "AKTU" },
-    semester: { type: Number, default: 3 },
-    totalMarks: { type: Number, default: 70 },
-    durationMinutes: { type: Number, default: 180 }, // 3 hours
-    difficulty: { type: String, default: "Medium" },
-    unitsCovered: { type: [String], default: [] },
-    blueprint: {
-      sections: [
-        {
-          sectionName: String,
-          description: String,
-          totalQuestions: Number,
-          attemptRequired: Number,
-          marksPerQuestion: Number,
-        },
-      ],
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
     },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    subjectId: {
+      type: String,
+      required: true,
+    },
+    subjectName: {
+      type: String,
+      required: true,
+    },
+    university: {
+      type: String,
+      default: "AKTU / University Standard",
+    },
+    semester: {
+      type: Number,
+      default: 4,
+    },
+    selectedUnits: {
+      type: [Number],
+      default: [1, 2, 3, 4, 5],
+    },
+    totalMarks: {
+      type: Number,
+      default: 100,
+    },
+    durationMinutes: {
+      type: Number,
+      default: 180,
+    },
+    difficulty: {
+      type: String,
+      enum: ["Balanced", "Standard University", "Challenging", "High-Scoring"],
+      default: "Standard University",
+    },
+    blueprint: [
+      {
+        section: String,
+        description: String,
+        totalQuestions: Number,
+        mandatoryCount: Number,
+        marksPerQuestion: Number,
+        totalSectionMarks: Number,
+      },
+    ],
     sections: [
       {
-        sectionName: String, // e.g. "Section A (Short Compulsory)", "Section B (Medium)", "Section C (Long)"
+        name: String, // e.g. "Section A: Short Answer Questions (Attempt all)"
         instructions: String,
         marksPerQuestion: Number,
         questions: [
@@ -33,26 +66,24 @@ const pyqMockPaperSchema = new mongoose.Schema(
             questionNumber: String,
             questionText: String,
             marks: Number,
-            unitId: String,
-            unitName: String,
-            topicId: String,
+            unitNumber: Number,
             topicTitle: String,
-            questionType: String,
-            isAiGenerated: { type: Boolean, default: false },
-            sourcePYQId: { type: mongoose.Schema.Types.ObjectId, ref: "PYQQuestion" },
-            sourcePaperYear: String,
-            modelAnswer: String,
+            difficulty: String,
+            sourceType: {
+              type: String,
+              enum: ["Original PYQ", "Similar Practice", "AI Generated"],
+              default: "Original PYQ",
+            },
+            originalPaperYear: String,
+            originalQuestionNumber: String,
+            solutionGuide: String,
+            expectedKeywords: [String],
           },
         ],
       },
     ],
-    isCompleted: { type: Boolean, default: false },
-    score: { type: Number, default: null },
-    attemptedAt: { type: Date },
   },
   { timestamps: true }
 );
 
-const PYQMockPaper = mongoose.model("PYQMockPaper", pyqMockPaperSchema);
-export default PYQMockPaper;
-
+export default mongoose.model("PYQMockPaper", pyqMockPaperSchema);
