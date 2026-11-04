@@ -24,6 +24,7 @@ import AlgorithmVisualizerPage from "./pages/AlgorithmVisualizerPage.jsx";
 import CodingLabPage from "./pages/CodingLabPage.jsx";
 import MockInterviewPage from "./pages/MockInterviewPage.jsx";
 import ExamPrepPage from "./pages/ExamPrepPage.jsx";
+import PYQIntelligence from "./components/exam/PYQIntelligence.jsx";
 import CareerTwinPage from "./pages/CareerTwinPage.jsx";
 import RewardsPage from "./pages/RewardsPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
@@ -149,6 +150,22 @@ function App() {
             <Route
               path="/assessments"
               element={<Navigate to="/test" replace />}
+            />
+            <Route
+              path="/pyq"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <div className="p-4 sm:p-6 lg:p-8">
+                      <PYQIntelligence />
+                    </div>
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pyq-intelligence"
+              element={<Navigate to="/pyq" replace />}
             />
             <Route
               path="/achievements"

@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
+import PYQIntelligence from "../components/exam/PYQIntelligence.jsx";
 
 export const SUBJECTS = [
   { id: "DSA", name: "Data Structures & Algorithms", shortName: "DSA", code: "{}", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", icon: "{}" },
@@ -297,9 +298,9 @@ const CommandCenter = ({ onStartTest }) => {
   ];
 
   const TABS = [
+    { id: "pyq", label: "AI PYQ Intelligence", icon: "🧠" },
     { id: "topic", label: "Topic Tests", icon: "📚" },
     { id: "mock", label: "Mock Exams", icon: "🏆" },
-    { id: "pyq", label: "PYQs", icon: "📋" },
     { id: "ai", label: "AI Adaptive", icon: "🤖" },
   ];
 
@@ -942,35 +943,10 @@ const CommandCenter = ({ onStartTest }) => {
             </div>
           )}
 
-          {/* PYQS */}
+          {/* PYQS & AI PYQ INTELLIGENCE */}
           {activeTab === "pyq" && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2"><span>📋</span><h4 className="text-sm font-extrabold text-slate-900">Previous Year Questions</h4></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { exam: "GATE 2024 CS", subject: "OS", count: 20, difficulty: "Hard", desc: "Official memory management & paging questions." },
-                  { exam: "GATE 2023 CS", subject: "DBMS", count: 18, difficulty: "Medium", desc: "Transactions, concurrency control & serializability." },
-                  { exam: "TCS Digital 2023", subject: "DSA", count: 25, difficulty: "Medium", desc: "Advanced arrays, graphs & DP questions." },
-                  { exam: "Cognizant GenC Next", subject: "PROGRAMMING", count: 30, difficulty: "Easy", desc: "Pointers, recursion, and bitwise manipulation." },
-                ].map((p, i) => (
-                  <div key={i} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 hover:bg-white transition-all">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <p className="text-xs font-extrabold text-slate-900 leading-tight">{p.exam}</p>
-                      <DiffBadge diff={p.difficulty} />
-                    </div>
-                    <p className="text-[10px] text-slate-500 mb-3">{p.desc}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-slate-400 font-medium">📋 {p.count} Questions</span>
-                      <button
-                        onClick={() => openConfig(p.subject, "", p.count)}
-                        className="px-3 py-1 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all"
-                      >
-                        Solve PYQs →
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-6">
+              <PYQIntelligence />
             </div>
           )}
 
