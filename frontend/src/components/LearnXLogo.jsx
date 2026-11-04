@@ -20,6 +20,7 @@ export const LearnXLogo = ({
   showBadge = false,
   className = "",
   variant = "brand", // "brand" (full image logo) | "split" (icon + text)
+  darkBg = false,
 }) => {
   const heightSizes = {
     sm: "h-7",
@@ -29,12 +30,13 @@ export const LearnXLogo = ({
   };
 
   const currentHeight = heightSizes[size] || "h-9";
+  const logoSrc = darkBg ? "/learnx-logo-white.png" : "/learnx-logo.png";
 
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <div className="flex items-center">
         <img
-          src="/learnx-logo.png"
+          src={logoSrc}
           alt="LearnX"
           className={`${currentHeight} w-auto object-contain select-none`}
           loading="eager"
@@ -46,7 +48,7 @@ export const LearnXLogo = ({
         )}
       </div>
       {showTagline && (
-        <span className="text-[10px] sm:text-xs font-bold text-slate-500 tracking-tight ml-1 hidden sm:inline">
+        <span className={`text-[10px] sm:text-xs font-bold tracking-tight ml-1 hidden sm:inline ${darkBg ? "text-slate-300" : "text-slate-500"}`}>
           Learn. Practice. Grow. Succeed.
         </span>
       )}
