@@ -233,9 +233,19 @@ export const Sidebar = ({ isOpen, onClose }) => {
         }`}
       >
         {/* Brand Header */}
-        <div className="h-18 px-4 border-b border-slate-800/60 flex items-center justify-between shrink-0">
-          <Link to="/dashboard" onClick={onClose} className="flex items-center">
-            <LearnXLogo size="md" darkBg={true} />
+        <div className="h-20 px-4 border-b border-slate-800/60 flex items-center justify-between shrink-0">
+          <Link
+            to="/dashboard"
+            onClick={onClose}
+            className="flex items-center group py-1"
+            title="LearnX Dashboard"
+          >
+            <img
+              src="/learnx-logo-white.png"
+              alt="LearnX - Learn. Practice. Grow. Succeed."
+              className="h-11 max-h-12 w-auto max-w-[170px] object-contain select-none transition-transform duration-200 group-hover:scale-[1.02]"
+              loading="eager"
+            />
           </Link>
           <button
             onClick={onClose}
