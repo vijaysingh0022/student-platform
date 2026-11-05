@@ -103,13 +103,18 @@ What would you like to learn today?`,
     ];
   });
 
-  const messagesEndRef = useRef(null);
+  const chatScrollContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const hasAutoAsked = useRef(false);
 
-  // Auto-scroll on new message
+  // Auto-scroll inside chat container on new message (never auto-scroll the whole page)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatScrollContainerRef.current) {
+      chatScrollContainerRef.current.scrollTo({
+        top: chatScrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   }, [messages, loading]);
 
   // Load real student telemetry from Skill Graph API
@@ -125,7 +130,7 @@ What would you like to learn today?`,
     fetchTelemetry();
   }, []);
 
-  // Handle URL query parameters or location.state (e.g. from Skill Graph, Roadmap or Test review links)
+  // Handle URL query parameters or location.state
   useEffect(() => {
     const q = searchParams.get("q") || searchParams.get("question") || location.state?.initialPrompt;
     const subject = searchParams.get("subject") || location.state?.subjectId || "";
@@ -358,7 +363,7 @@ What CSE topic or coding challenge would you like to explore next?`,
   }, [skillData]);
 
   return (
-    <div className="w-full text-[#0B1220] pb-12 space-y-5 font-sans">
+    <div className="w-full text-[#0B1220] pb-10 space-y-5 font-sans">
       {/* Hidden File Input */}
       <input
         type="file"
@@ -382,19 +387,24 @@ What CSE topic or coding challenge would you like to explore next?`,
         }}
       />
 
-      {/* ── 7. MAIN AI WORKSPACE (3-COLUMN BALANCED LAYOUT) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        {/* LEFT COLUMN: AI Assistant Modes (3 cols) */}
+      {/* ── 7. BALANCED 3-COLUMN WORKSPACE ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* LEFT COLUMN: AI Assistant Modes + Connected Ecosystem (3 cols) */}
         <div className="lg:col-span-3 space-y-4">
           <TutorModePanel
             activeMode={activeMode}
             onSelectMode={handleSelectMode}
             activeSubject={activeSubject}
           />
+
+          <LearningContext
+            onQuickToolClick={(query) => executeQuestion(query)}
+            activeSubject={activeSubject}
+          />
         </div>
 
         {/* CENTER COLUMN: Main AI Conversation (6 cols) */}
-        <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col min-h-[560px] h-[600px] overflow-hidden">
+        <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col h-[580px] max-h-[620px] overflow-hidden">
           {/* Header */}
           <ChatHeader
             isHinglish={isHinglish}
@@ -404,8 +414,11 @@ What CSE topic or coding challenge would you like to explore next?`,
             activeSubject={activeSubject}
           />
 
-          {/* Conversation Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin">
+          {/* Conversation Stream - Internal Scrolling Container */}
+          <div
+            ref={chatScrollContainerRef}
+            className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 scrollbar-thin"
+          >
             {messages.map((msg, idx) => (
               <ChatMessage
                 key={idx}
@@ -422,7 +435,6 @@ What CSE topic or coding challenge would you like to explore next?`,
             ))}
 
             {loading && <TypingIndicator />}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area + Quick Actions */}
@@ -444,14 +456,8 @@ What CSE topic or coding challenge would you like to explore next?`,
           />
         </div>
 
-        {/* RIGHT COLUMN: Personal Learning Context Panel (3 cols) */}
+        {/* RIGHT COLUMN: Popular Topics & Recent Conversations (3 cols) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Today's Learning + Quick Tools */}
-          <LearningContext
-            onQuickToolClick={(query) => executeQuestion(query)}
-            activeSubject={activeSubject}
-          />
-
           {/* Popular Topics */}
           <PopularTopics
             onSelectTopic={(query, subject) => executeQuestion(query, subject)}
@@ -468,7 +474,7 @@ What CSE topic or coding challenge would you like to explore next?`,
       </div>
 
       {/* ── 10. PERSONALIZED RECOMMENDATIONS (Directly following Workspace) ── */}
-      <div className="pt-1">
+      <div className="pt-2">
         <RecommendedForYou
           recommendations={dynamicRecommendations}
           onSelectRecommendation={(query) => executeQuestion(query)}
