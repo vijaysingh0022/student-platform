@@ -358,7 +358,7 @@ What CSE topic or coding challenge would you like to explore next?`,
   }, [skillData]);
 
   return (
-    <div className="w-full text-[#0B1220] pb-16 space-y-6 font-sans">
+    <div className="w-full text-[#0B1220] pb-12 space-y-5 font-sans">
       {/* Hidden File Input */}
       <input
         type="file"
@@ -382,8 +382,8 @@ What CSE topic or coding challenge would you like to explore next?`,
         }}
       />
 
-      {/* ── 7. MAIN AI WORKSPACE (3-COLUMN LAYOUT) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {/* ── 7. MAIN AI WORKSPACE (3-COLUMN BALANCED LAYOUT) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* LEFT COLUMN: AI Assistant Modes (3 cols) */}
         <div className="lg:col-span-3 space-y-4">
           <TutorModePanel
@@ -394,7 +394,7 @@ What CSE topic or coding challenge would you like to explore next?`,
         </div>
 
         {/* CENTER COLUMN: Main AI Conversation (6 cols) */}
-        <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col h-[740px] overflow-hidden">
+        <div className="lg:col-span-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs flex flex-col min-h-[560px] h-[600px] overflow-hidden">
           {/* Header */}
           <ChatHeader
             isHinglish={isHinglish}
@@ -467,11 +467,13 @@ What CSE topic or coding challenge would you like to explore next?`,
         </div>
       </div>
 
-      {/* ── 10. PERSONALIZED RECOMMENDATIONS (Bottom Section) ── */}
-      <RecommendedForYou
-        recommendations={dynamicRecommendations}
-        onSelectRecommendation={(query) => executeQuestion(query)}
-      />
+      {/* ── 10. PERSONALIZED RECOMMENDATIONS (Directly following Workspace) ── */}
+      <div className="pt-1">
+        <RecommendedForYou
+          recommendations={dynamicRecommendations}
+          onSelectRecommendation={(query) => executeQuestion(query)}
+        />
+      </div>
     </div>
   );
 }
