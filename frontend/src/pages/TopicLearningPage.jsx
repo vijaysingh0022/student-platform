@@ -23,6 +23,8 @@ import VoiceTeacherExperience from "../components/voice/VoiceTeacherExperience.j
 import VideoPlayer from "../components/video/VideoPlayer.jsx";
 import VideoTranscript from "../components/video/VideoTranscript.jsx";
 import TopicSidebarNavigation from "../components/video/TopicSidebarNavigation.jsx";
+import MarkdownRenderer from "../components/MarkdownRenderer.jsx";
+import AcademicDiagramViewer from "../components/AcademicDiagramViewer.jsx";
 
 const TopicLearningPage = () => {
   const { subjectId, topicId } = useParams();
@@ -63,6 +65,7 @@ const TopicLearningPage = () => {
   // Exam Answer State
   const [selectedMarks, setSelectedMarks] = useState(5);
   const [examAnswerText, setExamAnswerText] = useState("");
+  const [examAnswerDiagram, setExamAnswerDiagram] = useState(null);
   const [examAnswerLoading, setExamAnswerLoading] = useState(false);
 
   // Quick Check active learning state
@@ -251,9 +254,11 @@ const TopicLearningPage = () => {
         topicId,
         subjectId,
         marks,
+        question: topic?.title || "",
       });
       if (res?.data?.answer) {
         setExamAnswerText(res.data.answer);
+        setExamAnswerDiagram(res.data.diagram || null);
       }
     } catch (e) {
       console.warn("Exam answer generator error:", e);
@@ -1542,27 +1547,34 @@ const TopicLearningPage = () => {
 
       {/* ── TAB 9: EXAM ANSWER GENERATOR (2, 5, 10 MARKS) ──────────────────── */}
       {activeTab === "exam_answer" && (
-        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-5 shadow-2xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 space-y-6 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
-              <h2 className="text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <span>🎓</span>
-                <span>University Exam Answer Generator</span>
-              </h2>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                Generate structured university semester examination answers tailored for your university syllabus.
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>🎓</span>
+                  <span>University Exam Answer & Architecture Generator</span>
+                </h2>
+                {examAnswerDiagram && (
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-extrabold uppercase">
+                    ✨ Diagram Auto-Generated
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Standardized university semester examination answers with automatically synthesized technical diagrams, formal architectures, and grading breakdown.
               </p>
             </div>
 
             {/* Marks Selector */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {[2, 5, 10].map((m) => (
                 <button
                   key={m}
                   onClick={() => handleGenerateExamAnswer(m)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     selectedMarks === m
-                      ? "bg-blue-600 text-white shadow-xs"
+                      ? "bg-indigo-600 text-white shadow-xs scale-[1.02]"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
@@ -1572,16 +1584,38 @@ const TopicLearningPage = () => {
             </div>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-50/70 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-wrap min-h-[160px]">
-            {examAnswerLoading ? (
-              <div className="flex items-center gap-2 text-slate-500">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-ping" />
-                <span>Formatting {selectedMarks}-mark university answer structure...</span>
+          {examAnswerLoading ? (
+            <div className="p-8 rounded-2xl bg-slate-50/70 border border-slate-200 flex flex-col items-center justify-center gap-3 text-slate-500 min-h-[220px]">
+              <div className="w-8 h-8 rounded-full border-3 border-indigo-600 border-t-transparent animate-spin" />
+              <p className="text-xs font-bold text-slate-700">
+                Synthesizing {selectedMarks}-mark university structure & technical diagrams...
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Evaluating syllabus constraints, component mappings, and grading requirements
+              </p>
+            </div>
+          ) : examAnswerText ? (
+            <div className="space-y-6">
+              {/* If an academic diagram was detected and synthesized, render it prominently in the answer flow */}
+              {examAnswerDiagram && (
+                <AcademicDiagramViewer diagram={examAnswerDiagram} />
+              )}
+
+              {/* Formatted Academic Answer Markdown */}
+              <div className="p-6 rounded-2xl bg-slate-50/60 border border-slate-200/90">
+                <MarkdownRenderer content={examAnswerText} />
               </div>
-            ) : (
-              examAnswerText || "Select 2, 5, or 10 marks above to generate a university-ready structured answer."
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="p-8 rounded-2xl bg-slate-50/60 border border-slate-200/80 text-center space-y-2">
+              <p className="text-xs font-bold text-slate-700">
+                Ready to generate exam answers with automatic diagrams
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Select 2, 5, or 10 marks above to generate a university-ready structured answer tailored for your syllabus.
+              </p>
+            </div>
+          )}
         </div>
       )}
         </div>

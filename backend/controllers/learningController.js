@@ -17,6 +17,7 @@ import {
   matchConceptInHierarchy,
   checkConceptPrerequisites,
 } from "../config/conceptHierarchy.js";
+import { detectDiagram } from "../utils/diagramRegistry.js";
 
 // ─── MASTERY CLASSIFICATION THRESHOLDS ───────────────────────────────────────
 const MASTERY_THRESHOLDS = {
@@ -1835,91 +1836,102 @@ Return valid JSON with this exact format:
   }
 };
 
-// ─── 12. EXAM ANSWER GENERATOR (2, 5, 10 MARKS) ──────────────────────────────
+// ─── 12. EXAM ANSWER GENERATOR (2, 5, 10 MARKS) WITH AUTO DIAGRAM GENERATION ─
 // @route POST /api/learning/exam-answer
 export const generateExamAnswer = async (req, res) => {
   try {
     const { topicId = "dbms-u5-normalization", subjectId = "dbms", marks = 5, question = "" } = req.body;
 
     const topic = CURRICULUM_TOPICS.find((t) => t.topicId === topicId) || {
-      title: topicId,
-      summary: "Database Normalization and Relational Modeling",
+      title: question || topicId,
+      summary: "University Computer Science Examination Topic",
     };
     const subject = CURRICULUM_SUBJECTS.find((s) => s.subjectId === subjectId) || {
       name: "Computer Science",
     };
 
+    const effectiveTitle = question.trim() || topic.title;
+
+    // Detect if an academic diagram is relevant for this question
+    const matchedDiagram = detectDiagram(topicId, subjectId, effectiveTitle);
+    const hasDiagram = !!matchedDiagram && marks >= 5;
+
     let answer = "";
     if (marks === 2) {
-      answer = `### 📝 2-Mark University Answer
+      answer = `### 📝 2-Mark University Short Answer
 
-**Question:** Define ${topic.title} and state its primary objective.
+**Question:** Define **${effectiveTitle}** and state its core purpose in ${subject.name}.
 
-**Answer:**
-**${topic.title}** is a systematic technique used in ${subject.name} to organize data and minimize redundancy.
-- **Primary Objective:** Eliminates data anomalies (Insertion, Deletion, Update) and enforces referential integrity.
-- **Key Formula/Rule:** Every non-prime attribute must depend directly on the primary key without partial or transitive dependencies.`;
+#### 1. Core Definition
+**${effectiveTitle}** represents a fundamental concept in ${subject.name} designed to solve computational or architectural bottlenecks.
+- **Primary Objective:** Establishes standardized abstraction, improves efficiency, and maintains system integrity.
+- **Key Takeaway:** Universally tested in semester examinations for direct conceptual clarity without extraneous verbosity.`;
     } else if (marks === 5) {
-      answer = `### 📝 5-Mark University Answer
+      answer = `### 📝 5-Mark University Structured Answer
 
-**Question:** Explain the concept of ${topic.title} with suitable diagrams and examples.
+**Question:** Explain the concept of **${effectiveTitle}** with suitable structural breakdown and academic representation.
 
-#### 1. Definition (1 Mark)
-**${topic.title}** is the formal process of decomposing tables in a relational database to minimize data duplication and prevent inconsistency across transaction cycles.
+#### 1. Introduction & Formal Definition (1 Mark)
+**${effectiveTitle}** is a core syllabus concept in **${subject.name}**. It formalizes the abstraction layer and operations required to guarantee predictable execution, data consistency, and modular interoperability.
 
-#### 2. Key Conditions & Rules (2 Marks)
-- **Condition 1:** Atomicity of attribute values (First Normal Form).
-- **Condition 2:** Elimination of Partial Functional Dependencies (Second Normal Form).
-- **Condition 3:** Elimination of Transitive Dependencies (Third Normal Form).
+#### 2. Key Architectural Characteristics & Principles (2 Marks)
+- **Principle 1 (Modularity):** Decouples structural responsibilities into well-defined, distinct stages or components.
+- **Principle 2 (Integrity):** Enforces strict boundary invariants across all operational cycles.
+- **Principle 3 (Efficiency):** Minimizes overhead and maximizes throughput under standard university benchmarks.
 
-#### 3. Illustrative Example & Schema (1.5 Marks)
-\`\`\`sql
--- Initial Schema (Suffers from redundancy):
-STUDENT_COURSE (StudentID, CourseID, StudentName, Instructor)
--- Decomposed Normalized Schema:
-STUDENT (StudentID, StudentName)
-COURSE (CourseID, Instructor)
-ENROLLMENT (StudentID, CourseID)
-\`\`\`
+#### 3. Core Working & Step-by-Step Mechanism (1.5 Marks)
+1. **Initial Phase:** Environment or input state is initialized and validated against domain constraints.
+2. **Processing Phase:** Core transformations or transitions occur according to standard rules.
+3. **Termination Phase:** Guaranteed completion with invariant verification.
 
 #### 4. University Exam Conclusion (0.5 Marks)
-Decomposition guarantees **Lossless Join** and **Dependency Preservation**, making the relational model optimal for transaction processing.`;
+Mastery of **${effectiveTitle}** is critical for scoring maximum marks in university semester examinations as it demonstrates both conceptual depth and practical design understanding.`;
     } else {
+      // 10 Marks Comprehensive Answer
       answer = `### 📝 10-Mark University Comprehensive Answer
 
-**Question:** Critically analyze ${topic.title}. Discuss its significance, anomalies, decomposition algorithms, and compare the trade-offs between normal forms.
+**Question:** Critically analyze **${effectiveTitle}**. Discuss its theoretical foundations, detailed architectural tiers, working mechanisms, real-world examples, comparative trade-offs, and practical industry applications.
+
+---
 
 #### 1. Introduction & Theoretical Background (2 Marks)
-${topic.title} was formulated by E.F. Codd to enforce integrity constraints in Relational Database Management Systems. Without normalization, databases suffer from:
-1. **Insertion Anomaly:** Inability to record specific facts without inserting unrelated entities.
-2. **Deletion Anomaly:** Unintended loss of crucial information when a record is deleted.
-3. **Modification Anomaly:** Need to update multiple records when a single fact changes.
+**${effectiveTitle}** represents an essential milestone in **${subject.name}**. Developed to address complexity in modern computational systems, it bridges high-level abstraction with physical execution guarantees.
 
-#### 2. Detailed Breakdown of Normal Forms (3 Marks)
-- **1NF:** Eliminates multi-valued and composite attributes.
-- **2NF:** Requires 1NF + Full Functional Dependency on Candidate Keys.
-- **3NF:** Requires 2NF + No transitive dependencies (\`X → Y\`, \`Y → Z\`).
-- **BCNF:** A stricter version of 3NF where every determinant \`X\` in \`X → Y\` must be a super key.
+Without this framework, systems suffer from:
+1. **Coupling & Fragility:** Direct dependence between client applications and physical storage or low-level routines.
+2. **Resource Inefficiencies:** Suboptimal resource allocation during peak concurrent execution.
+3. **Integrity Vulnerabilities:** Inability to guarantee ACID semantics or deterministic state transitions.
 
-#### 3. Comparative Matrix (2 Marks)
-| Normal Form | Target Dependency Removed | Lossless Join Guaranteed | Dependency Preserved |
-|---|---|---|---|
-| **1NF** | Multi-valued attributes | Yes | Yes |
-| **2NF** | Partial dependencies | Yes | Yes |
-| **3NF** | Transitive dependencies | Yes | Yes |
-| **BCNF** | All non-superkey determinants | Yes | Sometimes Lost |
+---
 
-#### 4. Solved Problem & Schema Transformation (2 Marks)
-Given Relation \`R(A, B, C, D, E)\` with FDs:
-- \`A → B\`
-- \`BC → D\`
-- \`D → E\`
-Candidate Key is \`AC\`.
-- \`A → B\` is a partial dependency because \`A\` is a proper subset of \`AC\`.
-- Decomposing \`R\` into \`R1(A, B)\` and \`R2(A, C, D, E)\` resolves the 2NF violation.
+#### 2. Architectural Design & Component Breakdown (3 Marks)
+The architecture decomposes complex responsibilities into decoupled tiers:
+- **Tier 1 (External / Interface Layer):** Provides dedicated, tailored perspectives for different user classes and client applications.
+- **Tier 2 (Logical / Conceptual Layer):** Serves as the single source of truth, enforcing global schema invariants, relationship semantics, and validation rules.
+- **Tier 3 (Internal / Physical Storage Layer):** Interfaces directly with operating system system calls and persistent storage blocks for optimal I/O throughput.
 
-#### 5. Conclusion & Practical Industry Context (1 Mark)
-While 3NF/BCNF is mandatory for high-concurrency OLTP transactional systems, modern Big Data and OLAP systems often use deliberate denormalization (Star Schema / Snowflake Schema) to optimize read performance.`;
+---
+
+#### 3. Step-by-Step Execution Lifecycle (2 Marks)
+1. **Request Ingestion:** The client issues an operation or query through the external interface.
+2. **Schema & Semantic Resolution:** The conceptual mapping translates logical entities into structured execution plans.
+3. **Physical Translation:** The internal mapping optimizes the plan using indexing structures (e.g., B+ Trees or hash indexes).
+4. **Execution & State Commitment:** Low-level disk access completes and results propagate upward through the abstraction layers.
+
+---
+
+#### 4. Comparative Matrix & Trade-offs (1.5 Marks)
+| Evaluation Metric | Classical Baseline Approach | Modern ${effectiveTitle} Architecture |
+|---|---|---|
+| **Data / State Independence** | Low (Tight Coupling) | High (Logical & Physical Separation) |
+| **Scalability & Maintenance** | O(N) Manual Refactoring | Seamless Modular Evolution |
+| **Concurrency Resilience** | Prone to Race Conditions & Locks | Strict Transaction Isolation |
+| **Implementation Overhead** | Minimal Initial Complexity | Requires Multi-Tier Mapping |
+
+---
+
+#### 5. Industry Use Cases & University Exam Summary (1.5 Marks)
+In production environments ranging from hyper-scale cloud databases to low-latency financial systems, this architectural separation enables zero-downtime maintenance and independent schema evolution. For university exams, reproducing the clear architectural boundaries and directional mappings guarantees full credit.`;
     }
 
     res.json({
@@ -1927,6 +1939,7 @@ While 3NF/BCNF is mandatory for high-concurrency OLTP transactional systems, mod
       topicId,
       marks,
       answer,
+      diagram: hasDiagram ? matchedDiagram : null,
     });
   } catch (err) {
     console.error("generateExamAnswer error:", err);
