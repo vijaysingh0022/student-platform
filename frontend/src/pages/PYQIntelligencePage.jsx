@@ -460,11 +460,10 @@ export const PYQIntelligencePage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
-                isActive
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${isActive
                   ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md font-black"
                   : "bg-white text-slate-700 border border-slate-200/90 hover:bg-slate-50"
-              }`}
+                }`}
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
@@ -679,13 +678,12 @@ export const PYQIntelligencePage = () => {
                         {q.marks || 5} Marks
                       </span>
                       <span
-                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold ${
-                          q.difficulty === "Easy"
+                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold ${q.difficulty === "Easy"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                             : q.difficulty === "Hard"
-                            ? "bg-rose-50 text-rose-700 border border-rose-100"
-                            : "bg-blue-50 text-blue-700 border border-blue-100"
-                        }`}
+                              ? "bg-rose-50 text-rose-700 border border-rose-100"
+                              : "bg-blue-50 text-blue-700 border border-blue-100"
+                          }`}
                       >
                         {q.difficulty || "Medium"}
                       </span>
