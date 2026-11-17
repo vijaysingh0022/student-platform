@@ -9,6 +9,7 @@ import {
   sendCareerTwinChatMessage,
   simulateSkillImprovement,
 } from '../services/api';
+import GitHubPortfolioSection from '../components/portfolio/GitHubPortfolioSection.jsx';
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -476,6 +477,7 @@ export default function CareerTwinPage() {
               { id: 'sprint', label: '7-Day Sprint' },
               { id: 'simulator', label: 'Improvement Simulator' },
               { id: 'roleFit', label: 'Role Fit' },
+              { id: 'github', label: 'GitHub Portfolio' },
               { id: 'timeline', label: 'Growth Timeline' },
               { id: 'coach', label: 'Ask Career Twin' },
             ].map((tab) => (
@@ -956,6 +958,13 @@ export default function CareerTwinPage() {
                 {roleUpdating && <p className="text-xs text-indigo-600">Recomputing for new role…</p>}
               </div>
             </div>
+          )}
+
+          {/* ═══════════════════════════════════
+              TAB: GITHUB PORTFOLIO INTELLIGENCE
+          ════════════════════════════════════ */}
+          {activeTab === 'github' && (
+            <GitHubPortfolioSection targetRole={twin?.targetRole || 'Backend Developer'} />
           )}
 
           {/* ═══════════════════════════════════

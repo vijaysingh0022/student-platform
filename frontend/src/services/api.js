@@ -257,6 +257,23 @@ export const generateDocumentStudyMaterial = async (id, payload, config = {}) =>
   return api.post(`/documents/${id}/generate`, payload, config);
 };
 
+// ─── GitHub Portfolio Intelligence APIs ──────────────────────────────────────
+export const connectGitHubProfile = async (payload, config = {}) => {
+  return api.post("/github/connect", payload, config);
+};
+
+export const getGitHubPortfolio = async (config = {}) => {
+  return api.get("/github/portfolio", config);
+};
+
+export const refreshGitHubPortfolio = async (payload = {}, config = {}) => {
+  return api.post("/github/refresh", payload, config);
+};
+
+export const disconnectGitHubProfile = async (config = {}) => {
+  return api.post("/github/disconnect", {}, config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);
