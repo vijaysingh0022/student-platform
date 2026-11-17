@@ -168,6 +168,16 @@ const NAV_GROUPS = [
         ),
       },
       {
+        label: "Upload to Learn",
+        to: "/upload-to-learn",
+        badge: "RAG",
+        icon: (
+          <svg className="w-[18px] h-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+        ),
+      },
+      {
         label: "Spaced Repetition",
         to: "/revision",
         badge: "AI",
@@ -203,6 +213,7 @@ const isActive = (path, location) => {
   if (path === "/roadmap/DSA") return location.pathname.startsWith("/roadmap");
   if (path === "/skill-graph") return location.pathname.startsWith("/skill-graph");
   if (path === "/rewards") return location.pathname.startsWith("/rewards");
+  if (path === "/upload-to-learn") return location.pathname.startsWith("/upload-to-learn") || location.pathname.startsWith("/documents");
   if (path === "/revision") return location.pathname.startsWith("/revision");
   if (path === "/exam-prep") return location.pathname.startsWith("/exam-prep") || location.pathname.startsWith("/exam");
   if (path === "/offline-learning") return location.pathname.startsWith("/offline-learning");

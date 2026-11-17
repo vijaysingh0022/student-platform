@@ -229,6 +229,34 @@ export const getAdaptiveHistory = async (config = {}) => {
   return api.get("/adaptive/history", config);
 };
 
+// ─── Document Intelligence & Upload-to-Learn RAG APIs ────────────────────────
+export const uploadLearningDocument = async (formData, config = {}) => {
+  return api.post("/documents/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+    ...config,
+  });
+};
+
+export const getMyDocuments = async (config = {}) => {
+  return api.get("/documents", config);
+};
+
+export const getDocumentDetails = async (id, config = {}) => {
+  return api.get(`/documents/${id}`, config);
+};
+
+export const deleteDocument = async (id, config = {}) => {
+  return api.delete(`/documents/${id}`, config);
+};
+
+export const chatWithDocument = async (id, payload, config = {}) => {
+  return api.post(`/documents/${id}/chat`, payload, config);
+};
+
+export const generateDocumentStudyMaterial = async (id, payload, config = {}) => {
+  return api.post(`/documents/${id}/generate`, payload, config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);

@@ -28,6 +28,7 @@ import CareerTwinPage from "./pages/CareerTwinPage.jsx";
 import RewardsPage from "./pages/RewardsPage.jsx";
 import PYQIntelligencePage from "./pages/PYQIntelligencePage.jsx";
 import SpacedRepetitionPage from "./pages/SpacedRepetitionPage.jsx";
+import UploadToLearnPage from "./pages/UploadToLearnPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -406,6 +407,27 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <SpacedRepetitionPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/upload-to-learn"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <UploadToLearnPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/documents"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <UploadToLearnPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
