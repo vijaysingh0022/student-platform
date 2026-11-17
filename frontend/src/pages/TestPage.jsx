@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api.js";
 import { useAppState } from "../context/AppStateContext.jsx";
+import AdaptiveAssessmentModal from "../components/adaptive/AdaptiveAssessmentModal.jsx";
 
 export const SUBJECTS = [
   { id: "DSA", name: "Data Structures & Algorithms", shortName: "DSA", code: "{}", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", icon: "{}" },
@@ -221,6 +222,14 @@ const CommandCenter = ({ onStartTest }) => {
     subjectId: "DSA",
     topicName: "",
     maxAvailable: 10,
+  });
+
+  // Adaptive Assessment Modal state
+  const [adaptiveModal, setAdaptiveModal] = useState({
+    isOpen: false,
+    subject: "DSA",
+    mode: "diagnostic",
+    targetCount: 10,
   });
 
   const activeSubjectRef = useRef("DSA");
@@ -1023,24 +1032,119 @@ const CommandCenter = ({ onStartTest }) => {
 
           {/* AI ADAPTIVE */}
           {activeTab === "ai" && (
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🤖</span>
-                <div>
-                  <h4 className="text-sm font-extrabold text-indigo-950">AI Dynamic Adaptive Diagnostic</h4>
-                  <p className="text-xs text-indigo-700">Questions adapt dynamically in real-time as you solve them.</p>
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-50/80 via-white to-violet-50/80 border border-indigo-100/90 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl shadow-sm">
+                      🤖
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base font-black text-slate-900">
+                          AI Adaptive Question Intelligence
+                        </h4>
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                          IRT Engine
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Personalized question pathing powered by Item Response Theory (2PL) and topic mastery estimation.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setAdaptiveModal({
+                        isOpen: true,
+                        subject: activeSubject,
+                        mode: "diagnostic",
+                        targetCount: 10,
+                      })
+                    }
+                    className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black transition-all shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 shrink-0"
+                  >
+                    <span>⚡ Quick Diagnostic (10 Qs)</span>
+                  </button>
                 </div>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                The algorithm automatically raises difficulty when you answer correctly and guides you through foundational remedial questions if an error is detected.
-              </p>
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => openConfig("DSA", "", 20)}
-                  className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black transition-all shadow-md"
-                >
-                  Launch Adaptive Engine →
-                </button>
+
+                {/* Adaptive Modes Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-2">
+                  {[
+                    {
+                      id: "diagnostic",
+                      title: "Smart Diagnostic Test",
+                      desc: "Calibrated baseline scan. Questions adapt in real-time to pinpoint your true level.",
+                      icon: "🎯",
+                      badge: "Diagnostic",
+                      badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+                    },
+                    {
+                      id: "weak_topic",
+                      title: "Weak Topic Practice",
+                      desc: "Filters for historically struggling subtopics to patch critical knowledge gaps.",
+                      icon: "🛡️",
+                      badge: "Remediation",
+                      badgeColor: "bg-amber-50 text-amber-700 border-amber-200",
+                    },
+                    {
+                      id: "mastery_challenge",
+                      title: "Mastery Challenge",
+                      desc: "Elevated Medium-to-Hard problem sets testing edge cases and deep mastery.",
+                      icon: "⚡",
+                      badge: "Hard Tier",
+                      badgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+                    },
+                    {
+                      id: "interview_prep",
+                      title: "Interview Preparation",
+                      desc: "FAANG & Tier-1 technical OA simulations testing algorithms and systems.",
+                      icon: "💼",
+                      badge: "Campus OA",
+                      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                    },
+                    {
+                      id: "exam_prep",
+                      title: "Exam Preparation",
+                      desc: "Targeted university & GATE syllabus questions with rigorous conceptual depth.",
+                      icon: "🎓",
+                      badge: "Curriculum",
+                      badgeColor: "bg-sky-50 text-sky-700 border-sky-200",
+                    },
+                  ].map((mode) => (
+                    <div
+                      key={mode.id}
+                      className="p-4 rounded-2xl bg-white border border-slate-200/90 hover:border-indigo-300 hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl">{mode.icon}</span>
+                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${mode.badgeColor}`}>
+                            {mode.badge}
+                          </span>
+                        </div>
+                        <h5 className="text-xs sm:text-sm font-black text-slate-900">{mode.title}</h5>
+                        <p className="text-[11px] text-slate-500 font-medium leading-relaxed">{mode.desc}</p>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setAdaptiveModal({
+                            isOpen: true,
+                            subject: activeSubject,
+                            mode: mode.id,
+                            targetCount: 10,
+                          })
+                        }
+                        className="w-full py-2 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <span>Start {mode.title}</span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -1076,6 +1180,19 @@ const CommandCenter = ({ onStartTest }) => {
             <button onClick={() => setShowHistoryModal(false)} className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">Close</button>
           </div>
         </div>
+      )}
+
+      {/* Adaptive Assessment Modal */}
+      {adaptiveModal.isOpen && (
+        <AdaptiveAssessmentModal
+          subject={adaptiveModal.subject}
+          initialMode={adaptiveModal.mode}
+          targetQuestionCount={adaptiveModal.targetCount}
+          onClose={() => setAdaptiveModal((prev) => ({ ...prev, isOpen: false }))}
+          onSessionComplete={() => {
+            refreshStats();
+          }}
+        />
       )}
     </div>
   );

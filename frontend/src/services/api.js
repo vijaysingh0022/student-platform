@@ -208,6 +208,27 @@ export const enrollTopicInRevision = async (payload, config = {}) => {
   return api.post("/learning/revision/enroll", payload, config);
 };
 
+// ─── Adaptive Question Intelligence Engine APIs ──────────────────────────────
+export const startAdaptiveSession = async (payload, config = {}) => {
+  return api.post("/adaptive/start", payload, config);
+};
+
+export const getNextAdaptiveQuestion = async (payload, config = {}) => {
+  return api.post("/adaptive/next", payload, config);
+};
+
+export const submitAdaptiveAnswer = async (payload, config = {}) => {
+  return api.post("/adaptive/submit", payload, config);
+};
+
+export const endAdaptiveSession = async (payload, config = {}) => {
+  return api.post("/adaptive/end", payload, config);
+};
+
+export const getAdaptiveHistory = async (config = {}) => {
+  return api.get("/adaptive/history", config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);
