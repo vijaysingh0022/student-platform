@@ -30,6 +30,7 @@ import careerIntelligenceRoutes from "./routes/careerIntelligenceRoutes.js";
 import pyqIntelligenceRoutes from "./routes/pyqIntelligenceRoutes.js";
 import documentRagRoutes from "./routes/documentRagRoutes.js";
 import gitHubPortfolioRoutes from "./routes/gitHubPortfolioRoutes.js";
+import collaborativeRoutes from "./routes/collaborativeRoutes.js";
 import {
   enterpriseSecurityHeaders,
   rateLimiter,
@@ -104,6 +105,7 @@ app.use("/api/exam-prep", examPrepRoutes);
 app.use("/api/pyq", pyqIntelligenceRoutes);
 app.use("/api/documents", documentRagRoutes);
 app.use("/api/github", gitHubPortfolioRoutes);
+app.use("/api/community", collaborativeRoutes);
 
 // Alias mounts for direct REST conventions requested by prompt
 app.use("/api/subjects", learningRoutes);

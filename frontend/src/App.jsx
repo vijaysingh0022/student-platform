@@ -30,6 +30,7 @@ import PYQIntelligencePage from "./pages/PYQIntelligencePage.jsx";
 import SpacedRepetitionPage from "./pages/SpacedRepetitionPage.jsx";
 import UploadToLearnPage from "./pages/UploadToLearnPage.jsx";
 import PortfolioPage from "./pages/PortfolioPage.jsx";
+import CollaborativeNetworkPage from "./pages/CollaborativeNetworkPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -450,6 +451,27 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <PortfolioPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/community"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CollaborativeNetworkPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/study-groups"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CollaborativeNetworkPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

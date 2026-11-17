@@ -274,6 +274,59 @@ export const disconnectGitHubProfile = async (config = {}) => {
   return api.post("/github/disconnect", {}, config);
 };
 
+// ─── Collaborative Learning Network APIs ────────────────────────────────────
+export const getStudyGroups = async (params = {}, config = {}) => {
+  return api.get("/community/groups", { params, ...config });
+};
+
+export const createStudyGroup = async (payload, config = {}) => {
+  return api.post("/community/groups", payload, config);
+};
+
+export const getStudyGroupDetails = async (id, config = {}) => {
+  return api.get(`/community/groups/${id}`, config);
+};
+
+export const joinStudyGroup = async (id, config = {}) => {
+  return api.post(`/community/groups/${id}/join`, {}, config);
+};
+
+export const addGroupResource = async (id, payload, config = {}) => {
+  return api.post(`/community/groups/${id}/resources`, payload, config);
+};
+
+export const assignGroupChallenge = async (id, payload, config = {}) => {
+  return api.post(`/community/groups/${id}/challenges`, payload, config);
+};
+
+export const getDiscussions = async (params = {}, config = {}) => {
+  return api.get("/community/discussions", { params, ...config });
+};
+
+export const createDiscussionThread = async (payload, config = {}) => {
+  return api.post("/community/discussions", payload, config);
+};
+
+export const replyToDiscussionThread = async (id, payload, config = {}) => {
+  return api.post(`/community/discussions/${id}/replies`, payload, config);
+};
+
+export const upvoteDiscussionThread = async (id, config = {}) => {
+  return api.post(`/community/discussions/${id}/upvote`, {}, config);
+};
+
+export const askAiCommunityAssistant = async (payload, config = {}) => {
+  return api.post("/community/ai-assistant", payload, config);
+};
+
+export const getCommunityLeaderboards = async (config = {}) => {
+  return api.get("/community/leaderboards", config);
+};
+
+export const getCommunityNotifications = async (config = {}) => {
+  return api.get("/community/notifications", config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);
