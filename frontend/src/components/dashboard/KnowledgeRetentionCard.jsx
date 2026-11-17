@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { History, ArrowRight, Bot, RotateCcw } from "lucide-react";
+import { History, ArrowRight, Bot, RotateCcw, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { getRevisionDashboard } from "../../services/api.js";
 
-export const RETENTION_TOPICS = [
+export const RETENTION_TOPICS_FALLBACK = [
   {
     id: "r1",
     title: "DBMS Normalization (1NF to BCNF)",
@@ -13,7 +14,7 @@ export const RETENTION_TOPICS = [
     status: "Needs Revision",
     statusColor: "bg-amber-50 text-amber-700 border-amber-200",
     confidenceColor: "bg-amber-500",
-    link: "/learn/dbms/dbms-normalization",
+    link: "/revision",
   },
   {
     id: "r2",
@@ -25,7 +26,7 @@ export const RETENTION_TOPICS = [
     status: "At Risk",
     statusColor: "bg-rose-50 text-rose-700 border-rose-200",
     confidenceColor: "bg-rose-500",
-    link: "/learn/dsa/dsa-trees",
+    link: "/revision",
   },
   {
     id: "r3",
@@ -37,11 +38,71 @@ export const RETENTION_TOPICS = [
     status: "Fresh",
     statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
     confidenceColor: "bg-emerald-500",
-    link: "/learn/cn/cn-transport-layer",
+    link: "/revision",
   },
 ];
 
-export const KnowledgeRetentionCard = ({ retentionTopics = RETENTION_TOPICS }) => {
+export const KnowledgeRetentionCard = ({ retentionTopics }) => {
+  const [topics, setTopics] = useState(retentionTopics || RETENTION_TOPICS_FALLBACK);
+  const [dueCount, setDueCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveRevision = async () => {
+      try {
+        const res = await getRevisionDashboard();
+        if (res && res.data && isMounted) {
+          const due = res.data.dueToday || [];
+          const overdue = res.data.overdue || [];
+          const upcoming = res.data.upcoming || [];
+          const combined = [...overdue, ...due, ...upcoming];
+          
+          if (combined.length > 0) {
+            const mapped = combined.slice(0, 3).map((item) => {
+              const ret = Math.round(item.currentRetention ?? item.retentionScore ?? 75);
+              let status = "Fresh";
+              let statusColor = "bg-emerald-50 text-emerald-700 border-emerald-200";
+              let confidenceColor = "bg-emerald-500";
+
+              if (item.isOverdue || ret < 50) {
+                status = "At Risk";
+                statusColor = "bg-rose-50 text-rose-700 border-rose-200";
+                confidenceColor = "bg-rose-500";
+              } else if (item.isDueToday || ret < 75) {
+                status = "Needs Revision";
+                statusColor = "bg-amber-50 text-amber-700 border-amber-200";
+                confidenceColor = "bg-amber-500";
+              }
+
+              return {
+                id: item.topicId || item._id,
+                title: item.topicTitle,
+                subject: item.subjectId?.toUpperCase() || "CS",
+                lastStudied: item.lastReviewDate
+                  ? `${Math.max(1, Math.round((Date.now() - new Date(item.lastReviewDate).getTime()) / 86400000))}d ago`
+                  : "Recently",
+                retentionConfidence: ret,
+                status,
+                statusColor,
+                confidenceColor,
+                link: `/revision`,
+              };
+            });
+            setTopics(mapped);
+          }
+          setDueCount((res.data.summary?.dueTodayCount || 0) + (res.data.summary?.overdueCount || 0));
+        }
+      } catch (e) {
+        // Fallback to static props
+      }
+    };
+
+    fetchLiveRevision();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs flex flex-col justify-between">
       <div>
@@ -62,7 +123,7 @@ export const KnowledgeRetentionCard = ({ retentionTopics = RETENTION_TOPICS }) =
           </div>
 
           <Link
-            to="/roadmap/DSA"
+            to="/revision"
             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"
           >
             <span>Revision Center</span>
@@ -77,7 +138,7 @@ export const KnowledgeRetentionCard = ({ retentionTopics = RETENTION_TOPICS }) =
 
         {/* Topic Cards */}
         <div className="space-y-3 pt-1">
-          {retentionTopics.map((topic) => (
+          {topics.map((topic) => (
             <div
               key={topic.id}
               className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200/80 hover:border-indigo-300 hover:bg-white transition-all space-y-2 group shadow-2xs"
@@ -100,7 +161,7 @@ export const KnowledgeRetentionCard = ({ retentionTopics = RETENTION_TOPICS }) =
                 </div>
 
                 <Link
-                  to={topic.link}
+                  to="/revision"
                   className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-700 hover:border-indigo-400 hover:text-indigo-600 shrink-0 shadow-2xs flex items-center gap-1 transition-colors"
                 >
                   <RotateCcw className="w-3 h-3 text-slate-400" />
@@ -132,15 +193,15 @@ export const KnowledgeRetentionCard = ({ retentionTopics = RETENTION_TOPICS }) =
       {/* Footer Quick Action */}
       <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-wrap">
         <span className="text-[11px] text-slate-400 font-medium">
-          2 topics due for revision this week
+          {dueCount > 0 ? `${dueCount} topics due for revision` : "All retention schedules up to date"}
         </span>
 
         <Link
-          to="/tutor?q=Quiz%20me%20on%20my%20topics%20due%20for%20revision%20today"
+          to="/revision"
           className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
         >
-          <Bot className="w-3.5 h-3.5 text-indigo-500" />
-          <span>Ask AI to Quiz You →</span>
+          <Zap className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+          <span>Open Spaced Repetition →</span>
         </Link>
       </div>
     </div>

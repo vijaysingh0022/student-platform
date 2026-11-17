@@ -71,6 +71,12 @@ router.post("/evaluate-answer", optionalAuth, evaluateStudentAnswer);
 router.post("/exam-answer", optionalAuth, generateExamAnswer);
 router.post("/revision-notes", optionalAuth, generateRevisionNotes);
 
+// AI Spaced Repetition Engine
+router.get("/revision/dashboard", optionalAuth, (await import("../controllers/spacedRepetitionController.js")).getRevisionDashboard);
+router.get("/revision/session/:topicId", optionalAuth, (await import("../controllers/spacedRepetitionController.js")).getTopicRevisionSession);
+router.post("/revision/submit", optionalAuth, (await import("../controllers/spacedRepetitionController.js")).submitRevisionSession);
+router.post("/revision/enroll", optionalAuth, (await import("../controllers/spacedRepetitionController.js")).enrollTopic);
+
 // Learning Bookmarks
 router.get("/bookmarks", protect, getBookmarks);
 router.post("/bookmarks/toggle", protect, toggleBookmark);

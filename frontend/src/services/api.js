@@ -191,6 +191,23 @@ export const generateRevisionNotes = async (payload, config = {}) => {
   return api.post("/learning/revision-notes", payload, config);
 };
 
+// AI Spaced Repetition Engine APIs
+export const getRevisionDashboard = async (config = {}) => {
+  return api.get("/learning/revision/dashboard", config);
+};
+
+export const getTopicRevisionSession = async (topicId, config = {}) => {
+  return api.get(`/learning/revision/session/${topicId}`, config);
+};
+
+export const submitRevisionSession = async (payload, config = {}) => {
+  return api.post("/learning/revision/submit", payload, config);
+};
+
+export const enrollTopicInRevision = async (payload, config = {}) => {
+  return api.post("/learning/revision/enroll", payload, config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);

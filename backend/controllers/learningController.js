@@ -369,6 +369,18 @@ export const markTopicCompleted = async (req, res) => {
       console.warn("Topic completion reward notice:", rewardErr.message);
     }
 
+    // Automatically enroll completed topic into the AI Spaced Repetition Engine
+    try {
+      const { enrollTopicInSpacedRepetition } = await import("../services/spacedRepetitionService.js");
+      await enrollTopicInSpacedRepetition(userId, {
+        topicId,
+        subjectId: topic.subjectId,
+        initialScore: 80,
+      });
+    } catch (srErr) {
+      console.warn("Spaced repetition auto-enrollment note:", srErr.message);
+    }
+
     res.json({
       success: true,
       message: "Topic marked as completed! Test your understanding with the topic quiz.",
@@ -551,6 +563,25 @@ export const submitTopicQuiz = async (req, res) => {
         });
       } catch (err) {
         console.warn("Quiz reward error:", err.message);
+      }
+
+      // Automatically enroll or update topic in Spaced Repetition Engine
+      try {
+        const { enrollTopicInSpacedRepetition, recordRevisionResult } = await import("../services/spacedRepetitionService.js");
+        await enrollTopicInSpacedRepetition(userId, {
+          topicId: topic.topicId,
+          subjectId: topic.subjectId,
+          initialScore: accuracyPercent,
+        });
+        await recordRevisionResult(userId, {
+          topicId: topic.topicId,
+          sessionId: `quiz_${attemptId}`,
+          score: correctCount,
+          totalQuestions,
+          performanceRating: accuracyPercent >= 90 ? 5 : accuracyPercent >= 75 ? 4 : accuracyPercent >= 60 ? 3 : accuracyPercent >= 40 ? 2 : 1,
+        });
+      } catch (srErr) {
+        console.warn("Quiz spaced repetition sync notice:", srErr.message);
       }
     }
 
