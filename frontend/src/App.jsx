@@ -29,6 +29,7 @@ import RewardsPage from "./pages/RewardsPage.jsx";
 import PYQIntelligencePage from "./pages/PYQIntelligencePage.jsx";
 import SpacedRepetitionPage from "./pages/SpacedRepetitionPage.jsx";
 import UploadToLearnPage from "./pages/UploadToLearnPage.jsx";
+import PortfolioPage from "./pages/PortfolioPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -428,6 +429,27 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <UploadToLearnPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/portfolio"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PortfolioPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/github-portfolio"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PortfolioPage />
                   </AppLayout>
                 </ProtectedRoute>
               }
