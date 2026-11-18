@@ -413,30 +413,40 @@ export function simulatePersonalizedPlan({
   durationDays = 30,
   targetSubject = "DSA",
 }) {
+  // Sanitize numerical inputs to ensure robustness against negative or invalid inputs
+  const safeMastery = Math.max(0, Math.min(100, Number(currentMastery) || 0));
+  const safeDailyMins = Math.max(0, Math.min(240, Number(dailyStudyMinutes) || 0));
+  const safeDays = Math.max(0, Math.min(365, Number(durationDays) || 0));
+  const safeSubject = targetSubject || "DSA";
+
   // Linear-logarithmic learning velocity model:
   // Growth = (mins / 30) * sqrt(days) * efficiency_factor
-  const hoursInvested = (dailyStudyMinutes * durationDays) / 60;
-  const growthMultiplier = Math.min(45, Math.round(Math.sqrt(hoursInvested) * 7.5));
-  const projectedMastery = Math.min(98, currentMastery + growthMultiplier);
-  const projectedMasteredTopics = Math.max(3, Math.round(hoursInvested / 2.5));
+  const hoursInvested = (safeDailyMins * safeDays) / 60;
+  const growthMultiplier = hoursInvested > 0
+    ? Math.min(45, Math.round(Math.sqrt(hoursInvested) * 7.5))
+    : 0;
+  const projectedMastery = Math.min(98, safeMastery + growthMultiplier);
+  const projectedMasteredTopics = hoursInvested > 0
+    ? Math.max(1, Math.round(hoursInvested / 2.5))
+    : 0;
 
   let retentionStability = "Moderate (70%)";
-  if (dailyStudyMinutes >= 30 && durationDays >= 21) {
+  if (safeDailyMins >= 30 && safeDays >= 21) {
     retentionStability = "High (86%)";
-  } else if (dailyStudyMinutes >= 45) {
+  } else if (safeDailyMins >= 45) {
     retentionStability = "Exceptional (92%)";
   }
 
   return {
-    targetSubject,
-    dailyStudyMinutes: Number(dailyStudyMinutes),
-    durationDays: Number(durationDays),
-    currentMastery: Number(currentMastery),
+    targetSubject: safeSubject,
+    dailyStudyMinutes: safeDailyMins,
+    durationDays: safeDays,
+    currentMastery: safeMastery,
     projectedMastery,
     projectedMasteredTopics,
     retentionStabilityProjected: retentionStability,
     assumptions: [
-      `Assumes ${dailyStudyMinutes} minutes of focused, active recall each day for ${durationDays} consecutive days.`,
+      `Assumes ${safeDailyMins} minutes of focused, active recall each day for ${safeDays} consecutive days.`,
       "Topics enrolled into Spaced Repetition to prevent decay.",
       "Solving 1-2 practical assessment problems per study block.",
     ],
