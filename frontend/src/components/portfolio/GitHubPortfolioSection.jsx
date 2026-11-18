@@ -21,19 +21,25 @@ import {
   Check,
   Unlink,
   Eye,
+  Lock,
+  FolderGit2,
+  ListFilter,
+  SlidersHorizontal,
+  ChevronRight,
+  CheckSquare,
 } from "lucide-react";
-
-const GithubIcon = ({ className = "w-5 h-5" }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-  </svg>
-);
 import {
   connectGitHubProfile,
   getGitHubPortfolio,
   refreshGitHubPortfolio,
   disconnectGitHubProfile,
 } from "../../services/api.js";
+
+const GithubIcon = ({ className = "w-5 h-5" }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+  </svg>
+);
 
 export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => {
   const [portfolio, setPortfolio] = useState(null);
@@ -44,6 +50,10 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
   const [isConnecting, setIsConnecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedRepo, setSelectedRepo] = useState(null);
+
+  // Tab Navigation for Clean Organization
+  // "overview" | "explorer" | "audit" | "skills" | "roadmap"
+  const [activeTab, setActiveTab] = useState("overview");
 
   const fetchPortfolio = async () => {
     try {
@@ -129,90 +139,144 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
     );
   }
 
-  // DISCONNECTED STATE: PROMPT USER TO CONNECT
+  // ── 1. DISCONNECTED STATE: PREMIUM HERO & CONNECTION CARD ──
   if (!portfolio || !portfolio.isConnected) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-10 shadow-xl space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
-          <div className="space-y-2 max-w-xl">
+      <div className="space-y-8">
+        
+        {/* HERO SECTION (Clean White SaaS Theme with Deep Navy Contrast) */}
+        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
+          {/* Subtle background glow */}
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10 max-w-3xl space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>AI Developer Portfolio & Recruiter Lens</span>
+              <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+              <span>LearnX Developer Portfolio Intelligence</span>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
-              Analyze Your GitHub Like a Tech Recruiter
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
-              Connect your GitHub profile to get concrete project scoring, static code audits, automated README inspection, and skill gap alignment for your target role: <strong className="text-amber-300">{targetRole}</strong>.
-            </p>
-          </div>
 
-          <div className="shrink-0 flex items-center justify-center w-20 h-20 rounded-3xl bg-white/10 border border-white/20 text-white shadow-inner">
-            <GithubIcon className="w-10 h-10" />
+            {/* Accessible Crisp White Headings */}
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+              Analyze Your GitHub Like a Tech Recruiter
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-normal">
+              Connect your GitHub account for static code analysis, README documentation scoring, automated test suite verification, and role gap matching against: <strong className="text-amber-300 font-bold">{targetRole}</strong>.
+            </p>
+
+            {/* What LearnX Analyzes Pill Grid */}
+            <div className="pt-2 flex flex-wrap gap-2.5">
+              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>README & Documentation Quality</span>
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Automated Tests & CI/CD Pipelines</span>
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Verified Frameworks & Tech Stacks</span>
+              </span>
+              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-slate-200 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ATS Resume Action Bullets</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Connect Form */}
-        <form onSubmit={handleConnect} className="space-y-4 max-w-xl">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              GitHub Username
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
-                @
-              </span>
+        {/* GITHUB CONNECTION CARD */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-8 sm:p-10 shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-md">
+                <GithubIcon className="w-8 h-8" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                  Connect GitHub Account
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Status: <span className="text-rose-600 font-bold">Disconnected</span> • Public Read-Only Access
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Encrypted Credentials</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleConnect} className="space-y-5 max-w-xl">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                GitHub Username
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">
+                  @
+                </span>
+                <input
+                  type="text"
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
+                  placeholder="e.g. vijaysingh0022"
+                  required
+                  className="w-full pl-8 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium">
+                We will analyze your public repositories, languages, tests, and documentation.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                Personal Access Token <span className="text-[10px] text-slate-400 font-normal lowercase">(optional — for private repos or rate limit bypass)</span>
+              </label>
               <input
-                type="text"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="e.g. vijaysingh0022"
-                required
-                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-400 focus:bg-white/15"
+                type="password"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx (Stored with AES-256 encryption)"
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
               />
+              <p className="text-[11px] text-slate-400 font-medium">
+                Tokens are encrypted with AES-256 in the database and never stored in plaintext or browser localStorage.
+              </p>
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              Personal Access Token <span className="text-[10px] text-slate-400 font-normal">(Optional, for private repos or high rate limits)</span>
-            </label>
-            <input
-              type="password"
-              value={tokenInput}
-              onChange={(e) => setTokenInput(e.target.value)}
-              placeholder="ghp_xxxxxxxxxxxx (Stored with AES-256 encryption)"
-              className="w-full px-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-indigo-400 focus:bg-white/15"
-            />
-          </div>
+            {errorMsg && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
 
-          {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-200 text-xs font-bold flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
+            <button
+              type="submit"
+              disabled={isConnecting}
+              className="px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 font-black text-xs text-white shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <GithubIcon className="w-4 h-4" />
+              <span>{isConnecting ? "Analyzing Repositories..." : "Connect & Analyze Portfolio →"}</span>
+            </button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            disabled={isConnecting}
-            className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 font-black text-xs text-white shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
-          >
-            <GithubIcon className="w-4 h-4" />
-            <span>{isConnecting ? "Analyzing Repositories..." : "Analyze GitHub Portfolio Now →"}</span>
-          </button>
-        </form>
       </div>
     );
   }
 
-  // CONNECTED INTELLIGENCE DASHBOARD
+  // ── 2. CONNECTED STATE: PORTFOLIO DASHBOARD LAYOUT ──
   const alignment = portfolio.targetRoleAlignment || {};
 
   return (
     <div className="space-y-6">
       
-      {/* Portfolio Top Bar */}
+      {/* Top Connected Account Card */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div className="flex items-center gap-4 min-w-0">
@@ -221,11 +285,14 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
               alt={portfolio.username}
               className="w-14 h-14 rounded-2xl border border-slate-200 object-cover shadow-2xs"
             />
-            <div className="min-w-0">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-black text-slate-900 tracking-tight">
                   @{portfolio.username}
                 </h3>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Connected
+                </span>
                 <a
                   href={portfolio.profileUrl}
                   target="_blank"
@@ -236,27 +303,27 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
                 </a>
               </div>
               <p className="text-xs text-slate-500 font-medium truncate max-w-md">
-                {portfolio.bio || "Active GitHub Contributor"} • {portfolio.publicReposCount} Repositories
+                {portfolio.bio || "Active GitHub Contributor"} • {portfolio.publicReposCount} Repositories Analyzed
               </p>
             </div>
           </div>
 
-          {/* Action buttons */}
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5"
+              className="px-4 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 shadow-2xs"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-indigo-600" : ""}`} />
               <span>{refreshing ? "Re-analyzing..." : "Refresh Intelligence"}</span>
             </button>
             <button
               onClick={handleDisconnect}
-              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              className="px-3 py-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 transition-colors text-xs font-bold flex items-center gap-1"
               title="Disconnect GitHub"
             >
-              <Unlink className="w-4 h-4" />
+              <Unlink className="w-3.5 h-3.5" />
+              <span>Disconnect</span>
             </button>
           </div>
         </div>
@@ -281,7 +348,7 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
               {alignment.matchingPercentage || 65}%
             </div>
             <span className="text-[11px] font-bold text-emerald-600">
-              {alignment.demonstratedSkills?.length || 0} Skills Demonstrated
+              {alignment.demonstratedSkills?.length || 0} Verified Skills
             </span>
           </div>
 
@@ -307,121 +374,133 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
         </div>
       </div>
 
-      {/* Target Role Skill Gap Alignment (Career Twin Integration) */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h4 className="text-sm font-black text-slate-900 tracking-tight">
-              Career Twin Role Gap Alignment: {targetRole}
-            </h4>
-            <p className="text-xs text-slate-500 font-medium">
-              Comparing technologies verified in your actual repositories against target industry expectations.
-            </p>
-          </div>
-          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
-            {alignment.matchingPercentage || 0}% Fit
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Demonstrated Skills */}
-          <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100 space-y-2">
-            <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Demonstrated in Repositories</span>
-            </span>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {(alignment.demonstratedSkills || []).map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-xs font-bold text-emerald-800 shadow-2xs"
-                >
-                  ✓ {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Missing or Insufficiently Demonstrated */}
-          <div className="p-4 rounded-2xl bg-rose-50/40 border border-rose-100 space-y-2">
-            <span className="text-[11px] font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-              <span>Missing or Not Demonstrated</span>
-            </span>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {(alignment.missingOrWeakSkills || []).map((skill, idx) => (
-                <span
-                  key={idx}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-xs font-bold text-rose-800 shadow-2xs"
-                >
-                  + {skill} Needed
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* ── 3. PORTFOLIO DASHBOARD TABS ── */}
+      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+        {[
+          { id: "overview", label: "Portfolio Overview", icon: Layers },
+          { id: "explorer", label: "Repository Explorer", icon: FolderGit2 },
+          { id: "audit", label: "AI Code Audit", icon: ShieldCheck },
+          { id: "skills", label: "Technical Skills & Role Match", icon: Code },
+          { id: "roadmap", label: "Improvement Roadmap", icon: CheckSquare },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+                isActive
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Repositories & Static Code Audits */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Repo Selector List (4 Cols) */}
-        <div className="lg:col-span-5 space-y-3">
-          <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
-            Analyzed Repositories ({(portfolio.repositories || []).length})
-          </h4>
+      {/* ── TAB 1: OVERVIEW ── */}
+      {activeTab === "overview" && (
+        <div className="space-y-6">
+          {/* Target Role Skill Gap Alignment (Career Twin Integration) */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h4 className="text-sm font-black text-slate-900 tracking-tight">
+                  Career Twin Role Gap Alignment: {targetRole}
+                </h4>
+                <p className="text-xs text-slate-500 font-medium">
+                  Comparing verified technologies in your repositories against target industry job requirements.
+                </p>
+              </div>
+              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full">
+                {alignment.matchingPercentage || 0}% Match
+              </span>
+            </div>
 
-          <div className="space-y-2.5">
-            {(portfolio.repositories || []).map((repo) => {
-              const isSelected = selectedRepo?._id === repo._id || selectedRepo?.name === repo.name;
-              const grade = repo.audit?.grade || "B";
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl bg-emerald-50/40 border border-emerald-100 space-y-2">
+                <span className="text-[11px] font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Demonstrated in Repositories</span>
+                </span>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(alignment.demonstratedSkills || []).map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-emerald-200 text-xs font-bold text-emerald-800 shadow-2xs"
+                    >
+                      ✓ {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-              return (
+              <div className="p-4 rounded-2xl bg-rose-50/40 border border-rose-100 space-y-2">
+                <span className="text-[11px] font-black text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Missing or Not Demonstrated</span>
+                </span>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(alignment.missingOrWeakSkills || []).map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-xs font-bold text-rose-800 shadow-2xs"
+                    >
+                      + {skill} Needed
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Repo Preview Highlights */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="text-sm font-black text-slate-900 tracking-tight">
+                Featured Repositories ({(portfolio.repositories || []).length})
+              </h4>
+              <button
+                onClick={() => setActiveTab("explorer")}
+                className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+              >
+                <span>View All Repositories</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {(portfolio.repositories || []).slice(0, 6).map((repo) => (
                 <div
                   key={repo._id || repo.name}
-                  onClick={() => setSelectedRepo(repo)}
-                  className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                    isSelected
-                      ? "bg-indigo-50/80 border-indigo-400 shadow-2xs"
-                      : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
-                  }`}
+                  onClick={() => {
+                    setSelectedRepo(repo);
+                    setActiveTab("audit");
+                  }}
+                  className="p-4 rounded-2xl bg-slate-50/60 border border-slate-200/80 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition-all space-y-2 cursor-pointer group"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-700">
-                          {repo.language || "Code"}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
-                            grade.startsWith("A")
-                              ? "bg-emerald-100 text-emerald-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          Grade {grade}
-                        </span>
-                      </div>
-                      <h5 className="text-xs sm:text-sm font-black text-slate-900 truncate">
-                        {repo.name}
-                      </h5>
-                    </div>
-
-                    <span className="text-xs font-black text-slate-700">
-                      {repo.audit?.score || 70}/100
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md">
+                      {repo.language || "Code"}
+                    </span>
+                    <span className="text-[10px] font-black uppercase text-indigo-600">
+                      Score: {repo.audit?.score || 70}/100
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 font-medium line-clamp-2">
-                    {repo.description || "No repository description provided."}
+                  <h5 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                    {repo.name}
+                  </h5>
+
+                  <p className="text-xs text-slate-500 line-clamp-2 font-medium">
+                    {repo.description || "No description provided."}
                   </p>
 
                   <div className="flex items-center gap-3 text-[11px] text-slate-400 font-bold pt-1">
-                    <span className="flex items-center gap-1">
-                      <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                      <span>{repo.audit?.starsCount || 0}</span>
-                    </span>
-                    <span>•</span>
                     <span className={repo.audit?.hasTests ? "text-emerald-600" : "text-slate-400"}>
                       {repo.audit?.hasTests ? "✓ Tests" : "✗ No Tests"}
                     </span>
@@ -431,39 +510,126 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
                     </span>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Selected Repo Deep Audit & AI Portfolio Builder (7 Cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          {!selectedRepo ? (
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center text-xs text-slate-400">
-              Select a repository to view static analysis and AI project review.
-            </div>
-          ) : (
-            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-6">
-              
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-slate-900">{selectedRepo.name}</h3>
-                    <a
-                      href={selectedRepo.htmlUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-slate-400 hover:text-indigo-600 transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+      {/* ── TAB 2: REPOSITORY EXPLORER ── */}
+      {activeTab === "explorer" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-5 space-y-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Select Repository ({(portfolio.repositories || []).length})
+            </h4>
+
+            <div className="space-y-2.5">
+              {(portfolio.repositories || []).map((repo) => {
+                const isSelected = selectedRepo?._id === repo._id || selectedRepo?.name === repo.name;
+                const grade = repo.audit?.grade || "B";
+
+                return (
+                  <div
+                    key={repo._id || repo.name}
+                    onClick={() => setSelectedRepo(repo)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
+                      isSelected
+                        ? "bg-indigo-50/80 border-indigo-400 shadow-2xs"
+                        : "bg-white border-slate-200/90 hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-700">
+                            {repo.language || "Code"}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                            Grade {grade}
+                          </span>
+                        </div>
+                        <h5 className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                          {repo.name}
+                        </h5>
+                      </div>
+
+                      <span className="text-xs font-black text-slate-700">
+                        {repo.audit?.score || 70}/100
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 font-medium line-clamp-2">
+                      {repo.description || "No repository description provided."}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-4">
+            {!selectedRepo ? (
+              <p className="text-xs text-slate-400 text-center py-10">Select a repository from the left panel.</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">{selectedRepo.name}</h3>
+                    <p className="text-xs text-slate-500 font-medium">Default Branch: {selectedRepo.defaultBranch || "main"}</p>
+                  </div>
+                  <a
+                    href={selectedRepo.htmlUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <span>View on GitHub</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold">Stars</span>
+                    <span className="text-base font-black text-slate-900">{selectedRepo.audit?.starsCount || 0}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold">Test Suites</span>
+                    <span className="text-base font-black text-slate-900">{selectedRepo.audit?.hasTests ? "Present" : "Missing"}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                    <span className="text-[10px] text-slate-400 block font-bold">License</span>
+                    <span className="text-base font-black text-slate-900">{selectedRepo.audit?.licenseType || "None"}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setActiveTab("audit")}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
+                >
+                  <span>Open Deep AI Code Audit →</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 3: AI CODE AUDIT & RECRUITER PERSPECTIVE ── */}
+      {activeTab === "audit" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-6">
+          {!selectedRepo ? (
+            <p className="text-xs text-slate-400 text-center py-10">Select a repository to view deep AI audit.</p>
+          ) : (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">{selectedRepo.name}</h3>
+                  <p className="text-xs text-slate-500 font-medium">
                     Static Code Health Score: <strong className="text-indigo-600 font-bold">{selectedRepo.audit?.score || 70}/100</strong> (Grade {selectedRepo.audit?.grade})
                   </p>
                 </div>
-
                 <div className="flex items-center gap-2">
                   {selectedRepo.audit?.hasDocker && (
                     <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold">Docker</span>
@@ -523,22 +689,93 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
                   ))}
                 </div>
               </div>
-
-              {/* Improved README Suggestion */}
-              {selectedRepo.audit?.portfolioBuilder?.improvedReadmeMarkdown && (
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                  <span className="text-xs font-black text-slate-800">
-                    Recommended README Enhancements
-                  </span>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    {selectedRepo.audit.portfolioBuilder.improvedReadmeMarkdown}
-                  </p>
-                </div>
-              )}
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* ── TAB 4: TECHNICAL SKILLS & ROLE MATCH ── */}
+      {activeTab === "skills" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900">Verified Technical Skills Spectrum</h3>
+              <p className="text-xs text-slate-500 font-medium">Extracted from repository package dependencies and languages.</p>
+            </div>
+            <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+              {targetRole} Match
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <span className="text-xs font-bold text-slate-700 block">Demonstrated Technologies:</span>
+              <div className="flex flex-wrap gap-2">
+                {(alignment.demonstratedSkills || []).map((tech, idx) => (
+                  <span key={idx} className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
+                    ✓ {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <span className="text-xs font-bold text-slate-700 block">Target Role Skills Missing:</span>
+              <div className="flex flex-wrap gap-2">
+                {(alignment.missingOrWeakSkills || []).map((tech, idx) => (
+                  <span key={idx} className="px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800">
+                    + {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 5: IMPROVEMENT ROADMAP ── */}
+      {activeTab === "roadmap" && (
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-base font-black text-slate-900">Portfolio Improvement Roadmap</h3>
+              <p className="text-xs text-slate-500 font-medium">Prioritized action checklist to elevate portfolio score to Tier-1 recruiter level.</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {(portfolio.portfolioChecklist || []).length === 0 ? (
+              <div className="space-y-2.5">
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                  <span className="font-bold text-slate-800 block">Add Automated Unit & Integration Tests</span>
+                  <p className="text-slate-500 font-medium">Configure Jest, PyTest, or Go test runner with GitHub Actions CI badge.</p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                  <span className="font-bold text-slate-800 block">Enhance README Architecture Diagrams</span>
+                  <p className="text-slate-500 font-medium">Include system flowcharts or component diagrams in your top repository.</p>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+                  <span className="font-bold text-slate-800 block">Add Open Source License</span>
+                  <p className="text-slate-500 font-medium">Add MIT or Apache 2.0 license to demonstrate software engineering rigor.</p>
+                </div>
+              </div>
+            ) : (
+              portfolio.portfolioChecklist.map((item, idx) => (
+                <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-800 block">{item.task}</span>
+                    <span className="text-[10px] text-slate-500">{item.category} • {item.repoName}</span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md ${item.completed ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                    {item.completed ? "Done" : "Pending"}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
