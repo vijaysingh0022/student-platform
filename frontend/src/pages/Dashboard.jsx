@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
-import api, { getStudentLearningDashboard, getSkillGraph } from "../services/api.js";
+import api, { getStudentLearningDashboard, getSkillGraph, getPersonalLearningTwin } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useAppState } from "../context/AppStateContext.jsx";
 
 // Modular Dashboard Subcomponents
 import DashboardHeader from "../components/dashboard/DashboardHeader.jsx";
 import KeyMetricsRow from "../components/dashboard/KeyMetricsRow.jsx";
+import UnifiedIntelligenceSection from "../components/dashboard/UnifiedIntelligenceSection.jsx";
 import NextBestActionCard from "../components/dashboard/NextBestActionCard.jsx";
 import TodayFocusEngine from "../components/dashboard/TodayFocusEngine.jsx";
 import KnowledgeRetentionCard from "../components/dashboard/KnowledgeRetentionCard.jsx";
@@ -68,6 +69,7 @@ export const Dashboard = () => {
   const [prediction, setPrediction] = useState(null);
   const [learningData, setLearningData] = useState(null);
   const [skillGraphData, setSkillGraphData] = useState(null);
+  const [twinData, setTwinData] = useState(null);
 
   // Today's Focus state persisted in localStorage
   const [tasks, setTasks] = useState(() => {
@@ -105,16 +107,18 @@ export const Dashboard = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [resultsRes, learningRes, predRes, skillRes] = await Promise.all([
+        const [resultsRes, learningRes, predRes, skillRes, twinRes] = await Promise.all([
           api.get("/tests/results").catch(() => ({ data: [] })),
           getStudentLearningDashboard().catch(() => ({ data: null })),
           api.get("/prediction/readiness").catch(() => ({ data: null })),
           getSkillGraph().catch(() => ({ data: null })),
+          getPersonalLearningTwin().catch(() => ({ data: null })),
         ]);
 
         setResults(resultsRes.data || []);
         setPrediction(predRes.data || null);
         if (skillRes?.data) setSkillGraphData(skillRes.data);
+        if (twinRes?.data?.twin) setTwinData(twinRes.data.twin);
 
         if (learningRes?.data) {
           const raw = learningRes.data;
@@ -263,6 +267,15 @@ export const Dashboard = () => {
         readinessLabel={readinessLabel}
         streakDays={streakDays}
         weeklyMomentum={12}
+      />
+
+      {/* ── 2.5. UNIFIED ECOSYSTEM INTELLIGENCE (LEARNX 2.0 INTEGRATION) ── */}
+      <UnifiedIntelligenceSection
+        twin={twinData}
+        revisionsDue={2}
+        codingCount={14}
+        portfolioStatus="Connected"
+        weeklyVelocity="+14% Mastery"
       />
 
       {/* ── 3. SIGNATURE ENGINE: YOUR NEXT BEST ACTION ── */}
