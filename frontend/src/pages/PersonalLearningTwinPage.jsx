@@ -431,7 +431,74 @@ export const PersonalLearningTwinPage = () => {
           </div>
         </div>
 
-        {/* ROW 3: PERSONALIZED LEARNING SIMULATION ENGINE */}
+        {/* ROW 3: KNOWLEDGE GRAPH & PREREQUISITE NETWORK */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                  Knowledge Graph & Prerequisite Network
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Hierarchical relationships across core CS subjects, prerequisites, and target tech roles. Highlights missing dependencies blocking concept mastery.
+              </p>
+            </div>
+            <span className="text-[10px] font-black uppercase text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full self-start sm:self-center">
+              Concept Dependency Graph
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Subject Node */}
+            <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Curriculum Subject</span>
+                <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">Tier 1</span>
+              </div>
+              <h4 className="text-sm font-black text-slate-900">Database Systems (DBMS)</h4>
+              <p className="text-xs text-slate-500">Foundational Data Persistence, ACID guarantees, Relational Schema & Indices.</p>
+              <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] font-bold text-slate-600">
+                <span>Prerequisites Met: 3/4</span>
+                <span className="text-emerald-600">75% Ready</span>
+              </div>
+            </div>
+
+            {/* Prerequisite Node */}
+            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-700">Prerequisite Anchor</span>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">Crucial</span>
+              </div>
+              <h4 className="text-sm font-black text-amber-950">Relational Keys & Normalization</h4>
+              <p className="text-xs text-amber-800">Must understand Functional Dependency (1NF → 3NF / BCNF) prior to Transaction Concurrency.</p>
+              <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px] font-bold text-amber-900">
+                <span>Status: In Revision</span>
+                <span className="text-amber-700">High Impact</span>
+              </div>
+            </div>
+
+            {/* Target Role Target Node */}
+            <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600">Career Twin Alignment</span>
+                <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Goal</span>
+              </div>
+              <h4 className="text-sm font-black text-indigo-950">Backend & Distributed Systems</h4>
+              <p className="text-xs text-indigo-800">Directly maps to Backend Engineer and Full Stack campus placement interviews.</p>
+              <div className="pt-2 border-t border-indigo-200/60 flex items-center justify-between text-[11px] font-bold text-indigo-900">
+                <span>Core Skill Coverage: 68%</span>
+                <Link to="/career-twin" className="text-indigo-600 hover:underline flex items-center gap-1">
+                  <span>View Role</span>
+                  <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 4: PERSONALIZED LEARNING SIMULATION ENGINE */}
         <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-2xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
