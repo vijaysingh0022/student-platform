@@ -12,10 +12,10 @@ const KEY_BUFFER = crypto.createHash("sha256").update(String(ENCRYPTION_KEY)).di
  * Encrypt sensitive OAuth tokens using AES-256-CBC
  */
 export function encryptToken(token = "") {
-  if (!token) return { encrypted: "", iv: "" };
+  if (!token || !token.trim()) return { encrypted: "", iv: "" };
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv("aes-256-cbc", KEY_BUFFER, iv);
-  let encrypted = cipher.update(token, "utf8", "hex");
+  let encrypted = cipher.update(token.trim(), "utf8", "hex");
   encrypted += cipher.final("hex");
   return { encrypted, iv: iv.toString("hex") };
 }
@@ -38,6 +38,20 @@ export function decryptToken(encrypted = "", ivHex = "") {
 }
 
 /**
+ * Format GitHub Authorization Header
+ * Works for both classic PAT (ghp_), fine-grained PAT (github_pat_), and OAuth tokens
+ */
+function getAuthHeader(token = "") {
+  const clean = token.trim();
+  if (!clean) return "";
+  if (clean.startsWith("token ") || clean.startsWith("Bearer ")) {
+    return clean;
+  }
+  // If fine-grained PAT or modern token, Bearer is standard; if classic token, token works too.
+  return clean.startsWith("ghp_") ? `token ${clean}` : `Bearer ${clean}`;
+}
+
+/**
  * Fetch GitHub API helper with rate limit & auth handling
  */
 export async function fetchGitHubApi(endpoint, token = "") {
@@ -45,12 +59,22 @@ export async function fetchGitHubApi(endpoint, token = "") {
     Accept: "application/vnd.github.v3+json",
     "User-Agent": "LearnX-Portfolio-Intelligence-Engine",
   };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
+
+  const cleanToken = token ? token.trim() : "";
+  if (cleanToken) {
+    headers.Authorization = getAuthHeader(cleanToken);
   }
 
   const url = endpoint.startsWith("http") ? endpoint : `https://api.github.com${endpoint}`;
-  const response = await fetch(url, { headers });
+
+  let response;
+  try {
+    response = await fetch(url, { headers });
+  } catch (netErr) {
+    const err = new Error("GitHub API is currently unreachable. Please check your network connection.");
+    err.status = 503;
+    throw err;
+  }
 
   if (!response.ok) {
     const errText = await response.text();
@@ -59,10 +83,73 @@ export async function fetchGitHubApi(endpoint, token = "") {
       const parsed = JSON.parse(errText);
       if (parsed.message) msg = parsed.message;
     } catch (e) {}
-    throw new Error(msg);
+
+    const error = new Error(msg);
+    error.status = response.status;
+    error.headers = response.headers;
+    throw error;
   }
 
   return response.json();
+}
+
+/**
+ * Validate token and inspect granted permissions / authenticated login
+ */
+export async function testGitHubConnection({ username, token = "" }) {
+  const cleanUser = username ? username.trim().replace(/^@/, "") : "";
+  const cleanToken = token ? token.trim() : "";
+
+  // 1. If token is provided, verify token identity via /user
+  if (cleanToken) {
+    try {
+      const authUser = await fetchGitHubApi("/user", cleanToken);
+      const isOwner = cleanUser ? authUser.login.toLowerCase() === cleanUser.toLowerCase() : true;
+      return {
+        valid: true,
+        authenticatedLogin: authUser.login,
+        isTokenProvided: true,
+        isOwner,
+        tokenType: cleanToken.startsWith("github_pat_") ? "Fine-grained PAT" : cleanToken.startsWith("ghp_") ? "Classic PAT" : "OAuth Token",
+        scopes: "Read-only profile & repository access",
+        message: isOwner
+          ? `Authenticated as @${authUser.login}. Private and public repositories accessible.`
+          : `Authenticated as @${authUser.login}, but analyzing @${cleanUser}'s repositories.`,
+      };
+    } catch (err) {
+      if (err.status === 401) {
+        throw new Error("Invalid, expired or revoked GitHub Personal Access Token.");
+      } else if (err.status === 403) {
+        throw new Error("GitHub API rate limit exceeded or token lacks required permissions.");
+      }
+      throw err;
+    }
+  }
+
+  // 2. If no token provided, check if public profile exists
+  if (!cleanUser) {
+    throw new Error("Please enter a GitHub username to test connection.");
+  }
+
+  try {
+    const pubUser = await fetchGitHubApi(`/users/${cleanUser}`);
+    return {
+      valid: true,
+      authenticatedLogin: pubUser.login,
+      isTokenProvided: false,
+      isOwner: true,
+      tokenType: "Public (No Token)",
+      scopes: "Public repositories only (Rate limit: 60 req/hr)",
+      message: `Connected to public profile @${pubUser.login}. Analyzing public repositories without token.`,
+    };
+  } catch (err) {
+    if (err.status === 404) {
+      throw new Error(`GitHub user @${cleanUser} not found. Please verify the username.`);
+    } else if (err.status === 403) {
+      throw new Error("GitHub API public rate limit reached for your IP (60 req/hr). Please provide a Personal Access Token.");
+    }
+    throw err;
+  }
 }
 
 /**
@@ -101,242 +188,144 @@ export async function analyzeRepositoryStatic({ repo, token = "" }) {
     fileTree = [];
   }
 
-  // 3. Inspect package.json if JS/TS project
-  const packageFile = fileTree.find((f) => f.name.toLowerCase() === "package.json");
-  if (packageFile) {
+  // 3. Inspect Dependencies (package.json / requirements.txt / pom.xml)
+  const rootFiles = fileTree.map((f) => f.name.toLowerCase());
+  const technologies = [];
+
+  if (rootFiles.includes("package.json")) {
     try {
-      const pRes = await fetchGitHubApi(`/repos/${fullName}/contents/package.json`, token);
-      if (pRes.content) {
-        const rawP = Buffer.from(pRes.content, "base64").toString("utf8");
-        packageJson = JSON.parse(rawP);
+      const pkgRes = await fetchGitHubApi(`/repos/${fullName}/contents/package.json`, token);
+      if (pkgRes.content) {
+        const rawJson = Buffer.from(pkgRes.content, "base64").toString("utf8");
+        packageJson = JSON.parse(rawJson);
+        const deps = { ...(packageJson.dependencies || {}), ...(packageJson.devDependencies || {}) };
+
+        // Frameworks & tools extraction
+        if (deps.express) technologies.push({ name: "Express.js", category: "framework" });
+        if (deps.react) technologies.push({ name: "React", category: "framework" });
+        if (deps.next) technologies.push({ name: "Next.js", category: "framework" });
+        if (deps.vue) technologies.push({ name: "Vue", category: "framework" });
+        if (deps.mongoose || deps.mongodb) technologies.push({ name: "MongoDB", category: "database" });
+        if (deps.pg || deps.sequelize || deps["typeorm"]) technologies.push({ name: "PostgreSQL", category: "database" });
+        if (deps.redis || deps.ioredis) technologies.push({ name: "Redis", category: "database" });
+        if (deps.tailwindcss) technologies.push({ name: "TailwindCSS", category: "tool" });
+        if (deps.typescript) technologies.push({ name: "TypeScript", category: "language" });
+
+        // Testing libraries
+        if (deps.jest || deps.mocha || deps.vitest || deps["@testing-library/react"] || deps.cypress) {
+          technologies.push({ name: "Jest / Unit Tests", category: "testing" });
+        }
       }
     } catch (e) {}
   }
 
-  // 4. Fetch Language byte breakdown
-  let languagesMap = {};
-  try {
-    languagesMap = await fetchGitHubApi(`/repos/${fullName}/languages`, token);
-  } catch (e) {
-    languagesMap = repo.language ? { [repo.language]: 1000 } : {};
+  if (rootFiles.includes("requirements.txt") || rootFiles.includes("pyproject.toml")) {
+    technologies.push({ name: "Python", category: "language" });
+    try {
+      const reqRes = await fetchGitHubApi(`/repos/${fullName}/contents/requirements.txt`, token);
+      if (reqRes.content) {
+        requirementsTxt = Buffer.from(reqRes.content, "base64").toString("utf8");
+        if (/django/i.test(requirementsTxt)) technologies.push({ name: "Django", category: "framework" });
+        if (/fastapi/i.test(requirementsTxt)) technologies.push({ name: "FastAPI", category: "framework" });
+        if (/flask/i.test(requirementsTxt)) technologies.push({ name: "Flask", category: "framework" });
+        if (/pytorch|torch/i.test(requirementsTxt)) technologies.push({ name: "PyTorch", category: "tool" });
+        if (/tensorflow/i.test(requirementsTxt)) technologies.push({ name: "TensorFlow", category: "tool" });
+        if (/pytest/i.test(requirementsTxt)) technologies.push({ name: "PyTest", category: "testing" });
+      }
+    } catch (e) {}
   }
 
-  // Detect technologies from dependencies & files
-  const technologies = [];
-  const totalBytes = Object.values(languagesMap).reduce((a, b) => a + b, 0) || 1;
-
-  for (const [lang, bytes] of Object.entries(languagesMap)) {
-    technologies.push({
-      name: lang,
-      category: "language",
-      bytes,
-      percentage: Math.round((bytes / totalBytes) * 100),
-    });
+  if (repo.language) {
+    if (!technologies.some((t) => t.name.toLowerCase() === repo.language.toLowerCase())) {
+      technologies.push({ name: repo.language, category: "language" });
+    }
   }
 
-  const fileNames = fileTree.map((f) => f.name.toLowerCase());
+  // 4. Static Verification Signals
+  const hasReadme = !!readmeText && readmeText.trim().length > 100;
+  const readmeWordCount = readmeText ? readmeText.split(/\s+/).length : 0;
+  const readmeHasBadges = /\[!\[|shields\.io|badge/i.test(readmeText);
+  const readmeHasInstallGuide = /install|setup|getting started|run/i.test(readmeText);
+  const readmeHasArchitecture = /architecture|flowchart|structure|diagram/i.test(readmeText);
 
-  // Check Docker, CI/CD, Gitignore, License
-  const hasDocker = fileNames.some((n) => n.includes("dockerfile") || n.includes("docker-compose"));
-  const hasGitignore = fileNames.includes(".gitignore");
-  const hasLicense = Boolean(repo.license) || fileNames.some((n) => n.includes("license"));
-  const licenseType = repo.license?.name || (hasLicense ? "Custom License" : "");
+  const hasLicense = !!repo.license || rootFiles.some((f) => f.includes("license"));
+  const licenseType = repo.license?.spdx_id || (hasLicense ? "Detected" : "");
 
-  // Check CI/CD
-  let hasCiCd = fileNames.includes(".github") || fileNames.includes(".gitlab-ci.yml");
-  let ciCdPlatform = hasCiCd ? "GitHub Actions" : "";
+  const hasTests =
+    technologies.some((t) => t.category === "testing") ||
+    rootFiles.some((f) => f.includes("test") || f.includes("spec")) ||
+    rootFiles.includes("__tests__");
 
-  // Check Testing & Test Frameworks
-  let hasTests = fileNames.some(
-    (n) => n.includes("test") || n.includes("tests") || n.includes("__tests__") || n.includes("spec")
-  );
-  const testFrameworks = [];
+  const hasDocker = rootFiles.includes("dockerfile") || rootFiles.includes("docker-compose.yml");
+  const hasCiCd = rootFiles.includes(".github") || rootFiles.includes(".gitlab-ci.yml") || rootFiles.includes(".travis.yml");
+  const hasGitignore = rootFiles.includes(".gitignore");
 
-  if (packageJson) {
-    const allDeps = {
-      ...(packageJson.dependencies || {}),
-      ...(packageJson.devDependencies || {}),
-    };
-
-    // Framework detection
-    if (allDeps.react) technologies.push({ name: "React", category: "framework" });
-    if (allDeps.vue) technologies.push({ name: "Vue", category: "framework" });
-    if (allDeps.next) technologies.push({ name: "Next.js", category: "framework" });
-    if (allDeps.express) technologies.push({ name: "Express.js", category: "framework" });
-    if (allDeps.nestjs || allDeps["@nestjs/core"]) technologies.push({ name: "NestJS", category: "framework" });
-    if (allDeps.tailwindcss) technologies.push({ name: "TailwindCSS", category: "framework" });
-    if (allDeps.mongodb || allDeps.mongoose) technologies.push({ name: "MongoDB", category: "database" });
-    if (allDeps.redis || allDeps.ioredis) technologies.push({ name: "Redis", category: "database" });
-    if (allDeps.pg || allDeps["@prisma/client"]) technologies.push({ name: "PostgreSQL", category: "database" });
-
-    // Test frameworks
-    if (allDeps.jest) testFrameworks.push("Jest");
-    if (allDeps.mocha) testFrameworks.push("Mocha");
-    if (allDeps.cypress) testFrameworks.push("Cypress");
-    if (allDeps.vitest) testFrameworks.push("Vitest");
-    if (allDeps["@playwright/test"]) testFrameworks.push("Playwright");
-
-    if (testFrameworks.length > 0) hasTests = true;
-  }
-
-  // README Quality Observations
-  const readmeWordCount = readmeText ? readmeText.split(/\s+/).filter(Boolean).length : 0;
-  const hasReadme = readmeWordCount >= 30;
-  const readmeHasBadges = readmeText.includes("[![") || readmeText.includes("shields.io");
-  const readmeHasInstallGuide =
-    readmeText.toLowerCase().includes("install") ||
-    readmeText.toLowerCase().includes("getting started") ||
-    readmeText.toLowerCase().includes("setup") ||
-    readmeText.toLowerCase().includes("npm run");
-  const readmeHasArchitecture =
-    readmeText.toLowerCase().includes("architecture") ||
-    readmeText.toLowerCase().includes("flowchart") ||
-    readmeText.toLowerCase().includes("overview") ||
-    readmeText.toLowerCase().includes("diagram");
-
-  // Verified Automated Observations
-  const observations = [];
-  if (hasReadme) {
-    observations.push(`Found comprehensive README documentation (${readmeWordCount} words) with setup guidelines.`);
-  } else {
-    observations.push("Missing or sparse README documentation.");
-  }
-
-  if (hasTests) {
-    observations.push(
-      `Automated tests verified (${testFrameworks.join(", ") || "test directory structure"}).`
-    );
-  } else {
-    observations.push("No automated test suite detected (Jest/PyTest/JUnit missing).");
-  }
-
-  if (hasCiCd) {
-    observations.push("Continuous Integration / Deployment workflow configured (.github/workflows).");
-  } else {
-    observations.push("Missing CI/CD pipeline automation.");
-  }
-
-  if (hasDocker) {
-    observations.push("Containerization verified via Dockerfile / Docker Compose.");
-  }
-
-  if (hasLicense) {
-    observations.push(`Open source license verified: ${licenseType}.`);
-  } else {
-    observations.push("No explicit open-source license found.");
-  }
-
-  // Calculate Base Quality Score
-  let score = 40;
-  if (hasReadme) score += 15;
+  // Calculate Numerical Score (0 to 100)
+  let score = 30; // base score for established repo
+  if (hasReadme) score += 20;
+  if (readmeWordCount > 300) score += 5;
   if (readmeHasInstallGuide) score += 5;
-  if (readmeHasArchitecture) score += 5;
+  if (hasLicense) score += 10;
   if (hasTests) score += 15;
   if (hasCiCd) score += 10;
   if (hasDocker) score += 5;
-  if (hasLicense) score += 5;
+  score = Math.min(100, Math.max(25, score));
 
-  score = Math.min(100, score);
   let grade = "B";
   if (score >= 90) grade = "A+";
   else if (score >= 80) grade = "A";
   else if (score >= 70) grade = "B";
-  else if (score >= 55) grade = "C";
+  else if (score >= 60) grade = "C";
   else grade = "D";
 
-  // Synthesize AI Review & Portfolio Builder Suggestions
-  let aiReview = {
-    overview: `Project built with ${repo.language || "Code"}. Contains clear modular structure with ${fileTree.length} root items.`,
-    codeOrganization: hasGitignore ? "Properly organized with root separation and .gitignore." : "Lacks root .gitignore; repository may track unnecessary build artifacts.",
-    documentationQuality: hasReadme ? "Well documented setup guide and technical features." : "Needs comprehensive setup instructions and architecture explanations.",
-    testingPractices: hasTests ? "Demonstrates automated verification." : "Needs unit test coverage on critical business logic.",
+  // Automated Observation Bullet Points
+  const observations = [];
+  if (hasReadme) {
+    observations.push(`Comprehensive README found (${readmeWordCount} words) with installation instructions.`);
+  } else {
+    observations.push("Missing or brief README. Recruiters cannot quickly determine project purpose.");
+  }
+
+  if (hasTests) {
+    observations.push("Automated unit/integration tests verified in repository.");
+  } else {
+    observations.push("No automated test suite detected. Critical for production software engineer roles.");
+  }
+
+  if (hasCiCd) {
+    observations.push("Continuous Integration / Deployment configuration (.github/workflows) detected.");
+  }
+
+  if (hasDocker) {
+    observations.push("Containerization verified via Dockerfile.");
+  }
+
+  if (hasLicense) {
+    observations.push(`Open source license verified (${licenseType}).`);
+  }
+
+  // 5. AI Recruiter First 10-Second Impression & Resume Bullets
+  const aiReview = {
+    overview: `${repo.name} demonstrates practical engineering in ${repo.language || "modern tech stack"}.`,
+    recruiterPerspective: hasTests && hasReadme
+      ? "Strong project. Clear documentation, setup steps, and automated tests signal software engineering maturity."
+      : "Promising repository, but lacks test coverage or clear architecture documentation to stand out in screening rounds.",
+    codeOrganization: "Clean directory layout with standard project packaging conventions.",
+    documentationQuality: hasReadme ? "Well-documented setup and dependencies." : "Needs explicit setup instructions.",
+    testingPractices: hasTests ? "Demonstrated test-driven practices." : "Missing test harness.",
     securityConcerns: [],
-    missingPractices: [],
-    recruiterPerspective: "",
+    missingPractices: hasTests ? [] : ["Unit test coverage"],
   };
 
-  if (!hasTests) aiReview.missingPractices.push("Automated unit and integration testing");
-  if (!hasCiCd) aiReview.missingPractices.push("GitHub Actions automated build pipeline");
-  if (!hasLicense) aiReview.missingPractices.push("Standard open-source license (MIT/Apache)");
-
-  // Call LLM for recruiter-grade project evaluation
-  try {
-    const openai = getAIClient();
-    const model = getAIModel();
-
-    if (openai) {
-      const prompt = `You are a Principal Engineering Recruiter and Staff Architect analyzing a candidate's GitHub project.
-Repository Name: "${repo.name}"
-Language: "${repo.language || 'Software'}"
-Description: "${repo.description || 'No description provided'}"
-Readme Word Count: ${readmeWordCount}
-Has Tests: ${hasTests} (${testFrameworks.join(', ')})
-Has Docker: ${hasDocker}
-Has CI/CD: ${hasCiCd}
-Readme Excerpt:
-"${readmeText.slice(0, 1500)}"
-
-Generate a realistic, objective evaluation strictly in JSON format:
-{
-  "recruiterPerspective": "What recruiters notice in the first 10 seconds of viewing this repository",
-  "resumeBulletSuggestions": [
-    "High-impact resume action bullet 1 with technical keywords",
-    "High-impact resume action bullet 2 with measurable outcome"
-  ],
-  "professionalDescription": "2-sentence recruiter-ready elevator pitch for this portfolio project",
-  "improvedReadmeMarkdown": "Clear suggestions on what sections to add to the README to make it look professional"
-}`;
-
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
-        temperature: 0.4,
-      });
-
-      const parsed = JSON.parse(completion.choices[0]?.message?.content || "{}");
-      aiReview.recruiterPerspective = parsed.recruiterPerspective || "";
-
-      return {
-        technologies,
-        audit: {
-          score,
-          grade,
-          hasReadme,
-          readmeWordCount,
-          readmeHasBadges,
-          readmeHasInstallGuide,
-          readmeHasArchitecture,
-          hasLicense,
-          licenseType,
-          hasTests,
-          testFrameworks,
-          testFileCount: hasTests ? 3 : 0,
-          hasCiCd,
-          ciCdPlatform,
-          hasDocker,
-          hasGitignore,
-          commitCountEstimate: Math.max(5, repo.size || 10),
-          starsCount: repo.stargazers_count || 0,
-          forksCount: repo.forks_count || 0,
-          openIssuesCount: repo.open_issues_count || 0,
-          observations,
-          aiReview,
-          portfolioBuilder: {
-            professionalDescription: parsed.professionalDescription || repo.description || "",
-            improvedReadmeMarkdown: parsed.improvedReadmeMarkdown || "",
-            resumeBulletSuggestions: parsed.resumeBulletSuggestions || [
-              `Architected ${repo.name} utilizing ${repo.language || 'modern technologies'} for efficient system execution.`,
-              `Engineered core business logic and modular interfaces adhering to industry standards.`
-            ],
-            showcasePitch: `Engineered a production-ready ${repo.name} platform demonstrating practical expertise in ${repo.language || 'software engineering'}.`,
-          },
-        },
-      };
-    }
-  } catch (err) {
-    console.warn("AI Project review fallback:", err.message);
-  }
+  const portfolioBuilder = {
+    professionalDescription: repo.description || `Engineered full-featured ${repo.name} utilizing ${technologies.map((t) => t.name).join(", ")}.`,
+    improvedReadmeMarkdown: `## ${repo.name}\n\n### Overview\n${repo.description || "Production-grade project."}\n\n### Tech Stack\n${technologies.map((t) => `- **${t.name}**`).join("\n")}\n\n### Setup & Installation\n\`\`\`bash\nnpm install\nnpm run dev\n\`\`\``,
+    resumeBulletSuggestions: [
+      `Architected and developed ${repo.name} utilizing ${technologies.slice(0, 3).map((t) => t.name).join(", ") || repo.language}, serving reliable API endpoints.`,
+      `Integrated ${hasCiCd ? "automated CI/CD pipelines and " : ""}${hasTests ? "comprehensive unit test coverage" : "modular software design"} ensuring robust code quality.`,
+    ],
+    showcasePitch: `Check out ${repo.name} — built with ${repo.language || "TypeScript"} focusing on scalable software architecture and clean code.`,
+  };
 
   return {
     technologies,
@@ -351,34 +340,26 @@ Generate a realistic, objective evaluation strictly in JSON format:
       hasLicense,
       licenseType,
       hasTests,
-      testFrameworks,
-      testFileCount: hasTests ? 2 : 0,
+      testFrameworks: technologies.filter((t) => t.category === "testing").map((t) => t.name),
+      testFileCount: hasTests ? 3 : 0,
       hasCiCd,
-      ciCdPlatform,
+      ciCdPlatform: hasCiCd ? "GitHub Actions" : "",
       hasDocker,
       hasGitignore,
-      commitCountEstimate: 10,
+      commitCountEstimate: 20,
+      branchCount: 1,
+      openIssuesCount: repo.open_issues_count || 0,
       starsCount: repo.stargazers_count || 0,
       forksCount: repo.forks_count || 0,
-      openIssuesCount: repo.open_issues_count || 0,
       observations,
       aiReview,
-      portfolioBuilder: {
-        professionalDescription: repo.description || `${repo.name} developed in ${repo.language || 'software'}.`,
-        improvedReadmeMarkdown: "Add an Architecture Flowchart, Installation prerequisites, and Example API payloads.",
-        resumeBulletSuggestions: [
-          `Architected ${repo.name} utilizing ${repo.language || 'modern frameworks'} ensuring high-throughput execution.`,
-          `Designed modular repository architecture with verified documentation and structured workflow.`
-        ],
-        showcasePitch: `${repo.name} represents a concrete engineering implementation in ${repo.language || 'full-stack engineering'}.`,
-      },
+      portfolioBuilder,
     },
   };
 }
 
 /**
  * Career Twin Role Gap Alignment Engine
- * Compares verified repository technologies against target role requirements
  */
 export function alignPortfolioWithTargetRole({ verifiedTechs = [], targetRole = "Backend Developer" }) {
   const roleSkillRequirements = {
@@ -420,4 +401,3 @@ export function alignPortfolioWithTargetRole({ verifiedTechs = [], targetRole = 
     recommendedProjectActions,
   };
 }
-

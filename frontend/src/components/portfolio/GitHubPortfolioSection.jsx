@@ -33,6 +33,7 @@ import {
   getGitHubPortfolio,
   refreshGitHubPortfolio,
   disconnectGitHubProfile,
+  testGitHubConnection,
 } from "../../services/api.js";
 
 const GithubIcon = ({ className = "w-5 h-5" }) => (
@@ -48,6 +49,8 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
   const [usernameInput, setUsernameInput] = useState("");
   const [tokenInput, setTokenInput] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [selectedRepo, setSelectedRepo] = useState(null);
 
@@ -76,6 +79,33 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
     fetchPortfolio();
   }, []);
 
+  const handleTestConnection = async () => {
+    if (!usernameInput.trim()) {
+      setErrorMsg("Please enter a GitHub username to test.");
+      return;
+    }
+
+    try {
+      setIsTesting(true);
+      setErrorMsg("");
+      setTestResult(null);
+      const res = await testGitHubConnection({
+        username: usernameInput.trim(),
+        token: tokenInput.trim(),
+      });
+
+      if (res.data?.success) {
+        setTestResult(res.data);
+      }
+    } catch (err) {
+      console.error("Test connection error:", err);
+      setTestResult(null);
+      setErrorMsg(err.response?.data?.message || err.message || "Connection test failed.");
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const handleConnect = async (e) => {
     if (e) e.preventDefault();
     if (!usernameInput.trim()) return;
@@ -83,6 +113,7 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
     try {
       setIsConnecting(true);
       setErrorMsg("");
+      setTestResult(null);
       const res = await connectGitHubProfile({
         username: usernameInput.trim(),
         token: tokenInput.trim(),
@@ -99,7 +130,7 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
       }
     } catch (err) {
       console.error("Connect error:", err);
-      setErrorMsg(err.response?.data?.message || "Failed to connect GitHub account.");
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to connect GitHub account.");
     } finally {
       setIsConnecting(false);
     }
@@ -248,6 +279,19 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
               </p>
             </div>
 
+            {testResult && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Connection Verified: @{testResult.authenticatedLogin}</span>
+                </div>
+                <p className="text-[11px] text-emerald-700">{testResult.message}</p>
+                <div className="text-[10px] text-emerald-600 font-bold">
+                  Mode: {testResult.tokenType} • Scope: {testResult.scopes}
+                </div>
+              </div>
+            )}
+
             {errorMsg && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -255,14 +299,26 @@ export const GitHubPortfolioSection = ({ targetRole = "Backend Developer" }) => 
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isConnecting}
-              className="px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 font-black text-xs text-white shadow-md transition-all flex items-center justify-center gap-2"
-            >
-              <GithubIcon className="w-4 h-4" />
-              <span>{isConnecting ? "Analyzing Repositories..." : "Connect & Analyze Portfolio →"}</span>
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="submit"
+                disabled={isConnecting || isTesting}
+                className="px-7 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 font-black text-xs text-white shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <GithubIcon className="w-4 h-4" />
+                <span>{isConnecting ? "Analyzing Repositories..." : "Connect & Analyze Portfolio →"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleTestConnection}
+                disabled={isTesting || isConnecting}
+                className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-all flex items-center justify-center gap-1.5 border border-slate-200"
+              >
+                <Activity className={`w-3.5 h-3.5 ${isTesting ? "animate-spin text-indigo-600" : ""}`} />
+                <span>{isTesting ? "Testing Auth..." : "Test Connection"}</span>
+              </button>
+            </div>
           </form>
         </div>
 

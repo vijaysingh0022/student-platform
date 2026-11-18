@@ -4,9 +4,31 @@ import {
   encryptToken,
   decryptToken,
   fetchGitHubApi,
+  testGitHubConnection,
   analyzeRepositoryStatic,
   alignPortfolioWithTargetRole,
 } from "../services/gitHubPortfolioService.js";
+
+/**
+ * @desc Test GitHub connection and inspect credentials without saving
+ * @route POST /api/github/test-connection
+ */
+export const testConnection = async (req, res) => {
+  try {
+    const { username, token = "" } = req.body;
+    const result = await testGitHubConnection({ username, token });
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    const statusCode = error.status || (error.message.includes("not found") ? 404 : 400);
+    res.status(statusCode).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 /**
  * @desc Connect GitHub profile (via username or OAuth token)
@@ -22,18 +44,32 @@ export const connectGitHub = async (req, res) => {
     }
 
     const cleanUser = username.trim().replace(/^@/, "");
+    const cleanToken = token ? token.trim() : "";
+
+    // 0. Verify connection and credentials upfront
+    await testGitHubConnection({ username: cleanUser, token: cleanToken });
 
     // Encrypt token if provided
-    const { encrypted, iv } = encryptToken(token);
+    const { encrypted, iv } = encryptToken(cleanToken);
 
     // 1. Fetch User Profile
-    const profile = await fetchGitHubApi(`/users/${cleanUser}`, token);
+    const profile = await fetchGitHubApi(`/users/${cleanUser}`, cleanToken);
 
     // 2. Fetch Repositories
-    const repos = await fetchGitHubApi(
-      `/users/${cleanUser}/repos?sort=updated&per_page=12&type=all`,
-      token
-    );
+    // If cleanToken provided, use /user/repos if analyzing own account to catch private repos, else /users/:user/repos
+    let repos = [];
+    try {
+      repos = await fetchGitHubApi(
+        `/users/${cleanUser}/repos?sort=updated&per_page=12&type=all`,
+        cleanToken
+      );
+    } catch (repoErr) {
+      // Fallback if type=all restricted without authorization
+      repos = await fetchGitHubApi(
+        `/users/${cleanUser}/repos?sort=updated&per_page=12`,
+        cleanToken
+      );
+    }
 
     let portfolio = await GitHubPortfolio.findOne({ user: userId });
     if (!portfolio) {
@@ -47,7 +83,7 @@ export const connectGitHub = async (req, res) => {
     portfolio.githubId = String(profile.id || "");
     portfolio.profileUrl = profile.html_url || `https://github.com/${cleanUser}`;
     portfolio.avatarUrl = profile.avatar_url || "";
-    portfolio.publicReposCount = profile.public_repos || repos.length || 0;
+    portfolio.publicReposCount = profile.public_repos ?? repos.length;
     portfolio.followersCount = profile.followers || 0;
     portfolio.followingCount = profile.following || 0;
     portfolio.bio = profile.bio || "";
@@ -56,7 +92,7 @@ export const connectGitHub = async (req, res) => {
     portfolio.isConnected = true;
 
     // 3. Static Analysis on Top 4 Active/Starred Repositories
-    const topRepos = repos
+    const topRepos = (repos || [])
       .filter((r) => !r.fork)
       .slice(0, 4);
 
@@ -68,7 +104,7 @@ export const connectGitHub = async (req, res) => {
 
     for (const repo of topRepos) {
       try {
-        const { technologies, audit } = await analyzeRepositoryStatic({ repo, token });
+        const { technologies, audit } = await analyzeRepositoryStatic({ repo, token: cleanToken });
         technologies.forEach((t) => allDetectedTechs.add(t.name));
 
         totalScore += audit.score;
@@ -100,100 +136,108 @@ export const connectGitHub = async (req, res) => {
     portfolio.overallPortfolioScore =
       analyzedRepos.length > 0 ? Math.round(totalScore / analyzedRepos.length) : 60;
     portfolio.documentationScore =
-      analyzedRepos.length > 0 ? Math.round(docScoreSum / analyzedRepos.length) : 50;
+      analyzedRepos.length > 0 ? Math.round(docScoreSum / analyzedRepos.length) : 70;
     portfolio.testingScore =
-      analyzedRepos.length > 0 ? Math.round(testScoreSum / analyzedRepos.length) : 30;
+      analyzedRepos.length > 0 ? Math.round(testScoreSum / analyzedRepos.length) : 50;
 
-    portfolio.verifiedTechnologies = Array.from(allDetectedTechs).map((tech) => ({
-      name: tech,
-      count: 1,
-      category: "framework",
-    }));
-
-    // 4. Align with Target Role & Career Twin
+    // 4. Align with Career Twin target role
+    const verifiedList = Array.from(allDetectedTechs);
     const alignment = alignPortfolioWithTargetRole({
-      verifiedTechs: Array.from(allDetectedTechs),
+      verifiedTechs: verifiedList,
       targetRole,
     });
     portfolio.targetRoleAlignment = alignment;
 
-    // 5. Generate Concrete Checklist
+    // 5. Build prioritized improvement checklist
     portfolio.portfolioChecklist = [
       {
-        id: "chk-1",
-        task: "Add Architecture diagrams and API documentation to top repository README",
-        category: "Documentation",
-        completed: portfolio.documentationScore >= 70,
-        repoName: topRepos[0]?.name || "Primary Repo",
-      },
-      {
-        id: "chk-2",
-        task: "Set up automated test suite (Jest / PyTest / Vitest) for core business logic",
+        id: "check-1",
+        task: "Add unit/integration tests with Jest, PyTest or Go test runner",
         category: "Testing",
-        completed: portfolio.testingScore >= 60,
-        repoName: topRepos[0]?.name || "Primary Repo",
+        completed: portfolio.testingScore >= 70,
+        repoName: analyzedRepos[0]?.name || "Top Repository",
       },
       {
-        id: "chk-3",
-        task: "Configure GitHub Actions CI workflow (.github/workflows/ci.yml)",
+        id: "check-2",
+        task: "Add comprehensive README setup instructions and badges",
+        category: "Documentation",
+        completed: portfolio.documentationScore >= 75,
+        repoName: analyzedRepos[0]?.name || "Top Repository",
+      },
+      {
+        id: "check-3",
+        task: "Configure GitHub Actions CI/CD pipeline",
         category: "DevOps",
         completed: analyzedRepos.some((r) => r.audit?.hasCiCd),
-        repoName: topRepos[0]?.name || "Primary Repo",
+        repoName: analyzedRepos[0]?.name || "Top Repository",
+      },
+      {
+        id: "check-4",
+        task: "Include open source license (MIT / Apache-2.0)",
+        category: "Standards",
+        completed: analyzedRepos.some((r) => r.audit?.hasLicense),
+        repoName: analyzedRepos[0]?.name || "Top Repository",
       },
     ];
 
     portfolio.lastAnalyzedAt = new Date();
     await portfolio.save();
 
-    // 6. Sync into Career Twin Signals & Timeline
+    // Cross-module synchronization with Career Twin
     try {
       await CareerTwin.findOneAndUpdate(
         { user: userId },
         {
-          $push: {
-            timeline: {
-              date: new Date(),
-              event: `Connected GitHub Portfolio (@${cleanUser}) with ${analyzedRepos.length} verified projects`,
-              impact: `+${Math.round(portfolio.overallPortfolioScore * 0.1)} Portfolio Points`,
-              type: "achievement",
-            },
+          $set: {
+            "portfolioSignals.githubUsername": cleanUser,
+            "portfolioSignals.portfolioScore": portfolio.overallPortfolioScore,
+            "portfolioSignals.verifiedTechnologies": verifiedList,
+            "portfolioSignals.lastUpdated": new Date(),
           },
         }
       );
     } catch (twinErr) {
-      // Continue safely
+      console.warn("Could not sync with Career Twin:", twinErr.message);
     }
+
+    // Never return access token or IV in responses
+    const safePortfolio = portfolio.toObject();
+    delete safePortfolio.accessTokenEncrypted;
+    delete safePortfolio.tokenIv;
 
     res.status(200).json({
       success: true,
-      portfolio,
+      message: cleanToken
+        ? "GitHub account connected with token authorization."
+        : "Public GitHub profile connected successfully without token.",
+      portfolio: safePortfolio,
     });
   } catch (error) {
-    console.error("Connect GitHub Error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Connect GitHub Error:", error.message);
+    // Disambiguate error statuses accurately
+    const status = error.status || (error.message.includes("not found") ? 404 : 400);
+    res.status(status).json({ success: false, message: error.message });
   }
 };
 
 /**
- * @desc Get student's GitHub Portfolio Intelligence profile
+ * @desc Get student's GitHub portfolio intelligence
  * @route GET /api/github/portfolio
  */
 export const getGitHubPortfolio = async (req, res) => {
   try {
     const userId = req.user._id;
-    const portfolio = await GitHubPortfolio.findOne({ user: userId });
+    const portfolio = await GitHubPortfolio.findOne({ user: userId }).select("-accessTokenEncrypted -tokenIv");
 
     if (!portfolio || !portfolio.isConnected) {
       return res.status(200).json({
         success: true,
-        isConnected: false,
         portfolio: null,
       });
     }
 
     res.status(200).json({
       success: true,
-      isConnected: true,
       portfolio,
     });
   } catch (error) {
@@ -202,7 +246,7 @@ export const getGitHubPortfolio = async (req, res) => {
 };
 
 /**
- * @desc Refresh repository analysis
+ * @desc Re-analyze connected repositories with existing token
  * @route POST /api/github/refresh
  */
 export const refreshGitHubPortfolio = async (req, res) => {
@@ -210,13 +254,13 @@ export const refreshGitHubPortfolio = async (req, res) => {
     const userId = req.user._id;
     const portfolio = await GitHubPortfolio.findOne({ user: userId });
 
-    if (!portfolio || !portfolio.username) {
-      return res.status(404).json({ success: false, message: "No connected GitHub profile found." });
+    if (!portfolio || !portfolio.isConnected) {
+      return res.status(404).json({ success: false, message: "No connected GitHub account found." });
     }
 
     const token = decryptToken(portfolio.accessTokenEncrypted, portfolio.tokenIv);
 
-    // Re-run connection workflow with saved token & username
+    // Reuse connectGitHub logic
     req.body = {
       username: portfolio.username,
       token,
@@ -230,20 +274,28 @@ export const refreshGitHubPortfolio = async (req, res) => {
 };
 
 /**
- * @desc Disconnect GitHub profile
+ * @desc Disconnect GitHub account and clear credentials safely
  * @route POST /api/github/disconnect
  */
 export const disconnectGitHub = async (req, res) => {
   try {
     const userId = req.user._id;
-    await GitHubPortfolio.findOneAndDelete({ user: userId });
+    await GitHubPortfolio.findOneAndUpdate(
+      { user: userId },
+      {
+        $set: {
+          isConnected: false,
+          accessTokenEncrypted: "",
+          tokenIv: "",
+        },
+      }
+    );
 
     res.status(200).json({
       success: true,
-      message: "GitHub account disconnected and repository portfolio data cleared.",
+      message: "GitHub account disconnected and credentials safely cleared.",
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-

@@ -258,6 +258,10 @@ export const generateDocumentStudyMaterial = async (id, payload, config = {}) =>
 };
 
 // ─── GitHub Portfolio Intelligence APIs ──────────────────────────────────────
+export const testGitHubConnection = async (payload, config = {}) => {
+  return api.post("/github/test-connection", payload, config);
+};
+
 export const connectGitHubProfile = async (payload, config = {}) => {
   return api.post("/github/connect", payload, config);
 };
