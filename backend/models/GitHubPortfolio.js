@@ -166,9 +166,6 @@ const gitHubPortfolioSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-gitHubPortfolioSchema.index({ user: 1 });
-gitHubPortfolioSchema.index({ username: 1 });
-
 const GitHubPortfolio = mongoose.model("GitHubPortfolio", gitHubPortfolioSchema);
 export default GitHubPortfolio;
 
