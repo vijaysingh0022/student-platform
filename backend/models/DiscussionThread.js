@@ -68,3 +68,4 @@ discussionThreadSchema.index({ tags: 1 });
 
 const DiscussionThread = mongoose.model("DiscussionThread", discussionThreadSchema);
 export default DiscussionThread;
+

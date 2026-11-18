@@ -33,3 +33,4 @@ peerNotificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
 
 const PeerNotification = mongoose.model("PeerNotification", peerNotificationSchema);
 export default PeerNotification;
+

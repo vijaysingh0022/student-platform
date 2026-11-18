@@ -31,6 +31,7 @@ import SpacedRepetitionPage from "./pages/SpacedRepetitionPage.jsx";
 import UploadToLearnPage from "./pages/UploadToLearnPage.jsx";
 import PortfolioPage from "./pages/PortfolioPage.jsx";
 import CollaborativeNetworkPage from "./pages/CollaborativeNetworkPage.jsx";
+import PersonalLearningTwinPage from "./pages/PersonalLearningTwinPage.jsx";
 import { OfflineProvider } from "./context/OfflineContext.jsx";
 import { ClerkSignInPage, ClerkSignUpPage } from "./pages/AuthPages.jsx";
 
@@ -472,6 +473,27 @@ function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <CollaborativeNetworkPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/learning-twin"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PersonalLearningTwinPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/personal-twin"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PersonalLearningTwinPage />
                   </AppLayout>
                 </ProtectedRoute>
               }

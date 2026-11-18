@@ -111,3 +111,4 @@ studyGroupSchema.index({ "members.user": 1 });
 
 const StudyGroup = mongoose.model("StudyGroup", studyGroupSchema);
 export default StudyGroup;
+

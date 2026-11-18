@@ -40,3 +40,4 @@ router.get("/leaderboards", protect, getLeaderboards);
 router.get("/notifications", protect, getMyNotifications);
 
 export default router;
+

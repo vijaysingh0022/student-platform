@@ -385,3 +385,4 @@ export async function retrieveRelevantChunks({ query, chunks = [], topK = 4 }) {
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, topK);
 }
+

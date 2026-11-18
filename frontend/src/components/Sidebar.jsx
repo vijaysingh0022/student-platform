@@ -51,6 +51,16 @@ const NAV_GROUPS = [
     label: "PRACTICE",
     items: [
       {
+        label: "AI Learning Twin",
+        to: "/learning-twin",
+        badge: "AI",
+        icon: (
+          <svg className="w-[18px] h-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        ),
+      },
+      {
         label: "Coding Lab",
         to: "/coding-lab",
         icon: (
@@ -233,6 +243,7 @@ const isActive = (path, location) => {
   if (path === "/test") return location.pathname.startsWith("/test") || location.pathname === "/assessment";
   if (path === "/coding-lab") return location.pathname.startsWith("/coding");
   if (path === "/tutor") return location.pathname.startsWith("/tutor");
+  if (path === "/learning-twin") return location.pathname.startsWith("/learning-twin");
   if (path === "/career-twin") return location.pathname.startsWith("/career-twin");
   if (path === "/portfolio") return location.pathname.startsWith("/portfolio") || location.pathname.startsWith("/github");
   if (path === "/placement-readiness") return location.pathname.startsWith("/placement-readiness") || location.pathname.startsWith("/career");

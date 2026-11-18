@@ -31,6 +31,7 @@ import pyqIntelligenceRoutes from "./routes/pyqIntelligenceRoutes.js";
 import documentRagRoutes from "./routes/documentRagRoutes.js";
 import gitHubPortfolioRoutes from "./routes/gitHubPortfolioRoutes.js";
 import collaborativeRoutes from "./routes/collaborativeRoutes.js";
+import personalLearningTwinRoutes from "./routes/personalLearningTwinRoutes.js";
 import {
   enterpriseSecurityHeaders,
   rateLimiter,
@@ -106,6 +107,7 @@ app.use("/api/pyq", pyqIntelligenceRoutes);
 app.use("/api/documents", documentRagRoutes);
 app.use("/api/github", gitHubPortfolioRoutes);
 app.use("/api/community", collaborativeRoutes);
+app.use("/api/learning-twin", personalLearningTwinRoutes);
 
 // Alias mounts for direct REST conventions requested by prompt
 app.use("/api/subjects", learningRoutes);

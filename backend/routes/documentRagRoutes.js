@@ -37,3 +37,4 @@ router.post("/:id/chat", protect, chatWithDocument);
 router.post("/:id/generate", protect, generateStudyMaterial);
 
 export default router;
+

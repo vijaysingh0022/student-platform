@@ -171,3 +171,4 @@ gitHubPortfolioSchema.index({ username: 1 });
 
 const GitHubPortfolio = mongoose.model("GitHubPortfolio", gitHubPortfolioSchema);
 export default GitHubPortfolio;
+

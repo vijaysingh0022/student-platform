@@ -327,6 +327,19 @@ export const getCommunityNotifications = async (config = {}) => {
   return api.get("/community/notifications", config);
 };
 
+// ─── AI Personal Learning Twin APIs ─────────────────────────────────────────
+export const getPersonalLearningTwin = async (config = {}) => {
+  return api.get("/learning-twin", config);
+};
+
+export const recalculatePersonalLearningTwin = async (config = {}) => {
+  return api.post("/learning-twin/recalculate", {}, config);
+};
+
+export const simulatePersonalLearningPlan = async (payload, config = {}) => {
+  return api.post("/learning-twin/simulate", payload, config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);

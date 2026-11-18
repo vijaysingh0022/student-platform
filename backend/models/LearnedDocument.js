@@ -110,3 +110,4 @@ learnedDocumentSchema.index({ user: 1, status: 1 });
 
 const LearnedDocument = mongoose.model("LearnedDocument", learnedDocumentSchema);
 export default LearnedDocument;
+
