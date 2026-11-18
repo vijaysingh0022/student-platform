@@ -5,7 +5,10 @@ import {
   createGroup,
   getGroupDetails,
   joinGroup,
+  leaveGroup,
+  manageGroupMember,
   addGroupResource,
+  addGroupAnnouncement,
   assignGroupChallenge,
   getDiscussions,
   createDiscussion,
@@ -18,12 +21,15 @@ import {
 
 const router = express.Router();
 
-// Groups
+// Groups Management
 router.get("/groups", protect, getGroups);
 router.post("/groups", protect, createGroup);
 router.get("/groups/:id", protect, getGroupDetails);
 router.post("/groups/:id/join", protect, joinGroup);
+router.post("/groups/:id/leave", protect, leaveGroup);
+router.post("/groups/:id/members/manage", protect, manageGroupMember);
 router.post("/groups/:id/resources", protect, addGroupResource);
+router.post("/groups/:id/announcements", protect, addGroupAnnouncement);
 router.post("/groups/:id/challenges", protect, assignGroupChallenge);
 
 // Discussions
@@ -40,4 +46,3 @@ router.get("/leaderboards", protect, getLeaderboards);
 router.get("/notifications", protect, getMyNotifications);
 
 export default router;
-

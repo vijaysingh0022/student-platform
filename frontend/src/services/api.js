@@ -291,8 +291,20 @@ export const getStudyGroupDetails = async (id, config = {}) => {
   return api.get(`/community/groups/${id}`, config);
 };
 
-export const joinStudyGroup = async (id, config = {}) => {
-  return api.post(`/community/groups/${id}/join`, {}, config);
+export const joinStudyGroup = async (id, payload = {}, config = {}) => {
+  return api.post(`/community/groups/${id}/join`, payload, config);
+};
+
+export const leaveStudyGroup = async (id, config = {}) => {
+  return api.post(`/community/groups/${id}/leave`, {}, config);
+};
+
+export const manageGroupMember = async (id, payload, config = {}) => {
+  return api.post(`/community/groups/${id}/members/manage`, payload, config);
+};
+
+export const addGroupAnnouncement = async (id, payload, config = {}) => {
+  return api.post(`/community/groups/${id}/announcements`, payload, config);
 };
 
 export const addGroupResource = async (id, payload, config = {}) => {
