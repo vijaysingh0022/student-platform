@@ -469,25 +469,141 @@ export const assignGroupChallenge = async (req, res) => {
  * 3. DISCUSSIONS CONTROLLER
  */
 
+/**
+ * 3. PEER DISCUSSION FORUM CONTROLLER
+ */
+
 export const getDiscussions = async (req, res) => {
   try {
-    const { subject, search, tag } = req.query;
+    const {
+      subject,
+      search,
+      tag,
+      sort = "latest", // "latest", "popular", "unanswered", "trending"
+      page = 1,
+      limit = 15,
+      bookmarkedOnly,
+      authorId,
+    } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, Math.min(50, parseInt(limit, 10) || 15));
+    const skip = (pageNum - 1) * limitNum;
+
     const filter = {};
     if (subject && subject !== "ALL") filter.subject = subject;
-    if (tag) filter.tags = tag;
-    if (search) {
+    if (tag) filter.tags = { $in: [new RegExp(`^${tag}$`, "i")] };
+    if (authorId) filter.author = authorId;
+    if (bookmarkedOnly === "true" && req.user?._id) {
+      filter.bookmarks = req.user._id;
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
       filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { content: { $regex: search, $options: "i" } },
+        { title: { $regex: q, $options: "i" } },
+        { content: { $regex: q, $options: "i" } },
+        { topic: { $regex: q, $options: "i" } },
+        { authorName: { $regex: q, $options: "i" } },
+        { tags: { $regex: q, $options: "i" } },
       ];
     }
 
+    let sortCriteria = { isPinned: -1, createdAt: -1 };
+    if (sort === "popular") {
+      sortCriteria = { isPinned: -1, "upvotes.length": -1, createdAt: -1 };
+    } else if (sort === "unanswered") {
+      filter["replies.0"] = { $exists: false };
+      sortCriteria = { isPinned: -1, createdAt: -1 };
+    } else if (sort === "trending") {
+      // Prioritize threads with recent views/replies
+      sortCriteria = { isPinned: -1, updatedAt: -1, viewCount: -1 };
+    }
+
+    const total = await DiscussionThread.countDocuments(filter);
     const threads = await DiscussionThread.find(filter)
-      .sort({ upvotes: -1, createdAt: -1 })
-      .limit(30)
+      .sort(sortCriteria)
+      .skip(skip)
+      .limit(limitNum)
       .lean();
 
-    res.status(200).json({ success: true, threads });
+    // Map thread user-specific flags (hasUpvoted, hasDownvoted, isBookmarked)
+    const currentUserIdStr = req.user?._id ? String(req.user._id) : null;
+    const formattedThreads = threads.map((th) => {
+      const upvoteCount = (th.upvotes || []).length;
+      const downvoteCount = (th.downvotes || []).length;
+      const bookmarkCount = (th.bookmarks || []).length;
+      const hasAcceptedAnswer = (th.replies || []).some((r) => r.isAcceptedSolution);
+
+      return {
+        ...th,
+        score: upvoteCount - downvoteCount,
+        upvoteCount,
+        downvoteCount,
+        bookmarkCount,
+        replyCount: (th.replies || []).length,
+        hasAcceptedAnswer,
+        hasUpvoted: currentUserIdStr ? (th.upvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+        hasDownvoted: currentUserIdStr ? (th.downvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+        isBookmarked: currentUserIdStr ? (th.bookmarks || []).some((id) => String(id) === currentUserIdStr) : false,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      threads: formattedThreads,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum) || 1,
+        hasMore: pageNum * limitNum < total,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getDiscussionById = async (req, res) => {
+  try {
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Discussion not found." });
+
+    // Increment viewCount safely
+    thread.viewCount = (thread.viewCount || 0) + 1;
+    await thread.save();
+
+    const currentUserIdStr = req.user?._id ? String(req.user._id) : null;
+    const thObj = thread.toObject();
+
+    const upvoteCount = (thObj.upvotes || []).length;
+    const downvoteCount = (thObj.downvotes || []).length;
+
+    const repliesFormatted = (thObj.replies || []).map((r) => ({
+      ...r,
+      upvoteCount: (r.upvotes || []).length,
+      downvoteCount: (r.downvotes || []).length,
+      score: (r.upvotes || []).length - (r.downvotes || []).length,
+      hasUpvoted: currentUserIdStr ? (r.upvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+      hasDownvoted: currentUserIdStr ? (r.downvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+    }));
+
+    res.status(200).json({
+      success: true,
+      thread: {
+        ...thObj,
+        score: upvoteCount - downvoteCount,
+        upvoteCount,
+        downvoteCount,
+        bookmarkCount: (thObj.bookmarks || []).length,
+        hasAcceptedAnswer: (thObj.replies || []).some((r) => r.isAcceptedSolution),
+        hasUpvoted: currentUserIdStr ? (thObj.upvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+        hasDownvoted: currentUserIdStr ? (thObj.downvotes || []).some((id) => String(id) === currentUserIdStr) : false,
+        isBookmarked: currentUserIdStr ? (thObj.bookmarks || []).some((id) => String(id) === currentUserIdStr) : false,
+        replies: repliesFormatted,
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -495,23 +611,52 @@ export const getDiscussions = async (req, res) => {
 
 export const createDiscussion = async (req, res) => {
   try {
-    const { title, content, subject = "DSA", tags = [], codeSnippet, groupId } = req.body;
+    const {
+      title,
+      content,
+      subject = "DSA",
+      topic = "General Discussion",
+      tags = [],
+      codeSnippet = "",
+      codeLanguage = "javascript",
+      attachments = [],
+      groupId,
+    } = req.body;
+
     const userId = req.user._id;
     const userName = req.user.name || "Student";
+    const userRole = req.user.role || "student";
 
-    if (!title || !content) {
+    if (!title || !title.trim() || !content || !content.trim()) {
       return res.status(400).json({ success: false, message: "Title and content are required." });
     }
 
+    // Sanitize tags
+    const cleanTags = Array.isArray(tags)
+      ? tags.map((t) => String(t).trim()).filter(Boolean)
+      : [String(tags).trim()].filter(Boolean);
+
+    // Validate attachments (max 3 attachments, < 5MB each)
+    const sanitizedAttachments = (attachments || []).slice(0, 3).map((a) => ({
+      fileName: String(a.fileName || "attachment"),
+      fileType: String(a.fileType || "application/octet-stream"),
+      dataUrl: String(a.dataUrl || ""),
+      fileSize: Number(a.fileSize || 0),
+    }));
+
     const thread = await DiscussionThread.create({
-      title,
-      content,
+      title: title.trim(),
+      content: content.trim(),
       subject,
-      tags,
+      topic: topic.trim() || "General Discussion",
+      tags: cleanTags,
       codeSnippet: codeSnippet || "",
-      groupId: groupId || null,
+      codeLanguage: codeLanguage || "javascript",
+      attachments: sanitizedAttachments,
+      group: groupId || null,
       author: userId,
       authorName: userName,
+      authorRole: userRole,
       replies: [],
     });
 
@@ -521,27 +666,96 @@ export const createDiscussion = async (req, res) => {
   }
 };
 
+export const updateDiscussion = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    // Authorization: only the author or an admin may edit
+    if (String(thread.author) !== String(userId) && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Unauthorized to edit this discussion." });
+    }
+
+    const { title, content, subject, topic, tags, codeSnippet, codeLanguage } = req.body;
+    if (title) thread.title = title.trim();
+    if (content) thread.content = content.trim();
+    if (subject) thread.subject = subject;
+    if (topic) thread.topic = topic;
+    if (tags) thread.tags = Array.isArray(tags) ? tags : [tags];
+    if (codeSnippet !== undefined) thread.codeSnippet = codeSnippet;
+    if (codeLanguage !== undefined) thread.codeLanguage = codeLanguage;
+
+    await thread.save();
+    res.status(200).json({ success: true, thread });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteDiscussion = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    if (String(thread.author) !== String(userId) && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Unauthorized to delete this discussion." });
+    }
+
+    await thread.deleteOne();
+    res.status(200).json({ success: true, message: "Discussion deleted successfully." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const replyToDiscussion = async (req, res) => {
   try {
-    const { content, codeSnippet } = req.body;
+    const {
+      content,
+      codeSnippet = "",
+      codeLanguage = "javascript",
+      parentReplyId = null,
+      attachments = [],
+    } = req.body;
     const userId = req.user._id;
     const userName = req.user.name || "Peer";
+    const userRole = req.user.role || "student";
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ success: false, message: "Reply content cannot be empty." });
+    }
 
     const thread = await DiscussionThread.findById(req.params.id);
     if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
 
+    const sanitizedAttachments = (attachments || []).slice(0, 3).map((a) => ({
+      fileName: String(a.fileName || "attachment"),
+      fileType: String(a.fileType || "application/octet-stream"),
+      dataUrl: String(a.dataUrl || ""),
+      fileSize: Number(a.fileSize || 0),
+    }));
+
     const reply = {
       author: userId,
       authorName: userName,
-      content,
+      authorRole: userRole,
+      content: content.trim(),
       codeSnippet: codeSnippet || "",
-      upvotes: 0,
+      codeLanguage: codeLanguage || "javascript",
+      parentReplyId: parentReplyId || null,
+      attachments: sanitizedAttachments,
+      upvotes: [],
+      downvotes: [],
+      isAcceptedSolution: false,
       createdAt: new Date(),
     };
 
     thread.replies.push(reply);
     await thread.save();
 
+    // Trigger Notification for the thread author
     if (String(thread.author) !== String(userId)) {
       await PeerNotification.create({
         recipient: thread.author,
@@ -549,7 +763,8 @@ export const replyToDiscussion = async (req, res) => {
         senderName: userName,
         type: "discussion_reply",
         title: "New Reply to Your Discussion",
-        message: `${userName} replied: "${content.slice(0, 80)}..."`,
+        message: `${userName} replied: "${content.trim().slice(0, 80)}..."`,
+        link: `/community?tab=discussions&thread=${thread._id}`,
         threadId: thread._id,
       });
     }
@@ -560,23 +775,254 @@ export const replyToDiscussion = async (req, res) => {
   }
 };
 
-export const upvoteDiscussion = async (req, res) => {
+export const voteDiscussion = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { voteType = "upvote" } = req.body; // "upvote" | "downvote"
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    const uIdStr = String(userId);
+    const hasUpvoted = (thread.upvotes || []).some((id) => String(id) === uIdStr);
+    const hasDownvoted = (thread.downvotes || []).some((id) => String(id) === uIdStr);
+
+    if (voteType === "upvote") {
+      if (hasUpvoted) {
+        // Toggle off
+        thread.upvotes = thread.upvotes.filter((id) => String(id) !== uIdStr);
+      } else {
+        thread.upvotes.push(userId);
+        // Remove from downvotes if present
+        if (hasDownvoted) {
+          thread.downvotes = thread.downvotes.filter((id) => String(id) !== uIdStr);
+        }
+      }
+    } else if (voteType === "downvote") {
+      if (hasDownvoted) {
+        // Toggle off
+        thread.downvotes = thread.downvotes.filter((id) => String(id) !== uIdStr);
+      } else {
+        thread.downvotes.push(userId);
+        // Remove from upvotes if present
+        if (hasUpvoted) {
+          thread.upvotes = thread.upvotes.filter((id) => String(id) !== uIdStr);
+        }
+      }
+    }
+
+    await thread.save();
+
+    const upvoteCount = thread.upvotes.length;
+    const downvoteCount = thread.downvotes.length;
+    res.status(200).json({
+      success: true,
+      score: upvoteCount - downvoteCount,
+      upvoteCount,
+      downvoteCount,
+      hasUpvoted: thread.upvotes.some((id) => String(id) === uIdStr),
+      hasDownvoted: thread.downvotes.some((id) => String(id) === uIdStr),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const voteReply = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { replyId } = req.params;
+    const { voteType = "upvote" } = req.body;
+
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    const reply = thread.replies.id(replyId);
+    if (!reply) return res.status(404).json({ success: false, message: "Reply not found." });
+
+    const uIdStr = String(userId);
+    const hasUpvoted = (reply.upvotes || []).some((id) => String(id) === uIdStr);
+    const hasDownvoted = (reply.downvotes || []).some((id) => String(id) === uIdStr);
+
+    if (voteType === "upvote") {
+      if (hasUpvoted) {
+        reply.upvotes = reply.upvotes.filter((id) => String(id) !== uIdStr);
+      } else {
+        reply.upvotes.push(userId);
+        if (hasDownvoted) {
+          reply.downvotes = reply.downvotes.filter((id) => String(id) !== uIdStr);
+        }
+      }
+    } else if (voteType === "downvote") {
+      if (hasDownvoted) {
+        reply.downvotes = reply.downvotes.filter((id) => String(id) !== uIdStr);
+      } else {
+        reply.downvotes.push(userId);
+        if (hasUpvoted) {
+          reply.upvotes = reply.upvotes.filter((id) => String(id) !== uIdStr);
+        }
+      }
+    }
+
+    await thread.save();
+
+    res.status(200).json({
+      success: true,
+      replyId,
+      score: (reply.upvotes || []).length - (reply.downvotes || []).length,
+      upvoteCount: (reply.upvotes || []).length,
+      downvoteCount: (reply.downvotes || []).length,
+      hasUpvoted: (reply.upvotes || []).some((id) => String(id) === uIdStr),
+      hasDownvoted: (reply.downvotes || []).some((id) => String(id) === uIdStr),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const bookmarkDiscussion = async (req, res) => {
   try {
     const userId = req.user._id;
     const thread = await DiscussionThread.findById(req.params.id);
     if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
 
-    const alreadyUpvoted = thread.upvotedBy.some((id) => String(id) === String(userId));
-    if (alreadyUpvoted) {
-      thread.upvotedBy = thread.upvotedBy.filter((id) => String(id) !== String(userId));
-      thread.upvotes = Math.max(0, thread.upvotes - 1);
+    const uIdStr = String(userId);
+    const isBookmarked = (thread.bookmarks || []).some((id) => String(id) === uIdStr);
+
+    if (isBookmarked) {
+      thread.bookmarks = thread.bookmarks.filter((id) => String(id) !== uIdStr);
     } else {
-      thread.upvotedBy.push(userId);
-      thread.upvotes += 1;
+      thread.bookmarks.push(userId);
     }
 
     await thread.save();
-    res.status(200).json({ success: true, upvotes: thread.upvotes, upvoted: !alreadyUpvoted });
+    res.status(200).json({
+      success: true,
+      isBookmarked: !isBookmarked,
+      bookmarkCount: thread.bookmarks.length,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const acceptAnswer = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { replyId } = req.params;
+
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    // Only thread author can mark accepted solution
+    if (String(thread.author) !== String(userId) && req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Only the question author can accept an answer." });
+    }
+
+    let acceptedAuthorId = null;
+    let acceptedAuthorName = "";
+
+    thread.replies.forEach((r) => {
+      if (String(r._id) === String(replyId)) {
+        r.isAcceptedSolution = !r.isAcceptedSolution; // Toggle
+        if (r.isAcceptedSolution) {
+          acceptedAuthorId = r.author;
+          acceptedAuthorName = r.authorName;
+        }
+      } else {
+        r.isAcceptedSolution = false;
+      }
+    });
+
+    thread.isResolved = thread.replies.some((r) => r.isAcceptedSolution);
+    await thread.save();
+
+    // Notify solution provider
+    if (acceptedAuthorId && String(acceptedAuthorId) !== String(userId)) {
+      await PeerNotification.create({
+        recipient: acceptedAuthorId,
+        sender: userId,
+        senderName: req.user.name || "Peer",
+        type: "answer_accepted",
+        title: "Your Answer Was Accepted! 🎉",
+        message: `Your answer on "${thread.title.slice(0, 60)}" was marked as the accepted solution (+50 XP).`,
+        link: `/community?tab=discussions&thread=${thread._id}`,
+        threadId: thread._id,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      isResolved: thread.isResolved,
+      replies: thread.replies,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const reportDiscussion = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { reason = "Inappropriate content" } = req.body;
+
+    const thread = await DiscussionThread.findById(req.params.id);
+    if (!thread) return res.status(404).json({ success: false, message: "Thread not found." });
+
+    // Avoid duplicate report from same user
+    const alreadyReported = (thread.reports || []).some((r) => String(r.user) === String(userId));
+    if (!alreadyReported) {
+      thread.reports.push({
+        user: userId,
+        reason: reason.trim(),
+        reportedAt: new Date(),
+      });
+      thread.isReported = true;
+      await thread.save();
+    }
+
+    res.status(200).json({ success: true, message: "Report submitted for moderation review." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getUserCommunityProfile = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const targetUserId = userId || req.user._id;
+
+    const threads = await DiscussionThread.find({ author: targetUserId }).lean();
+    const allThreadsWithReplies = await DiscussionThread.find({ "replies.author": targetUserId }).lean();
+
+    let userRepliesCount = 0;
+    let acceptedSolutionsCount = 0;
+    let totalUpvotesReceived = 0;
+
+    threads.forEach((th) => {
+      totalUpvotesReceived += (th.upvotes || []).length;
+    });
+
+    allThreadsWithReplies.forEach((th) => {
+      (th.replies || []).forEach((r) => {
+        if (String(r.author) === String(targetUserId)) {
+          userRepliesCount++;
+          if (r.isAcceptedSolution) acceptedSolutionsCount++;
+          totalUpvotesReceived += (r.upvotes || []).length;
+        }
+      });
+    });
+
+    res.status(200).json({
+      success: true,
+      profile: {
+        userId: targetUserId,
+        questionsAsked: threads.length,
+        repliesGiven: userRepliesCount,
+        acceptedSolutions: acceptedSolutionsCount,
+        reputationScore: totalUpvotesReceived * 10 + acceptedSolutionsCount * 50,
+        recentQuestions: threads.slice(0, 5),
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

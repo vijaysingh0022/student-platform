@@ -11,9 +11,17 @@ import {
   addGroupAnnouncement,
   assignGroupChallenge,
   getDiscussions,
+  getDiscussionById,
   createDiscussion,
+  updateDiscussion,
+  deleteDiscussion,
   replyToDiscussion,
-  upvoteDiscussion,
+  voteDiscussion,
+  voteReply,
+  bookmarkDiscussion,
+  acceptAnswer,
+  reportDiscussion,
+  getUserCommunityProfile,
   aiCommunityAssistant,
   getLeaderboards,
   getMyNotifications,
@@ -32,11 +40,25 @@ router.post("/groups/:id/resources", protect, addGroupResource);
 router.post("/groups/:id/announcements", protect, addGroupAnnouncement);
 router.post("/groups/:id/challenges", protect, assignGroupChallenge);
 
-// Discussions
+// Peer Discussions Forum
 router.get("/discussions", protect, getDiscussions);
+router.get("/discussions/:id", protect, getDiscussionById);
 router.post("/discussions", protect, createDiscussion);
+router.put("/discussions/:id", protect, updateDiscussion);
+router.delete("/discussions/:id", protect, deleteDiscussion);
 router.post("/discussions/:id/replies", protect, replyToDiscussion);
-router.post("/discussions/:id/upvote", protect, upvoteDiscussion);
+router.post("/discussions/:id/vote", protect, voteDiscussion);
+router.post("/discussions/:id/replies/:replyId/vote", protect, voteReply);
+router.post("/discussions/:id/bookmark", protect, bookmarkDiscussion);
+router.post("/discussions/:id/replies/:replyId/accept", protect, acceptAnswer);
+router.post("/discussions/:id/report", protect, reportDiscussion);
+router.get("/users/:userId/profile", protect, getUserCommunityProfile);
+
+// Legacy route alias for backward compatibility
+router.post("/discussions/:id/upvote", protect, (req, res, next) => {
+  req.body.voteType = "upvote";
+  return voteDiscussion(req, res, next);
+});
 
 // AI Assistant
 router.post("/ai-assistant", protect, aiCommunityAssistant);

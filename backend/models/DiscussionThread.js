@@ -10,7 +10,17 @@ const discussionReplySchema = new mongoose.Schema(
     codeSnippet: { type: String, default: "" },
     codeLanguage: { type: String, default: "javascript" },
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     isAcceptedSolution: { type: Boolean, default: false },
+    parentReplyId: { type: mongoose.Schema.Types.ObjectId, default: null }, // nested replies
+    attachments: [
+      {
+        fileName: { type: String, required: true },
+        fileType: { type: String, required: true },
+        dataUrl: { type: String, required: true },
+        fileSize: { type: Number, default: 0 },
+      },
+    ],
     createdAt: { type: Date, default: Date.now },
   },
   { _id: true }
@@ -25,7 +35,7 @@ const discussionThreadSchema = new mongoose.Schema(
       default: "DSA",
       index: true,
     },
-    topic: { type: String, default: "Core Concept" },
+    topic: { type: String, default: "General Discussion" },
     title: { type: String, required: true, trim: true },
     content: { type: String, required: true },
     codeSnippet: { type: String, default: "" },
@@ -37,24 +47,35 @@ const discussionThreadSchema = new mongoose.Schema(
     authorAvatar: { type: String, default: "" },
 
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     replies: [discussionReplySchema],
     tags: [{ type: String }],
+
+    attachments: [
+      {
+        fileName: { type: String, required: true },
+        fileType: { type: String, required: true },
+        dataUrl: { type: String, required: true },
+        fileSize: { type: Number, default: 0 },
+      },
+    ],
 
     isPinned: { type: Boolean, default: false },
     isResolved: { type: Boolean, default: false },
     viewCount: { type: Number, default: 0 },
 
-    // AI Discussion Digest
+    // AI Discussion Assistant / Digest
     aiSummary: { type: String, default: "" },
     aiRecommendedTopics: [{ type: String }],
+    aiGeneratedAnswer: { type: String, default: "" },
 
     // Moderation
     isReported: { type: Boolean, default: false },
     reports: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        reason: String,
+        reason: { type: String, required: true },
         reportedAt: { type: Date, default: Date.now },
       },
     ],
@@ -65,7 +86,7 @@ const discussionThreadSchema = new mongoose.Schema(
 discussionThreadSchema.index({ group: 1, createdAt: -1 });
 discussionThreadSchema.index({ subject: 1, createdAt: -1 });
 discussionThreadSchema.index({ tags: 1 });
+discussionThreadSchema.index({ title: "text", content: "text", tags: "text" });
 
 const DiscussionThread = mongoose.model("DiscussionThread", discussionThreadSchema);
 export default DiscussionThread;
-

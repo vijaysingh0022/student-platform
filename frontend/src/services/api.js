@@ -319,12 +319,48 @@ export const getDiscussions = async (params = {}, config = {}) => {
   return api.get("/community/discussions", { params, ...config });
 };
 
+export const getDiscussionById = async (id, config = {}) => {
+  return api.get(`/community/discussions/${id}`, config);
+};
+
 export const createDiscussionThread = async (payload, config = {}) => {
   return api.post("/community/discussions", payload, config);
 };
 
+export const updateDiscussionThread = async (id, payload, config = {}) => {
+  return api.put(`/community/discussions/${id}`, payload, config);
+};
+
+export const deleteDiscussionThread = async (id, config = {}) => {
+  return api.delete(`/community/discussions/${id}`, config);
+};
+
 export const replyToDiscussionThread = async (id, payload, config = {}) => {
   return api.post(`/community/discussions/${id}/replies`, payload, config);
+};
+
+export const voteDiscussionThread = async (id, voteType = "upvote", config = {}) => {
+  return api.post(`/community/discussions/${id}/vote`, { voteType }, config);
+};
+
+export const voteDiscussionReply = async (id, replyId, voteType = "upvote", config = {}) => {
+  return api.post(`/community/discussions/${id}/replies/${replyId}/vote`, { voteType }, config);
+};
+
+export const bookmarkDiscussionThread = async (id, config = {}) => {
+  return api.post(`/community/discussions/${id}/bookmark`, {}, config);
+};
+
+export const acceptDiscussionAnswer = async (id, replyId, config = {}) => {
+  return api.post(`/community/discussions/${id}/replies/${replyId}/accept`, {}, config);
+};
+
+export const reportDiscussionThread = async (id, reason, config = {}) => {
+  return api.post(`/community/discussions/${id}/report`, { reason }, config);
+};
+
+export const getUserCommunityProfile = async (userId, config = {}) => {
+  return api.get(`/community/users/${userId}/profile`, config);
 };
 
 export const upvoteDiscussionThread = async (id, config = {}) => {

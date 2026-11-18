@@ -53,6 +53,7 @@ import {
   getCommunityLeaderboards,
   getCommunityNotifications,
 } from "../services/api.js";
+import { PeerDiscussionForum } from "../components/PeerDiscussionForum.jsx";
 
 export const CollaborativeNetworkPage = () => {
   // Navigation tabs: 'groups' | 'discussions' | 'challenges' | 'leaderboard'
@@ -835,147 +836,7 @@ export const CollaborativeNetworkPage = () => {
 
         {/* ── 2. DISCUSSIONS TAB ── */}
         {activeTab === "discussions" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center justify-between">
-                <span className="text-xs font-black uppercase text-slate-400">Academic Discussions</span>
-                <button
-                  onClick={() => setIsCreatingThread(!isCreatingThread)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold"
-                >
-                  {isCreatingThread ? "Cancel" : "+ Ask Question"}
-                </button>
-              </div>
-
-              {isCreatingThread && (
-                <form
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!newThreadTitle.trim() || !newThreadContent.trim()) return;
-                    await createDiscussionThread({
-                      title: newThreadTitle.trim(),
-                      content: newThreadContent.trim(),
-                      subject: newThreadSubject,
-                    });
-                    setIsCreatingThread(false);
-                    setNewThreadTitle("");
-                    setNewThreadContent("");
-                    fetchDiscussions();
-                  }}
-                  className="bg-white rounded-3xl border border-slate-200/90 p-5 space-y-3 shadow-2xs"
-                >
-                  <input
-                    type="text"
-                    value={newThreadTitle}
-                    onChange={(e) => setNewThreadTitle(e.target.value)}
-                    placeholder="Topic or question title..."
-                    required
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold"
-                  />
-                  <textarea
-                    value={newThreadContent}
-                    onChange={(e) => setNewThreadContent(e.target.value)}
-                    placeholder="Explain what concept you need clarification on..."
-                    required
-                    rows="3"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium"
-                  />
-                  <div className="flex items-center justify-between">
-                    <select
-                      value={newThreadSubject}
-                      onChange={(e) => setNewThreadSubject(e.target.value)}
-                      className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold"
-                    >
-                      {["DSA", "DBMS", "OS", "CN", "OOP"].map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button type="submit" className="px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">
-                      Post Question
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="space-y-2.5">
-                {threads.map((t) => (
-                  <div
-                    key={t._id}
-                    onClick={() => setSelectedThread(t)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                      selectedThread?._id === t._id
-                        ? "bg-indigo-50/80 border-indigo-400 shadow-2xs"
-                        : "bg-white border-slate-200/90 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
-                        {t.subject}
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold">{t.replies?.length || 0} Replies</span>
-                    </div>
-                    <h4 className="text-sm font-black text-slate-900">{t.title}</h4>
-                    <p className="text-xs text-slate-500 line-clamp-2">{t.content}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-2xs space-y-5">
-              {!selectedThread ? (
-                <p className="text-xs text-slate-400 text-center py-12">Select a discussion on the left.</p>
-              ) : (
-                <div className="space-y-5">
-                  <div className="pb-4 border-b border-slate-100 space-y-2">
-                    <span className="text-[10px] font-black uppercase text-indigo-700 bg-indigo-100 px-2.5 py-1 rounded-lg">
-                      {selectedThread.subject}
-                    </span>
-                    <h2 className="text-lg font-black text-slate-900">{selectedThread.title}</h2>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium">{selectedThread.content}</p>
-                  </div>
-
-                  {/* Replies List */}
-                  <div className="space-y-2.5">
-                    <span className="text-xs font-black uppercase tracking-wider text-slate-400 block">
-                      Peer Replies ({selectedThread.replies?.length || 0})
-                    </span>
-                    {(selectedThread.replies || []).map((r, idx) => (
-                      <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs space-y-1">
-                        <div className="flex items-center justify-between font-bold text-slate-800">
-                          <span>{r.authorName}</span>
-                          <span className="text-[10px] text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-slate-600 leading-relaxed">{r.content}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Post Reply */}
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!replyContent.trim()) return;
-                      await replyToDiscussionThread(selectedThread._id, { content: replyContent.trim() });
-                      setReplyContent("");
-                      fetchDiscussions();
-                    }}
-                    className="flex items-center gap-2 pt-2"
-                  >
-                    <input
-                      type="text"
-                      value={replyContent}
-                      onChange={(e) => setReplyContent(e.target.value)}
-                      placeholder="Write your explanation or answer..."
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-medium"
-                    />
-                    <button type="submit" className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs">
-                      Reply
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-          </div>
+          <PeerDiscussionForum />
         )}
 
         {/* ── 3. TEAM CHALLENGES TAB ── */}
