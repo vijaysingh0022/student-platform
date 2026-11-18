@@ -340,6 +340,14 @@ export const simulatePersonalLearningPlan = async (payload, config = {}) => {
   return api.post("/learning-twin/simulate", payload, config);
 };
 
+export const toggleDailyPlanTask = async (taskId, config = {}) => {
+  return api.post("/learning-twin/task/toggle", { taskId }, config);
+};
+
+export const resolveLearningInsight = async (insightId, config = {}) => {
+  return api.post("/learning-twin/insight/resolve", { insightId }, config);
+};
+
 // Learning Bookmarks
 export const getLearningBookmarks = async (config = {}) => {
   return api.get("/learning/bookmarks", config);
